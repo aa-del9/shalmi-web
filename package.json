@@ -1,0 +1,40 @@
+{
+  "name": "shaalmi-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "start": "turbo run start",
+    "vercel:dev": "vercel dev --token=$VERCEL_TOKEN --listen $PORT",
+    "dev:web": "turbo run dev --filter web",
+    "dev:storybook": "turbo run dev --filter storybook",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "clean": "rm -rf node_modules .turbo .next && turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types",
+    "prepare": "husky",
+    "vercel:link": "vercel link --token=$VERCEL_TOKEN --yes --repo",
+    "vercel:envs": "turbo run vercel:envs",
+    "vercel:envs:staging": "turbo run vercel:envs:staging",
+    "vercel:envs:prod": "turbo run vercel:envs:prod",
+    "vercel:build": "turbo run vercel:build",
+    "vercel:build:staging": "turbo run vercel:build:staging",
+    "vercel:build:prod": "turbo run vercel:build:prod",
+    "vercel:deploy": "turbo run vercel:deploy",
+    "vercel:deploy:staging": "turbo run vercel:deploy:staging",
+    "vercel:deploy:prod": "turbo run vercel:deploy:prod"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "prettier": "^3.7.4",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "turbo": "^2.7.3",
+    "typescript": "5.9.2"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22.0.0 <23.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
