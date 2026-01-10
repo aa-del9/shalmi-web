@@ -32,11 +32,11 @@ jobs:
           GIT_BRANCH: main
       - name: Build Project Artifacts
         run: pnpm vercel:build:prod
-      - name: Change the author of last commit to web@vyro.ai
-        run: |
-          git config user.name 'web@shalmi.app'
-          git config user.email 'web@shalmi.app'
-          git commit --amend --reset-author --no-verify -m "$(git log -1 --pretty=%B)"
+      # - name: Change the author of last commit to web@shalmi.app
+      #   run: |
+      #     git config user.name 'web@shalmi.app'
+      #     git config user.email 'web@shalmi.app'
+      #     git commit --amend --reset-author --no-verify -m "$(git log -1 --pretty=%B)"
       - name: Deploy Project Artifacts to Vercel
         run: pnpm vercel:deploy:prod
         env:
