@@ -1,0 +1,51 @@
+name: Vercel Production Deployment
+env:
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+on:
+  push:
+    branches:
+      - main
+jobs:
+  Deploy-Prod:
+    runs-on: ubuntu-latest-8core
+    timeout-minutes: 15
+    env:
+      NODE_VERSION: 22
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - name: Install Dependencies using pnpm
+        run: pnpm install
+      - name: Link Vercel Project
+        run: pnpm vercel:link
+      - name: Pull Vercel Environment Information
+        run: pnpm vercel:envs:prod
+        env:
+          GIT_BRANCH: main
+      - name: Build Project Artifacts
+        run: pnpm vercel:build:prod
+      - name: Change the author of last commit to web@vyro.ai
+        run: |
+          git config user.name 'web@shalmi.app'
+          git config user.email 'web@shalmi.app'
+          git commit --amend --reset-author --no-verify -m "$(git log -1 --pretty=%B)"
+      - name: Deploy Project Artifacts to Vercel
+        run: pnpm vercel:deploy:prod
+        env:
+          GIT_BRANCH: main
+          GITHUB_COMMIT_AUTHOR_NAME: ${{ github.actor }}
+          GITHUB_COMMIT_ORG: ${{ github.repository_owner }}
+          GITHUB_COMMIT_REF: main
+          GITHUB_COMMIT_SHA: ${{ github.sha }}
+          GITHUB_DEPLOYMENT: '1'
+          GITHUB_ORG: ${{ github.repository_owner }}
+          GITHUB_REPO: 'shalmi-web'
+          GITHUB_COMMIT_REPO: 'shalmi-web'

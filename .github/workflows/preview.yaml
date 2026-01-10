@@ -1,0 +1,63 @@
+name: Vercel Preview Deployment
+env:
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+on:
+  pull_request:
+    branches-ignore:
+      - main
+      - staging
+
+jobs:
+  Deploy-Preview:
+    runs-on: ubuntu-latest-8core
+    timeout-minutes: 15
+    env:
+      NODE_VERSION: 22
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - name: Install Dependencies using pnpm
+        run: pnpm install
+      - name: Initialize Preview Comment
+        run: |
+          echo "## 🚀 Preview Deployments" > preview_comment.md
+          echo "" >> preview_comment.md
+      - name: Link Vercel Project
+        run: pnpm vercel:link
+      - name: Pull Vercel Environment Information
+        run: pnpm vercel:envs
+        env:
+          GIT_BRANCH: ${{ github.head_ref }}
+      - name: Build Project Artifacts
+        run: pnpm vercel:build
+      - name: Change the author of last commit to web@shalmi.app
+        run: |
+          git config user.name 'web@shalmi.app'
+          git config user.email 'web@shalmi.app'
+          git commit --amend --reset-author --no-verify -m "$(git log -1 --pretty=%B)"
+      - name: Deploy Project Artifacts to Vercel
+        run: pnpm vercel:deploy
+        env:
+          GIT_BRANCH: ${{ github.head_ref }}
+          GITHUB_COMMIT_AUTHOR_NAME: ${{ github.actor }}
+          GITHUB_COMMIT_ORG: ${{ github.repository_owner }}
+          GITHUB_COMMIT_REF: ${{ github.head_ref }}
+          GITHUB_COMMIT_SHA: ${{ github.sha }}
+          GITHUB_DEPLOYMENT: '1'
+          GITHUB_ORG: ${{ github.repository_owner }}
+          GITHUB_REPO: 'shalmi-web'
+          GITHUB_COMMIT_REPO: 'shalmi-web'
+      - name: Comment PR with Preview URLs
+        run: |
+          if [ -s preview_comment.md ]; then
+            gh pr comment ${{ github.event.pull_request.number }} --body-file preview_comment.md
+          fi
