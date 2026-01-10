@@ -12,7 +12,7 @@ on:
 
 jobs:
   Deploy-Preview:
-    runs-on: ubuntu-latest-8core
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       NODE_VERSION: 22
