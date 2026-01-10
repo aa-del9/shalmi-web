@@ -1,0 +1,42 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": ["DATABASE_URL"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "vercel:build": {
+      "dependsOn": ["^vercel:build"],
+      "env": ["DATABASE_URL"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".vercel/.env.preview.local",
+        ".vercel/project.json"
+      ],
+      "outputs": [".next/**", "!.next/cache/**", ".vercel/output"]
+    },
+    "vercel:build:staging": {
+      "dependsOn": ["^vercel:build:staging"],
+      "env": ["DATABASE_URL"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".vercel/.env.staging.local",
+        ".vercel/project.json"
+      ],
+      "outputs": [".next/**", "!.next/cache/**", ".vercel/output"]
+    },
+    "vercel:build:prod": {
+      "dependsOn": ["^vercel:build:prod"],
+      "env": ["DATABASE_URL"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".vercel/.env.production.local",
+        ".vercel/project.json"
+      ],
+      "outputs": [".next/**", "!.next/cache/**", ".vercel/output"]
+    }
+  }
+}

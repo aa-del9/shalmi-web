@@ -1,22 +1,113 @@
 {
-  "$schema": "https://turborepo.com/schema.json",
-  "ui": "tui",
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
   "tasks": {
+    "vercel:envs": {
+      "dependsOn": ["^vercel:envs"],
+      "cache": false,
+      "env": ["GIT_BRANCH"]
+    },
+    "vercel:envs:staging": {
+      "dependsOn": ["^vercel:envs:staging"],
+      "cache": false
+    },
+    "vercel:envs:prod": {
+      "dependsOn": ["^vercel:envs:prod"],
+      "cache": false
+    },
+    "vercel:deploy": {
+      "dependsOn": ["^vercel:deploy"],
+      "cache": false,
+      "env": [
+        "GIT_BRANCH",
+        "GITHUB_COMMIT_AUTHOR_NAME",
+        "GITHUB_COMMIT_ORG",
+        "GITHUB_COMMIT_REF",
+        "GITHUB_COMMIT_SHA",
+        "GITHUB_DEPLOYMENT",
+        "GITHUB_ORG",
+        "GITHUB_REPO",
+        "GITHUB_COMMIT_REPO"
+      ]
+    },
+    "vercel:deploy:staging": {
+      "dependsOn": ["^vercel:deploy:staging"],
+      "cache": false,
+      "env": [
+        "GIT_BRANCH",
+        "GITHUB_COMMIT_AUTHOR_NAME",
+        "GITHUB_COMMIT_ORG",
+        "GITHUB_COMMIT_REF",
+        "GITHUB_COMMIT_SHA",
+        "GITHUB_DEPLOYMENT",
+        "GITHUB_ORG",
+        "GITHUB_REPO",
+        "GITHUB_COMMIT_REPO"
+      ]
+    },
+    "vercel:deploy:prod": {
+      "dependsOn": ["^vercel:deploy:prod"],
+      "cache": false,
+      "env": [
+        "GIT_BRANCH",
+        "GITHUB_COMMIT_AUTHOR_NAME",
+        "GITHUB_COMMIT_ORG",
+        "GITHUB_COMMIT_REF",
+        "GITHUB_COMMIT_SHA",
+        "GITHUB_DEPLOYMENT",
+        "GITHUB_ORG",
+        "GITHUB_REPO",
+        "GITHUB_COMMIT_REPO"
+      ]
+    },
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
+    "vercel:build": {
+      "env": ["NODE_OPTIONS"],
+      "dependsOn": ["^vercel:build"],
+      "inputs": ["$TURBO_DEFAULT$", ".vercel/repo.json"]
+    },
+    "vercel:build:staging": {
+      "env": ["NODE_OPTIONS"],
+      "dependsOn": ["^vercel:build:staging"],
+      "inputs": ["$TURBO_DEFAULT$", ".vercel/repo.json"]
+    },
+    "vercel:build:prod": {
+      "env": ["NODE_OPTIONS"],
+      "dependsOn": ["^vercel:build:prod"],
+      "inputs": ["$TURBO_DEFAULT$", ".vercel/repo.json"]
+    },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "inputs": ["$TURBO_DEFAULT$", "**/*.{js,jsx,ts,tsx}"],
+      "outputs": []
+    },
+    "lint:fix": {
+      "dependsOn": ["^lint:fix"],
+      "inputs": ["$TURBO_DEFAULT$", "**/*.{js,jsx,ts,tsx}"],
+      "outputs": []
+    },
+    "lint:quiet": {
+      "dependsOn": ["^lint:quiet"],
+      "inputs": ["$TURBO_DEFAULT$", "**/*.{js,jsx,ts,tsx}"],
+      "outputs": []
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types"],
+      "inputs": ["$TURBO_DEFAULT$", "**/*.{js,jsx,ts,tsx}"],
+      "outputs": []
     },
     "dev": {
       "cache": false,
-      "persistent": true,
-      "env": ["DATABASE_URL", "API_SECRET_KEY"]
+      "persistent": true
+    },
+    "start": {
+      "cache": false,
+      "persistent": true
     }
-  }
+  },
+  "globalEnv": ["VERCEL_TOKEN", "TURBO_TOKEN", "TURBO_TEAM"]
 }
