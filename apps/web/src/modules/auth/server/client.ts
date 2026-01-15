@@ -3,6 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db, authSchema } from '@repo/database';
 import { clientEnv } from '@/modules/core/env/client';
 import { serverEnv } from '@/modules/core/env/server';
+import { getBaseUrl } from '@/modules/core/utils/url';
 
 export const auth = betterAuth({
   appName: clientEnv.NEXT_PUBLIC_BRAND_NAME,
@@ -11,8 +12,11 @@ export const auth = betterAuth({
     schema: authSchema,
   }),
   secret: serverEnv.BETTER_AUTH_SECRET,
-  baseURL: clientEnv.NEXT_PUBLIC_APP_URL,
+  baseURL: getBaseUrl(),
   basePath: '/api/auth',
+  trustedOrigins: [
+    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+  ],
   emailAndPassword: {
     enabled: true,
   },
