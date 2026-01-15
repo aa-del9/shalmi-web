@@ -1,7 +1,8 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db, authSchema } from '@repo/database';
-import { clientEnv, serverEnv } from '@/modules/core/env';
+import { clientEnv } from '@/modules/core/env/client';
+import { serverEnv } from '@/modules/core/env/server';
 
 export const auth = betterAuth({
   appName: clientEnv.NEXT_PUBLIC_BRAND_NAME,
