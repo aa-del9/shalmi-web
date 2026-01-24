@@ -109,5 +109,5 @@
       "persistent": true
     }
   },
-  "globalEnv": ["VERCEL_TOKEN", "TURBO_TOKEN", "TURBO_TEAM"]
+  "globalEnv": ["VERCEL_TOKEN", "TURBO_TOKEN", "TURBO_TEAM", "DATABASE_URL"]
 }

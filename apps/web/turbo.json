@@ -4,13 +4,29 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["DATABASE_URL"],
+      "env": [
+        "DATABASE_URL",
+        "BETTER_AUTH_SECRET",
+        "VERCEL_URL",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_BRAND_NAME",
+        "NEXT_PUBLIC_IS_PROD",
+        "NEXT_PUBLIC_API_URL"
+      ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "vercel:build": {
       "dependsOn": ["^vercel:build"],
-      "env": ["DATABASE_URL"],
+      "env": [
+        "DATABASE_URL",
+        "BETTER_AUTH_SECRET",
+        "VERCEL_URL",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_BRAND_NAME",
+        "NEXT_PUBLIC_IS_PROD",
+        "NEXT_PUBLIC_API_URL"
+      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".vercel/.env.preview.local",
@@ -20,7 +36,15 @@
     },
     "vercel:build:staging": {
       "dependsOn": ["^vercel:build:staging"],
-      "env": ["DATABASE_URL"],
+      "env": [
+        "DATABASE_URL",
+        "BETTER_AUTH_SECRET",
+        "VERCEL_URL",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_BRAND_NAME",
+        "NEXT_PUBLIC_IS_PROD",
+        "NEXT_PUBLIC_API_URL"
+      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".vercel/.env.staging.local",
@@ -30,7 +54,15 @@
     },
     "vercel:build:prod": {
       "dependsOn": ["^vercel:build:prod"],
-      "env": ["DATABASE_URL"],
+      "env": [
+        "DATABASE_URL",
+        "BETTER_AUTH_SECRET",
+        "VERCEL_URL",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_BRAND_NAME",
+        "NEXT_PUBLIC_IS_PROD",
+        "NEXT_PUBLIC_API_URL"
+      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".vercel/.env.production.local",
