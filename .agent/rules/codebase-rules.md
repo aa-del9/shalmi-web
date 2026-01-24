@@ -80,14 +80,14 @@ All shared packages use **subpath exports**. Import from specific modules, never
 
 ```typescript
 // ✅ CORRECT - Specific subpath import
-import { shuffleArray } from "@repo/utils/array";
-import { COOKIE_KEYS } from "@repo/constants/cookie-keys";
-import type { WithChildren } from "@repo/types/common";
-import { useEffectOnce } from "@repo/hooks/use-effect-once";
-import { paginationParamsSchema } from "@repo/schemas/page-based-pagination";
+import { shuffleArray } from '@repo/utils/array';
+import { COOKIE_KEYS } from '@repo/constants/cookie-keys';
+import type { WithChildren } from '@repo/types/common';
+import { useEffectOnce } from '@repo/hooks/use-effect-once';
+import { paginationParamsSchema } from '@repo/schemas/page-based-pagination';
 
 // ❌ WRONG - Root imports don't exist
-import { shuffleArray } from "@repo/utils";
+import { shuffleArray } from '@repo/utils';
 ```
 
 ### Import Order Convention
@@ -96,26 +96,26 @@ Organize imports in this order with blank lines between groups:
 
 ```typescript
 // 1. React/Next.js
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 // 2. External libraries
-import { useQuery } from "@tanstack/react-query";
-import { z } from "zod";
+import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 
 // 3. Workspace packages (@repo/*)
-import { Button } from "@repo/ui/button";
-import { cn } from "@repo/ui/lib/utils";
-import type { WithChildren } from "@repo/types/common";
-import { formatCurrency } from "@repo/utils/formatter";
+import { Button } from '@repo/ui/button';
+import { cn } from '@repo/ui/utils';
+import type { WithChildren } from '@repo/types/common';
+import { formatCurrency } from '@repo/utils/formatter';
 
 // 4. Internal modules (@/modules/*)
-import { useAuth } from "@/modules/auth";
-import { ProductCard } from "@/modules/products/components";
+import { useAuth } from '@/modules/auth';
+import { ProductCard } from '@/modules/products/components';
 
 // 5. Relative imports
-import { localHelper } from "./helpers";
-import type { LocalType } from "./types";
+import { localHelper } from './helpers';
+import type { LocalType } from './types';
 ```
 
 ---
@@ -128,7 +128,7 @@ All environment variables must be accessed through the typed env modules:
 
 ```typescript
 // ✅ CORRECT
-import { clientEnv } from "@/modules/core/env";
+import { clientEnv } from '@/modules/core/env';
 const apiUrl = clientEnv.NEXT_PUBLIC_API_URL;
 
 // ❌ WRONG
@@ -158,7 +158,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 "use client"; // Only if needed - prefer Server Components
 
 import { type FC } from "react";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "@repo/ui/utils";
 import type { WithClassName } from "@repo/types/common";
 
 interface ProductCardProps extends WithClassName {
@@ -193,15 +193,15 @@ export const ProductCard: FC<ProductCardProps> = ({
 ### React Query for Client-Side Data
 
 ```typescript
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { getInfiniteQueryData } from "@repo/utils/react-query";
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { getInfiniteQueryData } from '@repo/utils/react-query';
 
 // Query keys should be structured arrays
 const productKeys = {
-  all: ["products"] as const,
-  lists: () => [...productKeys.all, "list"] as const,
+  all: ['products'] as const,
+  lists: () => [...productKeys.all, 'list'] as const,
   list: (filters: ProductFilters) => [...productKeys.lists(), filters] as const,
-  details: () => [...productKeys.all, "detail"] as const,
+  details: () => [...productKeys.all, 'detail'] as const,
   detail: (id: string) => [...productKeys.details(), id] as const,
 };
 
@@ -217,10 +217,10 @@ export const useProducts = (filters: ProductFilters) => {
 
 ```typescript
 // src/modules/products/server/actions.ts
-"use server";
+'use server';
 
-import { revalidateTag } from "next/cache";
-import { REVALIDATE_TAGS } from "@repo/constants/revalidate-tags";
+import { revalidateTag } from 'next/cache';
+import { REVALIDATE_TAGS } from '@repo/constants/revalidate-tags';
 
 export async function createProduct(data: CreateProductInput) {
   // Validate with Zod
@@ -331,7 +331,7 @@ import type {
   PageProps,
   Nullable,
   DeepPartial,
-} from "@repo/types/common";
+} from '@repo/types/common';
 
 // Page component props
 type ProductPageProps = PageProps<{ productId: string }>;
@@ -358,7 +358,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 ```typescript
 // Order: layout → sizing → spacing → typography → colors → effects → states
 className =
-  "flex items-center gap-4 w-full p-4 text-sm font-medium text-foreground bg-card rounded-lg shadow-sm hover:bg-accent transition-colors";
+  'flex items-center gap-4 w-full p-4 text-sm font-medium text-foreground bg-card rounded-lg shadow-sm hover:bg-accent transition-colors';
 ```
 
 ---
@@ -372,7 +372,7 @@ import {
   ServiceErrorResponse,
   errorCodes,
   createErrorResponse,
-} from "@repo/schemas/service-error-response";
+} from '@repo/schemas/service-error-response';
 
 // In API routes or server actions
 try {
@@ -381,7 +381,7 @@ try {
 } catch (error) {
   return createErrorResponse(
     errorCodes.INTERNAL_ERROR,
-    "Operation failed",
+    'Operation failed',
     error instanceof Error ? error.message : undefined
   );
 }
@@ -415,7 +415,7 @@ Before submitting code, verify:
 ```typescript
 // UI
 import { Button } from "@repo/ui/button";
-import { cn } from "@repo/ui/lib/utils";
+import { cn } from "@repo/ui/utils";
 
 // Types
 import type {
