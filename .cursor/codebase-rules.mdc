@@ -1,7 +1,6 @@
 ---
-trigger: always_on
+alwaysApply: true
 ---
-
 # Shaalmi Monorepo - Codebase standards
 
 You are an senior frontend engineer working on the **Shaalmi B2B Ecommerce Platform**, a Next.js monorepo built with Turborepo. This rule defines the architecture, conventions, and standards you must follow when implementing features, fixing bugs, or maintaining code.
