@@ -1,0 +1,73 @@
+---
+alwaysApply: true
+---
+
+# Tech Stack & Libraries
+
+This document defines the strict technology choices for the Shalmi Mart B2B Monorepo.
+**All AI Agents must adhere to this list. Do not introduce new libraries without explicit user permission.**
+
+## 1. Core Architecture
+- **Monorepo Manager:** `Turborepo` (Google's choice for scaling).
+- **Package Manager:** `pnpm` (Workspace mode).
+- **Main Framework:** `Next.js 15` (App Router).
+- **Language:** `TypeScript` (Strict mode).
+- **Environment:** Node.js v22 (LTS).
+
+## 2. Frontend (User Interface)
+- **Styling Engine:** `Tailwind CSS` (Utility-first).
+- **Component Library:** `Shadcn UI` (Headless components based on Radix UI).
+  - *Location:* `@repo/ui/components`.
+  - *Do not use:* Material UI, Chakra, or AntD.
+- **Icons:** `Lucide React` (Standard consistency with Shadcn).
+- **Fonts:** `Geist Sans` or `Inter` (via `next/font`).
+- **Animations:** `Tailwind Animate` (simple transitions) or `Framer Motion` (complex gestures).
+
+### specific UI Packages
+- **Toasts/Notifications:** `Sonner` (Lightweight, stacked toasts).
+- **Tables (Admin/Vendor):** `TanStack Table` (Headless, robust sorting/filtering).
+- **Forms:** `React Hook Form` (Performance).
+- **Form Validation:** `Zod` (Schema-based validation).
+- **Modals/Dialogs:** `Radix UI Dialog` (via Shadcn).
+- **Selects/Dropdowns:** `Radix UI Popover/Select` (via Shadcn).
+
+## 3. Backend & Database
+- **Database:** `PostgreSQL` (Relational Data).
+- **ORM:** `Drizzle ORM` (TypeScript-first, lightweight).
+- **DB Driver:** `postgres` (Fastest Node.js driver, also known as `postgres.js`).
+- **Authentication:** `Better-Auth` (Modern, secure).
+  - *Strategy:* Phone Number + OTP (Custom Credential Provider).
+  - *Storage:* Database-backed sessions.
+- **API Architecture:** `Server Actions` (Primary) + `Route Handlers` (Webhooks/External APIs).
+
+## 4. State Management & Data Fetching
+- **Server State (Caching):** `TanStack Query` (React Query v5).
+  - *Usage:* Data fetching, caching, deduplication, optimistic updates.
+- **Client Global State:** `Zustand`.
+  - *Usage:* Complex client-only state like the **Shopping Cart**, **Sidebar State**.
+- **URL State (Filters/Search):** `Nuqs` (Type-safe search params).
+  - *Usage:* Storing search queries, pagination, and active tabs in the URL.
+
+## 5. Utilities & Shared Logic
+- **Date Handling:** `date-fns` (Lightweight, tree-shakeable).
+  - *Do not use:* Moment.js or Day.js.
+- **HTTP Client:** `Axios` (With `axios-logger` for debugging).
+  - *Usage:* Communicating with external services (MNP Logistics API, SMS Gateways).
+- **Validation Schemas:** `Zod`.
+  - *Location:* `@repo/schemas` (Shared between Frontend forms and Backend API).
+- **PDF Generation:** `@react-pdf/renderer`.
+  - *Usage:* Generating "Packing Slips" and "Invoices" in the Vendor Portal.
+- **Class Merging:** `clsx` + `tailwind-merge` (Standard `cn` utility).
+
+## 6. DevOps & Tooling
+- **Linting:** `ESLint` (Flat Config).
+- **Formatting:** `Prettier` (with `prettier-plugin-tailwindcss`).
+- **Hooks:** `Husky` (Pre-commit hooks).
+- **Deployment:** `Vercel` (Zero-config Next.js deployment).
+- **Infrastructure:** `Docker` (Optional, for local DB container).
+
+## 7. Key Implementation Rules
+- **Forms:** Always use `zodResolver` with React Hook Form.
+- **Database:** Always define schemas in `packages/database/src/schema`.
+- **Imports:** Use `@/` alias for local imports and `@repo/*` for shared packages.
+- **Async:** Prefer `async/await` over `.then()`.

@@ -1,0 +1,48 @@
+---
+description: Core coding standards and architectural guidelines for this monorepo
+alwaysApply: true
+---
+
+# Coding Standards & Architectural Guidelines
+
+This rule ensures all code follows the project's established patterns. For complete details, see `CODING_STANDARDS.md` in the repo root.
+
+## Quick Reference
+
+### File Organization
+- **Must** use Feature-Sliced Architecture in `apps/web/src/modules/<feature>` with colocated `components/`, `hooks/`, `constants/`, `types/`, `stores/`, `utils/`
+- **Must** export feature entry from module-level `index.tsx`
+- **Must** colocate types: module-level in `types/index.ts`, component-level in `types/index.ts` or `*.types.ts`
+
+### React Components
+- **Must** use `const ComponentName = () => {}` arrow functions
+- **Must** mark client components with `'use client'` directive
+- **Should** keep App Router pages as server components by default
+- **Should** define props in `*.types.ts` files for UI components
+
+### State Management
+- **Must** use `nuqs` + `useQueryState` for URL-backed state
+- **Must** use React Query (`@tanstack/react-query`) for server state
+- **Should** use Zustand stores for feature-local state in `modules/<feature>/stores/`
+- **Must** use React Contexts from `packages/contexts` for cross-app global state
+
+### Data Fetching
+- **Must** use server components for App Router pages (async by default)
+- **Must** use route handlers (`app/api`) for server-side mutations
+- **Should** use `Suspense` boundaries for async server components
+- **Must** define Zod schemas in `packages/schemas` for API responses
+
+### Shared Packages
+- **Must** export constants as `as const` for literal typing
+- **Must** use Zod schemas + `z.infer` for data contracts
+- **Should** provide DTO conversion helpers when API shape differs
+- **Must** implement reusable hooks in `packages/hooks` for cross-app logic
+
+## Full Documentation
+
+See `CODING_STANDARDS.md` for:
+- Detailed examples from the codebase
+- File path references for each pattern
+- Complete Must/Should/Avoid rules
+- Full stack package conventions
+
