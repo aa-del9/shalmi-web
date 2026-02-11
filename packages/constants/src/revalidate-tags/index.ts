@@ -16,9 +16,17 @@ export const REVALIDATE_TAGS = {
   // Order-related
   ORDERS: "orders",
   ORDER_DETAIL: "order-detail",
+  SUB_ORDERS: "sub-orders",
 
   // Cart
   CART: "cart",
+
+  // Catalog
+  CATALOG: "catalog",
+
+  // Finance
+  VENDOR_LEDGER: "vendor-ledger",
+  WALLET: "wallet",
 
   // Global
   ALL: "all",
