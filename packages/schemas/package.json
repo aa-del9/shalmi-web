@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./*": "./src/*/index.ts"
+    "./*": "./src/*/index.ts",
+    "./catalog/product-price-tiers": "./src/catalog/product-price-tiers.ts",
+    "./catalog/product": "./src/catalog/product.ts",
+    "./cart/line-item": "./src/cart/line-item.ts",
+    "./orders/checkout": "./src/orders/checkout.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
