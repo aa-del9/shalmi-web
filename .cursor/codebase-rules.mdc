@@ -144,9 +144,20 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 ## 5. Component Development
 
+### Component + local hook folder structure (when component has logic/state)
+
+For any component that has **logic or state**, use a **folder** with a dedicated local hook:
+
+- **`component-name/index.tsx`** — The component file. It should be thin: it imports and uses the local hook and renders from the hook’s returned state and handlers. No business logic or non-trivial state in the component file.
+- **`component-name/use-component-name.ts`** — The local hook. Holds all state, event handlers, derived values, and side effects for this component. Export everything the component needs (e.g. `value`, `setValue`, `error`, `handleSubmit`, `isLoading`). The component calls this hook and passes through to the UI.
+
+Use this structure consistently so that logic lives in one place and components stay presentational. Barrels (e.g. `components/index.ts`) re-export from the folder: `export { SignInForm } from './sign-in-form'`.
+
+- **Without logic/state:** A single file `component-name.tsx` is fine (e.g. a pure presentational component that only receives props).
+
 ### File Naming
 
-- Components: `kebab-case.tsx` (be consistent within a module)
+- Components: `kebab-case.tsx` or folder `component-name/` with `index.tsx` + `use-component-name.ts`
 - Hooks: `use-{name}.ts` (always kebab-case with `use-` prefix)
 - Utilities: `kebab-case.ts`
 - Types: `types.ts` or `{feature}.types.ts`
