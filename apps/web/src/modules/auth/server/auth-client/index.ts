@@ -6,6 +6,7 @@ import { clientEnv } from '@/modules/core/env/client';
 import { serverEnv } from '@/modules/core/env/server';
 import { getBaseUrl } from '@/modules/core/utils/url';
 import { sendOtpSms } from '../services/otp';
+import { USER_ROLES } from '@/modules/core/constants/user-roles';
 
 export const auth = betterAuth({
   appName: clientEnv.NEXT_PUBLIC_BRAND_NAME,
@@ -16,6 +17,16 @@ export const auth = betterAuth({
   secret: serverEnv.BETTER_AUTH_SECRET,
   baseURL: getBaseUrl(),
   basePath: '/api/auth',
+  user: {
+    additionalFields: {
+      role: {
+        type: 'string',
+        required: true,
+        defaultValue: USER_ROLES.RETAILER,
+        input: false,
+      },
+    },
+  },
   trustedOrigins: [
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
     clientEnv.NEXT_PUBLIC_APP_URL,

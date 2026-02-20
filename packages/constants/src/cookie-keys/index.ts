@@ -2,11 +2,6 @@
  * Standardized cookie key names for consistent usage across the app
  */
 export const COOKIE_KEYS = {
-  // Auth
-  ACCESS_TOKEN: "access_token",
-  REFRESH_TOKEN: "refresh_token",
-  SESSION_ID: "session_id",
-
   // User preferences
   THEME: "theme",
   LOCALE: "locale",
