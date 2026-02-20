@@ -1,7 +1,11 @@
 export const ABSOLUTE_ROUTES = {
   ROOT: '/',
-  ADMIN: '/admin',
+
   VENDOR: '/vendor',
+
+  ADMIN: '/admin',
+  ADMIN_DASHBOARD: `/admin/dashboard`,
+  ADMIN_VENDORS: `/admin/vendors`,
 } as const;
 
 export const AUTH_REQUIRED_PREFIXES = [
