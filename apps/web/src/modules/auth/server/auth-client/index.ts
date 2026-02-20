@@ -1,9 +1,11 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { phoneNumber } from 'better-auth/plugins';
 import { db, authSchema } from '@repo/database';
 import { clientEnv } from '@/modules/core/env/client';
 import { serverEnv } from '@/modules/core/env/server';
 import { getBaseUrl } from '@/modules/core/utils/url';
+import { sendOtpSms } from '../services/otp';
 
 export const auth = betterAuth({
   appName: clientEnv.NEXT_PUBLIC_BRAND_NAME,
@@ -19,16 +21,27 @@ export const auth = betterAuth({
     clientEnv.NEXT_PUBLIC_APP_URL,
     'http://localhost:5181',
   ],
+  plugins: [
+    phoneNumber({
+      sendOTP: ({ phoneNumber: phone, code }) => {
+        sendOtpSms(phone, code);
+      },
+      signUpOnVerification: {
+        getTempEmail: (phone) =>
+          `${phone.replace(/\D/g, '')}@phone.shalmi.local`,
+        getTempName: (phone) => phone,
+      },
+      verifyOTP: () => {
+        // TODO
+        return true;
+      },
+      otpLength: 6,
+      expiresIn: 300,
+      allowedAttempts: 3,
+    }),
+  ],
   emailAndPassword: {
     enabled: true,
-  },
-  socialProviders: {
-    // TODO: add proper config here
-    google: {
-      clientId: 'your-client-id',
-      clientSecret: 'your-client-secret',
-      redirectURI: 'https://example.com/api/auth/callback/google',
-    },
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url, token }) => {
