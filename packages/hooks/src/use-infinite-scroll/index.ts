@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback } from 'react';
 
 interface UseInfiniteScrollParams {
   /** ID of the scrollable container element */
@@ -58,7 +58,7 @@ export const useInfiniteScroll = ({
     const container = document.getElementById(containerId);
     if (!container || !enabled) return;
 
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
   }, [containerId, handleScroll, enabled, contentLength]);
 };

@@ -2,12 +2,12 @@
  * Product create/update Zod schemas (catalog).
  */
 
-import { z } from "zod";
-import { slugSchema } from "../metadata";
+import { z } from 'zod';
+import { slugSchema } from '../metadata';
 import {
   productPriceTiersFormSchema,
   type ProductPriceTiersForm,
-} from "./product-price-tiers";
+} from './product-price-tiers';
 
 const weightGramsSchema = z.number().int().positive();
 const optionalUrlSchema = z.string().url().optional();

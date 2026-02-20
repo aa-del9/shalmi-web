@@ -11,7 +11,7 @@ export const buildUrl = (
 ): string => {
   if (!params) return baseUrl;
 
-  const url = new URL(baseUrl, "http://placeholder");
+  const url = new URL(baseUrl, 'http://placeholder');
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       url.searchParams.set(key, String(value));
@@ -19,7 +19,7 @@ export const buildUrl = (
   });
 
   // Return path + search for relative URLs
-  if (baseUrl.startsWith("/")) {
+  if (baseUrl.startsWith('/')) {
     return url.pathname + url.search;
   }
 
@@ -47,12 +47,12 @@ export const joinPaths = (...paths: string[]): string => {
   return paths
     .map((path, index) => {
       if (index === 0) {
-        return path.replace(/\/+$/, "");
+        return path.replace(/\/+$/, '');
       }
-      return path.replace(/^\/+|\/+$/g, "");
+      return path.replace(/^\/+|\/+$/g, '');
     })
     .filter(Boolean)
-    .join("/");
+    .join('/');
 };
 
 /**
@@ -70,6 +70,6 @@ export const getDomain = (url: string): string => {
     const urlObj = new URL(url);
     return urlObj.hostname;
   } catch {
-    return "";
+    return '';
   }
 };

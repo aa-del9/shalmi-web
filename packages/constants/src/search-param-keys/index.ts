@@ -4,32 +4,32 @@
 
 export const SEARCH_PARAM_KEYS = {
   // Pagination
-  PAGE: "page",
-  PAGE_SIZE: "pageSize",
-  LIMIT: "limit",
-  OFFSET: "offset",
+  PAGE: 'page',
+  PAGE_SIZE: 'pageSize',
+  LIMIT: 'limit',
+  OFFSET: 'offset',
 
   // Sorting
-  SORT_BY: "sortBy",
-  SORT_ORDER: "sortOrder",
+  SORT_BY: 'sortBy',
+  SORT_ORDER: 'sortOrder',
 
   // Filtering
-  SEARCH: "search",
-  QUERY: "q",
-  CATEGORY: "category",
-  STATUS: "status",
-  DATE_FROM: "dateFrom",
-  DATE_TO: "dateTo",
+  SEARCH: 'search',
+  QUERY: 'q',
+  CATEGORY: 'category',
+  STATUS: 'status',
+  DATE_FROM: 'dateFrom',
+  DATE_TO: 'dateTo',
 
   // UI State
-  TAB: "tab",
-  VIEW: "view",
-  MODAL: "modal",
+  TAB: 'tab',
+  VIEW: 'view',
+  MODAL: 'modal',
 
   // Auth
-  REDIRECT: "redirect",
-  CALLBACK_URL: "callbackUrl",
-  TOKEN: "token",
+  REDIRECT: 'redirect',
+  CALLBACK_URL: 'callbackUrl',
+  TOKEN: 'token',
 } as const;
 
 export type SearchParamKey =

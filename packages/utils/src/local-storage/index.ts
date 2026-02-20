@@ -7,7 +7,7 @@
  */
 export const isLocalStorageAvailable = (): boolean => {
   try {
-    const testKey = "__test__";
+    const testKey = '__test__';
     window.localStorage.setItem(testKey, testKey);
     window.localStorage.removeItem(testKey);
     return true;
@@ -20,7 +20,7 @@ export const isLocalStorageAvailable = (): boolean => {
  * Get item from localStorage with type safety
  */
 export const getStorageItem = <T>(key: string, defaultValue: T): T => {
-  if (typeof window === "undefined" || !isLocalStorageAvailable()) {
+  if (typeof window === 'undefined' || !isLocalStorageAvailable()) {
     return defaultValue;
   }
 
@@ -36,14 +36,14 @@ export const getStorageItem = <T>(key: string, defaultValue: T): T => {
  * Set item in localStorage with type safety
  */
 export const setStorageItem = <T>(key: string, value: T): void => {
-  if (typeof window === "undefined" || !isLocalStorageAvailable()) {
+  if (typeof window === 'undefined' || !isLocalStorageAvailable()) {
     return;
   }
 
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error("Failed to save to localStorage:", error);
+    console.error('Failed to save to localStorage:', error);
   }
 };
 
@@ -51,14 +51,14 @@ export const setStorageItem = <T>(key: string, value: T): void => {
  * Remove item from localStorage
  */
 export const removeStorageItem = (key: string): void => {
-  if (typeof window === "undefined" || !isLocalStorageAvailable()) {
+  if (typeof window === 'undefined' || !isLocalStorageAvailable()) {
     return;
   }
 
   try {
     window.localStorage.removeItem(key);
   } catch (error) {
-    console.error("Failed to remove from localStorage:", error);
+    console.error('Failed to remove from localStorage:', error);
   }
 };
 

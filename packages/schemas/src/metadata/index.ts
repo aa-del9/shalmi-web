@@ -2,7 +2,7 @@
  * Common metadata field schemas
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Timestamp fields schema
@@ -65,26 +65,26 @@ export const slugSchema = z
   .string()
   .min(1)
   .max(100)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug format");
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Invalid slug format');
 
 /**
  * Email schema with validation
  */
-export const emailSchema = z.string().email("Invalid email address");
+export const emailSchema = z.string().email('Invalid email address');
 
 /**
  * Phone number schema (basic international format)
  */
 export const phoneSchema = z
   .string()
-  .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number");
+  .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number');
 
 /**
  * URL schema
  */
-export const urlSchema = z.string().url("Invalid URL");
+export const urlSchema = z.string().url('Invalid URL');
 
 /**
  * UUID schema
  */
-export const uuidSchema = z.string().uuid("Invalid UUID");
+export const uuidSchema = z.string().uuid('Invalid UUID');

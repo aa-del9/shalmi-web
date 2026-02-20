@@ -2,14 +2,14 @@
  * Zod schema helper utilities
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Create a schema that transforms empty strings to undefined
  */
 export const emptyStringToUndefined = <T extends z.ZodTypeAny>(schema: T) => {
   return z.preprocess((val) => {
-    if (typeof val === "string" && val.trim() === "") {
+    if (typeof val === 'string' && val.trim() === '') {
       return undefined;
     }
     return val;
@@ -19,7 +19,7 @@ export const emptyStringToUndefined = <T extends z.ZodTypeAny>(schema: T) => {
 /**
  * Create a required string schema (non-empty)
  */
-export const requiredString = (message: string = "This field is required") => {
+export const requiredString = (message: string = 'This field is required') => {
   return z.string().min(1, message);
 };
 
@@ -36,7 +36,7 @@ export const optionalString = () => {
 export const numericString = () => {
   return z.string().transform((val) => {
     const num = Number(val);
-    if (isNaN(num)) throw new Error("Invalid number");
+    if (isNaN(num)) throw new Error('Invalid number');
     return num;
   });
 };
@@ -47,6 +47,6 @@ export const numericString = () => {
 export const commaSeparated = <T extends z.ZodTypeAny>(itemSchema: T) => {
   return z
     .string()
-    .transform((val) => val.split(",").map((s) => s.trim()))
+    .transform((val) => val.split(',').map((s) => s.trim()))
     .pipe(z.array(itemSchema));
 };

@@ -4,32 +4,32 @@
 
 export const REVALIDATE_TAGS = {
   // User-related
-  USER: "user",
-  USER_PROFILE: "user-profile",
-  USER_SETTINGS: "user-settings",
+  USER: 'user',
+  USER_PROFILE: 'user-profile',
+  USER_SETTINGS: 'user-settings',
 
   // Product-related
-  PRODUCTS: "products",
-  PRODUCT_DETAIL: "product-detail",
-  CATEGORIES: "categories",
+  PRODUCTS: 'products',
+  PRODUCT_DETAIL: 'product-detail',
+  CATEGORIES: 'categories',
 
   // Order-related
-  ORDERS: "orders",
-  ORDER_DETAIL: "order-detail",
-  SUB_ORDERS: "sub-orders",
+  ORDERS: 'orders',
+  ORDER_DETAIL: 'order-detail',
+  SUB_ORDERS: 'sub-orders',
 
   // Cart
-  CART: "cart",
+  CART: 'cart',
 
   // Catalog
-  CATALOG: "catalog",
+  CATALOG: 'catalog',
 
   // Finance
-  VENDOR_LEDGER: "vendor-ledger",
-  WALLET: "wallet",
+  VENDOR_LEDGER: 'vendor-ledger',
+  WALLET: 'wallet',
 
   // Global
-  ALL: "all",
+  ALL: 'all',
 } as const;
 
 export type RevalidateTag =

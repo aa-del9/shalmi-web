@@ -3,7 +3,7 @@
  * Validates: no gaps in quantity ranges, prices strictly decreasing as quantity increases.
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 const tierRowSchema = z.object({
   minQty: z.number().int().positive(),
@@ -28,8 +28,8 @@ export const productPriceTiersFormSchema = tierRowsArraySchema.superRefine(
         if (tier.minQty !== 1) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "First tier must start at minQty 1",
-            path: [i, "minQty"],
+            message: 'First tier must start at minQty 1',
+            path: [i, 'minQty'],
           });
         }
       } else {
@@ -40,7 +40,7 @@ export const productPriceTiersFormSchema = tierRowsArraySchema.superRefine(
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: `Tiers must have no gaps: expected minQty ${expectedMin} (previous maxQty + 1)`,
-            path: [i, "minQty"],
+            path: [i, 'minQty'],
           });
         }
       }
@@ -55,8 +55,8 @@ export const productPriceTiersFormSchema = tierRowsArraySchema.superRefine(
         ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Prices must decrease as quantity increases",
-            path: [i, "priceCents"],
+            message: 'Prices must decrease as quantity increases',
+            path: [i, 'priceCents'],
           });
         }
       }

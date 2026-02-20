@@ -2,7 +2,7 @@
  * Cart line item Zod schemas.
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 export const lineItemSchema = z.object({
   productId: z.string().min(1),

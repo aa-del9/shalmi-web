@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   createContext,
@@ -6,7 +6,7 @@ import {
   useState,
   useCallback,
   type ReactNode,
-} from "react";
+} from 'react';
 
 /**
  * User type - customize based on your auth system
@@ -64,7 +64,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 export function useUser() {
   const context = useContext(UserContext);
   if (context === undefined) {
-    throw new Error("useUser must be used within a UserProvider");
+    throw new Error('useUser must be used within a UserProvider');
   }
   return context;
 }
@@ -75,7 +75,7 @@ export function useUser() {
 export function useAuthenticatedUser() {
   const { user, isAuthenticated } = useUser();
   if (!isAuthenticated || !user) {
-    throw new Error("User is not authenticated");
+    throw new Error('User is not authenticated');
   }
   return user;
 }
