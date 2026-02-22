@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useVendorsQuery } from '../hooks/use-vendors-query';
+import { useVendorsQuery } from '../use-vendors-query';
 
 const PAGE_LIMIT = 10;
 
