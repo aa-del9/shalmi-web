@@ -19,8 +19,17 @@ export function normalizePagination(params: PaginationParams): {
   limit: number;
   offset: number;
 } {
-  const page = Math.max(1, Math.floor(params.page ?? DEFAULT_PAGE) || DEFAULT_PAGE);
-  const limit = Math.max(1, Math.min(100, Math.floor(params.limit ?? DEFAULT_PAGE_LIMIT) || DEFAULT_PAGE_LIMIT));
+  const page = Math.max(
+    1,
+    Math.floor(params.page ?? DEFAULT_PAGE) || DEFAULT_PAGE
+  );
+  const limit = Math.max(
+    1,
+    Math.min(
+      100,
+      Math.floor(params.limit ?? DEFAULT_PAGE_LIMIT) || DEFAULT_PAGE_LIMIT
+    )
+  );
   const offset = (page - 1) * limit;
   return { page, limit, offset };
 }

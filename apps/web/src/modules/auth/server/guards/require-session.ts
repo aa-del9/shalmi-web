@@ -7,7 +7,9 @@ type SessionLike = { user?: unknown } | null;
  * Use after getSession() when the route requires any authenticated user.
  * @throws Error with AUTH_GUARD_ERRORS.SESSION_REQUIRED if no session or no user
  */
-export function requireSession(session: SessionLike): asserts session is NonNullable<SessionLike> & { user: unknown } {
+export function requireSession(
+  session: SessionLike
+): asserts session is NonNullable<SessionLike> & { user: unknown } {
   if (!session?.user) {
     throw new Error(AUTH_GUARD_ERRORS.SESSION_REQUIRED);
   }

@@ -61,10 +61,14 @@ export function VendorsTable({
                 </TableCell>
               </TableRow>
             )}
-            {!hasError && isSuccess && vendors.length > 0 &&
+            {!hasError &&
+              isSuccess &&
+              vendors.length > 0 &&
               vendors.map((vendor) => (
                 <TableRow key={vendor.id}>
-                  <TableCell className="font-medium">{vendor.shopName}</TableCell>
+                  <TableCell className="font-medium">
+                    {vendor.shopName}
+                  </TableCell>
                   <TableCell>{vendor.phoneNumber ?? '—'}</TableCell>
                   <TableCell>{vendor.city || '—'}</TableCell>
                   <TableCell>{vendor.marketHub}</TableCell>

@@ -1,17 +1,15 @@
 'use client';
 
-import {
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@repo/ui/components/table';
+import { TableBody, TableCell, TableRow } from '@repo/ui/components/table';
 import { Skeleton } from '@repo/ui/components/skeleton';
 
 type VendorsTableSkeletonProps = {
   rowCount?: number;
 };
 
-export function VendorsTableSkeleton({ rowCount = 5 }: VendorsTableSkeletonProps) {
+export function VendorsTableSkeleton({
+  rowCount = 5,
+}: VendorsTableSkeletonProps) {
   return (
     <TableBody>
       {Array.from({ length: rowCount }).map((_, i) => (
