@@ -29,6 +29,9 @@ export function VendorsTableSkeleton({
           <TableCell>
             <Skeleton className="h-5 w-16" />
           </TableCell>
+          <TableCell>
+            <Skeleton className="h-8 w-14" />
+          </TableCell>
         </TableRow>
       ))}
     </TableBody>

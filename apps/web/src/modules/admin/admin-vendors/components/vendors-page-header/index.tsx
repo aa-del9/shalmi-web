@@ -1,6 +1,10 @@
-import { AddVendorDialog } from '../add-vendor-dialog';
+import { Button } from '@repo/ui/components/button';
 
-export function VendorsPageHeader() {
+type VendorsPageHeaderProps = {
+  onAddClick: () => void;
+};
+
+export function VendorsPageHeader({ onAddClick }: VendorsPageHeaderProps) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
@@ -11,7 +15,9 @@ export function VendorsPageHeader() {
           Manage vendors and their catalog.
         </p>
       </div>
-      <AddVendorDialog />
+      <Button type="button" onClick={onAddClick}>
+        Add Vendor
+      </Button>
     </div>
   );
 }

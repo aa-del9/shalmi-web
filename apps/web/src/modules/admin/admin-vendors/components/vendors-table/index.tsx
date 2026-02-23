@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@repo/ui/components/button';
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ type VendorsTableProps = {
   errorMessage: string;
   isSuccess: boolean;
   vendors: VendorListItem[];
+  onEditClick: (vendorId: string) => void;
 };
 
 export function VendorsTable({
@@ -25,6 +27,7 @@ export function VendorsTable({
   errorMessage,
   isSuccess,
   vendors,
+  onEditClick,
 }: VendorsTableProps) {
   return (
     <div className="rounded-md border">
@@ -36,6 +39,7 @@ export function VendorsTable({
             <TableHead>City</TableHead>
             <TableHead>Market Hub</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="w-[80px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         {isLoading && <VendorsTableSkeleton rowCount={5} />}
@@ -44,7 +48,7 @@ export function VendorsTable({
             {hasError && (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-muted-foreground h-24 text-center"
                 >
                   {errorMessage}
@@ -54,7 +58,7 @@ export function VendorsTable({
             {!hasError && isSuccess && vendors.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-muted-foreground h-24 text-center"
                 >
                   No vendors yet.
@@ -82,6 +86,16 @@ export function VendorsTable({
                     >
                       {vendor.isActive ? 'Active' : 'Inactive'}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEditClick(vendor.id)}
+                    >
+                      Edit
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

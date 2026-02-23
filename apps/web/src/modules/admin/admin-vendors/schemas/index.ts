@@ -16,4 +16,9 @@ export const createVendorSchema = z.object({
   bankDetails: bankDetailsSchema,
 });
 
+export const updateVendorSchema = createVendorSchema.extend({
+  isActive: z.boolean(),
+});
+
 export type CreateVendorInput = z.infer<typeof createVendorSchema>;
+export type UpdateVendorInput = z.infer<typeof updateVendorSchema>;

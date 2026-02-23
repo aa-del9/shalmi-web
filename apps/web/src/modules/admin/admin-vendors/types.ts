@@ -7,3 +7,12 @@ export type VendorListItem = {
   marketHub: string;
   isActive: boolean;
 };
+
+/** Full vendor detail for edit form (list item + bank details) */
+export type VendorDetail = VendorListItem & {
+  bankDetails: {
+    bankName: string;
+    accountTitle: string;
+    iban: string;
+  };
+};
