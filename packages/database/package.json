@@ -16,7 +16,8 @@
     "db:migrate:prod": "drizzle-kit migrate --config=drizzle-prod.config.ts",
     "db:push:dev": "drizzle-kit push --config=drizzle-dev.config.ts",
     "db:push:prod": "drizzle-kit push --config=drizzle-prod.config.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/seed.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",
@@ -27,6 +28,8 @@
     "@repo/typescript-config": "workspace:*",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.39.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "better-auth": "^1.4.12",
+    "tsx": "^4.19.2"
   }
 }

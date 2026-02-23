@@ -2,7 +2,7 @@
  * Next.js-specific type helpers
  */
 
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata, ResolvingMetadata } from 'next';
 
 /**
  * Type for generateMetadata function params

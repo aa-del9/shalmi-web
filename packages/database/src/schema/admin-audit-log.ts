@@ -2,7 +2,9 @@ import { jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 
 export const adminAuditLog = pgTable('admin_audit_log', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   adminId: text('admin_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),

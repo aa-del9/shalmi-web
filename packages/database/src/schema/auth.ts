@@ -13,7 +13,9 @@ export const user = pgTable('user', {
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
   phoneNumber: text('phone_number').unique(),
-  phoneNumberVerified: boolean('phone_number_verified').notNull().default(false),
+  phoneNumberVerified: boolean('phone_number_verified')
+    .notNull()
+    .default(false),
   role: text('role').notNull().default('retailer'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

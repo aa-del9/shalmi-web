@@ -2,7 +2,9 @@ import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { vendors } from './vendors';
 
 export const products = pgTable('products', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   vendorId: text('vendor_id')
     .notNull()
     .references(() => vendors.id, { onDelete: 'cascade' }),

@@ -2,7 +2,7 @@
  * Page-based pagination schemas
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Pagination metadata schema

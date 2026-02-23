@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   createContext,
@@ -6,7 +6,7 @@ import {
   useState,
   useCallback,
   type ReactNode,
-} from "react";
+} from 'react';
 
 /**
  * Stack item type for modals/drawers
@@ -22,11 +22,11 @@ interface StackItem {
  */
 interface StackNavigatorContextValue {
   stack: StackItem[];
-  push: (item: Omit<StackItem, "id"> & { id?: string }) => string;
+  push: (item: Omit<StackItem, 'id'> & { id?: string }) => string;
   pop: () => void;
   popTo: (id: string) => void;
   popAll: () => void;
-  replace: (item: Omit<StackItem, "id"> & { id?: string }) => string;
+  replace: (item: Omit<StackItem, 'id'> & { id?: string }) => string;
   isOpen: boolean;
   currentItem: StackItem | null;
 }
@@ -49,7 +49,7 @@ export function StackNavigatorProvider({ children }: { children: ReactNode }) {
   };
 
   const push = useCallback(
-    (item: Omit<StackItem, "id"> & { id?: string }): string => {
+    (item: Omit<StackItem, 'id'> & { id?: string }): string => {
       const id = item.id ?? generateId();
       setStack((prev) => [...prev, { ...item, id }]);
       return id;
@@ -74,7 +74,7 @@ export function StackNavigatorProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const replace = useCallback(
-    (item: Omit<StackItem, "id"> & { id?: string }): string => {
+    (item: Omit<StackItem, 'id'> & { id?: string }): string => {
       const id = item.id ?? generateId();
       setStack((prev) => [...prev.slice(0, -1), { ...item, id }]);
       return id;
@@ -107,7 +107,7 @@ export function useStackNavigator() {
   const context = useContext(StackNavigatorContext);
   if (context === undefined) {
     throw new Error(
-      "useStackNavigator must be used within a StackNavigatorProvider"
+      'useStackNavigator must be used within a StackNavigatorProvider'
     );
   }
   return context;

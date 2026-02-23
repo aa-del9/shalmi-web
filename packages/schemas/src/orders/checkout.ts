@@ -2,8 +2,8 @@
  * Checkout/cart payload validation before order creation.
  */
 
-import { z } from "zod";
-import { lineItemSchema } from "../cart/line-item";
+import { z } from 'zod';
+import { lineItemSchema } from '../cart/line-item';
 
 export const checkoutCartPayloadSchema = z.object({
   items: z.array(lineItemSchema).min(1),

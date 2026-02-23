@@ -2,7 +2,9 @@ import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 
 export const wallet = pgTable('wallet', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id')
     .notNull()
     .unique()

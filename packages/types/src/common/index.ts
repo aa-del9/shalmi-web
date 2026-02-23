@@ -2,7 +2,7 @@
  * Common utility types used across the application
  */
 
-import { type ReactNode } from "react";
+import { type ReactNode } from 'react';
 
 // ============================================================================
 // Component Props Utilities
@@ -132,16 +132,16 @@ export type Maybe<T> = T | null | undefined;
  * Deployment environment enum
  */
 export enum DeploymentEnvironment {
-  DEVELOPMENT = "development",
-  STAGING = "staging",
-  PRODUCTION = "production",
-  LOCAL = "local",
+  DEVELOPMENT = 'development',
+  STAGING = 'staging',
+  PRODUCTION = 'production',
+  LOCAL = 'local',
 }
 
 /**
  * Sort order enum
  */
 export enum SortOrder {
-  ASC = "asc",
-  DESC = "desc",
+  ASC = 'asc',
+  DESC = 'desc',
 }

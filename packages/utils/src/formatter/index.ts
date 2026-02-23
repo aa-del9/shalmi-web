@@ -7,7 +7,7 @@
  */
 export const formatNumber = (
   value: number,
-  locale: string = "en-US",
+  locale: string = 'en-US',
   options?: Intl.NumberFormatOptions
 ): string => {
   return new Intl.NumberFormat(locale, options).format(value);
@@ -18,11 +18,11 @@ export const formatNumber = (
  */
 export const formatCurrency = (
   value: number,
-  currency: string = "USD",
-  locale: string = "en-US"
+  currency: string = 'USD',
+  locale: string = 'en-US'
 ): string => {
   return new Intl.NumberFormat(locale, {
-    style: "currency",
+    style: 'currency',
     currency,
   }).format(value);
 };
@@ -32,11 +32,11 @@ export const formatCurrency = (
  */
 export const formatPercent = (
   value: number,
-  locale: string = "en-US",
+  locale: string = 'en-US',
   decimals: number = 0
 ): string => {
   return new Intl.NumberFormat(locale, {
-    style: "percent",
+    style: 'percent',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(value);
@@ -47,11 +47,11 @@ export const formatPercent = (
  */
 export const formatCompact = (
   value: number,
-  locale: string = "en-US"
+  locale: string = 'en-US'
 ): string => {
   return new Intl.NumberFormat(locale, {
-    notation: "compact",
-    compactDisplay: "short",
+    notation: 'compact',
+    compactDisplay: 'short',
   }).format(value);
 };
 
@@ -60,22 +60,22 @@ export const formatCompact = (
  */
 export const formatRelativeTime = (
   date: Date,
-  locale: string = "en-US"
+  locale: string = 'en-US'
 ): string => {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   const units: { unit: Intl.RelativeTimeFormatUnit; seconds: number }[] = [
-    { unit: "year", seconds: 31536000 },
-    { unit: "month", seconds: 2592000 },
-    { unit: "week", seconds: 604800 },
-    { unit: "day", seconds: 86400 },
-    { unit: "hour", seconds: 3600 },
-    { unit: "minute", seconds: 60 },
-    { unit: "second", seconds: 1 },
+    { unit: 'year', seconds: 31536000 },
+    { unit: 'month', seconds: 2592000 },
+    { unit: 'week', seconds: 604800 },
+    { unit: 'day', seconds: 86400 },
+    { unit: 'hour', seconds: 3600 },
+    { unit: 'minute', seconds: 60 },
+    { unit: 'second', seconds: 1 },
   ];
 
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
 
   for (const { unit, seconds } of units) {
     if (Math.abs(diffInSeconds) >= seconds) {
@@ -84,5 +84,5 @@ export const formatRelativeTime = (
     }
   }
 
-  return rtf.format(0, "second");
+  return rtf.format(0, 'second');
 };

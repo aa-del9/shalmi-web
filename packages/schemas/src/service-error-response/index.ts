@@ -2,7 +2,7 @@
  * Service error response schemas for API error handling
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Single validation error schema
@@ -51,14 +51,14 @@ export const httpErrorCodes = {
  * Common error codes
  */
 export const errorCodes = {
-  VALIDATION_ERROR: "VALIDATION_ERROR",
-  AUTHENTICATION_ERROR: "AUTHENTICATION_ERROR",
-  AUTHORIZATION_ERROR: "AUTHORIZATION_ERROR",
-  NOT_FOUND: "NOT_FOUND",
-  CONFLICT: "CONFLICT",
-  RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
-  INTERNAL_ERROR: "INTERNAL_ERROR",
-  SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  AUTHENTICATION_ERROR: 'AUTHENTICATION_ERROR',
+  AUTHORIZATION_ERROR: 'AUTHORIZATION_ERROR',
+  NOT_FOUND: 'NOT_FOUND',
+  CONFLICT: 'CONFLICT',
+  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
 } as const;
 
 export type ErrorCode = (typeof errorCodes)[keyof typeof errorCodes];

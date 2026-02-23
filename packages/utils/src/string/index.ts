@@ -8,12 +8,12 @@
 export const computeInitials = (name: string): string => {
   const initials = name
     ?.trim()
-    .split(" ")
+    .split(' ')
     .map((n) => n[0])
     .slice(0, 2)
-    .join("")
+    .join('')
     .toUpperCase();
-  return initials || "";
+  return initials || '';
 };
 
 /**
@@ -21,7 +21,7 @@ export const computeInitials = (name: string): string => {
  */
 export const truncate = (str: string, maxLength: number): string => {
   if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength - 3) + "...";
+  return str.slice(0, maxLength - 3) + '...';
 };
 
 /**
@@ -31,9 +31,9 @@ export const slugify = (str: string): string => {
   return str
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 };
 
 /**
@@ -48,7 +48,7 @@ export const capitalize = (str: string): string => {
  */
 export const camelToTitle = (str: string): string => {
   return str
-    .replace(/([A-Z])/g, " $1")
+    .replace(/([A-Z])/g, ' $1')
     .replace(/^./, (char) => char.toUpperCase())
     .trim();
 };
