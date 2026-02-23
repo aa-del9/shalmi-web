@@ -1,5 +1,7 @@
 export const ABSOLUTE_ROUTES = {
   ROOT: '/',
+  AUTH: '/auth',
+  AUTH_OTP: '/auth/otp',
 
   VENDOR: '/vendor',
 

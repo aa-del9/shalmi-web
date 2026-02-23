@@ -1,10 +1,8 @@
 'use client';
 
-import {
-  VendorsPageHeader,
-  VendorsTable,
-  VendorsPagination,
-} from './components';
+import { VendorsPageHeader } from './components/vendors-page-header';
+import { VendorsPagination } from './components/vendors-pagination';
+import { VendorsTable } from './components/vendors-table';
 import { useAdminVendors } from './hooks/use-admin-vendors';
 
 export function AdminVendors() {

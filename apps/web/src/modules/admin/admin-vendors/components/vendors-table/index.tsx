@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@repo/ui/components/table';
-import type { VendorListItem } from '../../actions';
+import type { VendorListItem } from '../../types';
 import { VendorsTableSkeleton } from '../vendors-table-skeleton';
 
 type VendorsTableProps = {

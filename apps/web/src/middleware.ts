@@ -33,7 +33,9 @@ export async function middleware(request: NextRequest) {
   });
 
   if (!session) {
-    return NextResponse.redirect(new URL(ABSOLUTE_ROUTES.ROOT, request.url));
+    const authUrl = new URL(ABSOLUTE_ROUTES.AUTH, request.url);
+    authUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(authUrl);
   }
 
   if (pathRequiresAdmin(pathname)) {

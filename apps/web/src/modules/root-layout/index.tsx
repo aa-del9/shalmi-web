@@ -1,4 +1,5 @@
 import { Providers } from './providers';
+import { GlobalModals } from './global-modals';
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -8,7 +9,10 @@ export function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background min-h-screen font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <GlobalModals />
+        </Providers>
       </body>
     </html>
   );

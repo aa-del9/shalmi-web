@@ -1,3 +1,5 @@
+import { SignInButton } from '@/modules/auth/components/sign-in-button';
+
 export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -6,10 +8,11 @@ export default function HomePage() {
         <p className="text-muted-foreground mb-8 text-xl">
           B2B Ecommerce Platform
         </p>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground mb-6 text-sm">
           Your monorepo is ready. Start building features in{' '}
           <code className="bg-muted rounded px-2 py-1">src/modules/</code>
         </p>
+        <SignInButton />
       </div>
     </main>
   );
