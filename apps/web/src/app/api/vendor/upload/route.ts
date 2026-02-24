@@ -24,17 +24,17 @@ export async function POST(req: NextRequest) {
     return jsonError('Invalid request body', 400);
   }
 
-  const file = formData.get('file');
-  if (!(file instanceof File)) {
-    return jsonError('File is required', 400);
+  const fileItems = formData.getAll('file');
+  const files = fileItems.filter((f): f is File => f instanceof File);
+  if (files.length === 0) {
+    return jsonError('At least one file is required', 400);
   }
 
   try {
-    const { url, blurHash } = await uploadImageToStorage(
-      file,
-      PRODUCT_ASSETS_BUCKET
+    const results = await Promise.all(
+      files.map((file) => uploadImageToStorage(file, PRODUCT_ASSETS_BUCKET))
     );
-    return jsonSuccess({ url, blurHash });
+    return jsonSuccess({ results });
   } catch (err) {
     console.error('Vendor upload error:', err);
     return jsonError('Upload failed', 500);

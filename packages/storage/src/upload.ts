@@ -11,16 +11,21 @@ function toUploadBody(
   return body;
 }
 
+export type UploadFileOptions = {
+  contentType?: string;
+};
+
 export async function uploadFile(
   bucket: string,
   path: string,
-  body: UploadFileBody
+  body: UploadFileBody,
+  options?: UploadFileOptions
 ): Promise<string> {
   const client = getSupabaseServerClient();
   const { error } = await client.storage
     .from(bucket)
     .upload(path, toUploadBody(body), {
-      contentType: undefined,
+      contentType: options?.contentType,
       upsert: false,
     });
   if (error) {

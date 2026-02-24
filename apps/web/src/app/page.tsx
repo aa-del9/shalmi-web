@@ -1,4 +1,6 @@
+'use client';
 import { SignInButton } from '@/modules/auth/components/sign-in-button';
+import { ImageUpload } from '@/modules/common/components/image-upload';
 
 export default function HomePage() {
   return (
@@ -13,6 +15,11 @@ export default function HomePage() {
           <code className="bg-muted rounded px-2 py-1">src/modules/</code>
         </p>
         <SignInButton />
+        <ImageUpload
+          onUploaded={(result) => {
+            console.log(result);
+          }}
+        />
       </div>
     </main>
   );

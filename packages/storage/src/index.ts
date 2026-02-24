@@ -5,4 +5,5 @@ export {
   uploadFile,
   getPublicUrl,
   type UploadFileBody,
+  type UploadFileOptions,
 } from './upload';

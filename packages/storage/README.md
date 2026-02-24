@@ -7,7 +7,7 @@ Server-side Supabase Storage helpers for uploads and public URLs.
 Set these in the app that uses this package (e.g. `apps/web/.env`):
 
 - **SUPABASE_URL** – Your Supabase project URL
-- **SUPABASE_SERVICE_ROLE_KEY** – Service role key (server-only; never expose to the client)
+- **SUPABASE_SERVICE_ROLE_KEY** – Service role key (server-only; never expose to the client). Required for uploads so Storage RLS is bypassed.
 
 ## Buckets
 

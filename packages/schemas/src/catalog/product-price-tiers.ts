@@ -65,3 +65,82 @@ export const productPriceTiersFormSchema = tierRowsArraySchema.superRefine(
 );
 
 export type ProductPriceTiersForm = z.infer<typeof productPriceTiersFormSchema>;
+
+// ---------------------------------------------------------------------------
+// Create product API: tier shape with `price` (no currency suffix in field name)
+// ---------------------------------------------------------------------------
+
+const createTierRowSchema = z.object({
+  minQty: z.number().int().positive(),
+  maxQty: z.number().int().positive().nullable(),
+  price: z.number().int().positive(),
+});
+
+export type CreateTierRow = z.infer<typeof createTierRowSchema>;
+
+/**
+ * Schema for create-product API: continuous tiers, last tier maxQty null, prices strictly decreasing.
+ */
+export const createProductPriceTiersSchema = z
+  .array(createTierRowSchema)
+  .min(1)
+  .superRefine((tiers, ctx) => {
+    for (let i = 0; i < tiers.length; i++) {
+      const tier = tiers[i];
+      if (tier === undefined) continue;
+
+      if (i === 0) {
+        if (tier.minQty !== 1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'First tier must start at minQty 1',
+            path: [i, 'minQty'],
+          });
+        }
+      } else {
+        const prev = tiers[i - 1];
+        if (prev === undefined) continue;
+        if (prev.maxQty === null) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Only the last tier may have maxQty null',
+            path: [i - 1, 'maxQty'],
+          });
+        } else {
+          const expectedMin = prev.maxQty + 1;
+          if (tier.minQty !== expectedMin) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Tiers must have no gaps: expected minQty ${expectedMin} (previous maxQty + 1)`,
+              path: [i, 'minQty'],
+            });
+          }
+        }
+      }
+
+      const isLastTier = i === tiers.length - 1;
+      if (isLastTier && tier.maxQty !== null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'The final tier must have maxQty null (and above)',
+          path: [i, 'maxQty'],
+        });
+      }
+
+      if (i > 0) {
+        const current = tiers[i];
+        const previous = tiers[i - 1];
+        if (
+          current !== undefined &&
+          previous !== undefined &&
+          current.price >= previous.price
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Prices must decrease as quantity increases',
+            path: [i, 'price'],
+          });
+        }
+      }
+    }
+  });
