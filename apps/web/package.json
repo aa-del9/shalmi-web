@@ -51,7 +51,10 @@
     "tailwind-merge": "^2.5.4",
     "uuid": "^11.0.3",
     "zod": "^3.23.8",
-    "zustand": "^5.0.1"
+    "zustand": "^5.0.1",
+    "@repo/storage": "workspace:*",
+    "sharp": "^0.33.5",
+    "blurhash": "^2.0.4"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

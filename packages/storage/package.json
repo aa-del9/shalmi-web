@@ -1,9 +1,10 @@
 {
-  "name": "@repo/utils",
+  "name": "@repo/storage",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
+    ".": "./src/index.ts",
     "./*": "./src/*/index.ts"
   },
   "scripts": {
@@ -11,16 +12,13 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/constants": "workspace:*",
-    "@repo/types": "workspace:*",
-    "browser-image-compression": "^2.0.2"
+    "@repo/utils": "workspace:*",
+    "@supabase/supabase-js": "^2.47.10"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@tanstack/react-query": "^5.62.0",
     "eslint": "^9.39.1",
-    "typescript": "^5.8.0",
-    "zod": "^3.23.8"
+    "typescript": "^5.8.0"
   }
 }
