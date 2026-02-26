@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@repo/ui/components/table';
+import { TableBody, TableCell, TableRow } from '@repo/ui/components/table';
 import { Skeleton } from '@repo/ui/components/skeleton';
 
 type ProductTableSkeletonProps = {

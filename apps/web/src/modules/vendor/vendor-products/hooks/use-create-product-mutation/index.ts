@@ -26,7 +26,9 @@ export function useCreateProductMutation() {
       toast.success('Product created successfully.');
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : 'Something went wrong');
+      toast.error(
+        error instanceof Error ? error.message : 'Something went wrong'
+      );
     },
   });
 }

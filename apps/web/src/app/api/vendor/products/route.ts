@@ -1,7 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { eq, desc, inArray } from 'drizzle-orm';
-import { db, products, productPriceTiers, productCategories } from '@repo/database';
+import {
+  db,
+  products,
+  productPriceTiers,
+  productCategories,
+} from '@repo/database';
 import { createProductSchema } from '@repo/schemas/catalog/product';
 import { jsonSuccess, jsonError } from '@/modules/core/api';
 import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
@@ -98,12 +103,12 @@ export async function POST(req: NextRequest) {
 
     const parsed = createProductSchema.safeParse(payload);
     if (!parsed.success) {
-      const message =
-        parsed.error.flatten().formErrors[0] ?? 'Invalid input';
+      const message = parsed.error.flatten().formErrors[0] ?? 'Invalid input';
       return jsonError(message, 400);
     }
 
-    const { name, weightGrams, images, stock, tiers, categoryIds } = parsed.data;
+    const { name, weightGrams, images, stock, tiers, categoryIds } =
+      parsed.data;
     const slug = slugForProduct(name);
 
     const [inserted] = await db.transaction(async (tx) => {

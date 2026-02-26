@@ -1,7 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { eq, and, asc } from 'drizzle-orm';
-import { db, products, productPriceTiers, productCategories } from '@repo/database';
+import {
+  db,
+  products,
+  productPriceTiers,
+  productCategories,
+} from '@repo/database';
 import { updateProductSchema } from '@repo/schemas/catalog/product';
 import { jsonSuccess, jsonError } from '@/modules/core/api';
 import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
@@ -13,10 +18,7 @@ import { POSTGRES_UNIQUE_VIOLATION } from '@repo/constants/postgres';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(
-  req: NextRequest,
-  context: RouteContext
-) {
+export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const session = await getSessionFromRequest(req);
     requireVendor(session);
@@ -92,10 +94,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  context: RouteContext
-) {
+export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     const session = await getSessionFromRequest(req);
     requireVendor(session);
@@ -119,8 +118,7 @@ export async function PATCH(
 
     const parsed = updateProductSchema.safeParse(payload);
     if (!parsed.success) {
-      const message =
-        parsed.error.flatten().formErrors[0] ?? 'Invalid input';
+      const message = parsed.error.flatten().formErrors[0] ?? 'Invalid input';
       return jsonError(message, 400);
     }
 
@@ -132,8 +130,13 @@ export async function PATCH(
       stock?: number;
     } = {};
     if (data.name !== undefined) updatePayload.name = data.name;
-    if (data.weightGrams !== undefined) updatePayload.weightGrams = data.weightGrams;
-    if (data.images !== undefined) updatePayload.images = data.images as { url: string; blurHash: string | null }[];
+    if (data.weightGrams !== undefined)
+      updatePayload.weightGrams = data.weightGrams;
+    if (data.images !== undefined)
+      updatePayload.images = data.images as {
+        url: string;
+        blurHash: string | null;
+      }[];
     if (data.stock !== undefined) updatePayload.stock = data.stock;
 
     await db.transaction(async (tx) => {
@@ -158,7 +161,9 @@ export async function PATCH(
       }
 
       if (data.tiers !== undefined && data.tiers.length > 0) {
-        await tx.delete(productPriceTiers).where(eq(productPriceTiers.productId, id));
+        await tx
+          .delete(productPriceTiers)
+          .where(eq(productPriceTiers.productId, id));
         await tx.insert(productPriceTiers).values(
           data.tiers.map((tier) => ({
             productId: id,
@@ -170,7 +175,9 @@ export async function PATCH(
       }
 
       if (data.categoryIds !== undefined) {
-        await tx.delete(productCategories).where(eq(productCategories.productId, id));
+        await tx
+          .delete(productCategories)
+          .where(eq(productCategories.productId, id));
         if (data.categoryIds.length > 0) {
           await tx.insert(productCategories).values(
             data.categoryIds.map((categoryId) => ({

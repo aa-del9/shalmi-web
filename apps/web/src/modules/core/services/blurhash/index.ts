@@ -5,7 +5,9 @@ const BLURHASH_RESIZE = 32;
 const BLURHASH_COMPONENT_X = 4;
 const BLURHASH_COMPONENT_Y = 3;
 
-export async function getBlurHashFromBuffer(buffer: Buffer): Promise<string | null> {
+export async function getBlurHashFromBuffer(
+  buffer: Buffer
+): Promise<string | null> {
   try {
     const { data, info } = await sharp(buffer)
       .ensureAlpha()

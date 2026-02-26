@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CategoryDialog } from './components/create-category-dialog';
+import { CategoryDialog } from './components/category-dialog';
 import { CategoriesPageHeader } from './components/categories-page-header';
 import { CategoriesTable } from './components/categories-table';
 import { useCategoriesQuery } from '@/modules/common/queries/categories';

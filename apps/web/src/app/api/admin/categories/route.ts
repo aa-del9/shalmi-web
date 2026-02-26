@@ -34,8 +34,7 @@ export async function POST(request: NextRequest) {
 
   const { name, imageUrl } = parsed.data;
   const slug = slugForCategory(name);
-  const imageUrlValue =
-    imageUrl && imageUrl !== '' ? imageUrl : undefined;
+  const imageUrlValue = imageUrl && imageUrl !== '' ? imageUrl : undefined;
 
   try {
     await db.insert(categories).values({

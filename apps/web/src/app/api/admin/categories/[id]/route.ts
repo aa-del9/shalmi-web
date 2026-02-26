@@ -50,7 +50,16 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   if (data.name !== undefined) {
     updatePayload.name = data.name;
-    updatePayload.slug = slugForCategory(data.name);
+    const existingCategory = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id))
+      .limit(1);
+    if (existingCategory[0] && existingCategory[0].name === data.name) {
+      updatePayload.slug = existingCategory[0].slug;
+    } else {
+      updatePayload.slug = slugForCategory(data.name);
+    }
   }
   if (data.imageUrl !== undefined) {
     updatePayload.imageUrl =

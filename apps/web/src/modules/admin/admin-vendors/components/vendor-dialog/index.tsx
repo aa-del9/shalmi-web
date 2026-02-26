@@ -91,8 +91,7 @@ export function VendorDialog({
     onOpenChange(false);
   });
 
-  const isPending =
-    createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation.isPending || updateMutation.isPending;
   const isLoading = isEdit && isLoadingVendor;
 
   const handleOpenChange = (next: boolean) => {

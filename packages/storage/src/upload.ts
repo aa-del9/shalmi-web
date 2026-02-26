@@ -2,9 +2,7 @@ import { getSupabaseServerClient } from './client';
 
 export type UploadFileBody = Buffer | Blob | ArrayBuffer;
 
-function toUploadBody(
-  body: UploadFileBody
-): Blob | ArrayBuffer | Uint8Array {
+function toUploadBody(body: UploadFileBody): Blob | ArrayBuffer | Uint8Array {
   if (body instanceof Buffer) {
     return new Uint8Array(body);
   }

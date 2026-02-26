@@ -6,7 +6,13 @@ import { useVendorProductsQuery } from './hooks/use-vendor-products-query';
 import { useCategoriesQuery } from '@/modules/common/queries/categories';
 
 export function VendorProducts() {
-  const { data: products = [], isLoading, isError, error, isSuccess } = useVendorProductsQuery();
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    error,
+    isSuccess,
+  } = useVendorProductsQuery();
   const { data } = useCategoriesQuery();
   const categories = data?.data ?? [];
 

@@ -11,10 +11,7 @@ import { POSTGRES_UNIQUE_VIOLATION } from '@repo/constants/postgres';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const session = await getSessionFromRequest(request);
     requireAdmin(session);
@@ -74,10 +71,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const session = await getSessionFromRequest(request);
     requireAdmin(session);

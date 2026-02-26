@@ -56,9 +56,7 @@ export function CategoryDialog({
   );
 
   const form = useForm<CreateCategoryInput | UpdateCategoryInput>({
-    resolver: zodResolver(
-      isEdit ? updateCategorySchema : createCategorySchema
-    ),
+    resolver: zodResolver(isEdit ? updateCategorySchema : createCategorySchema),
     defaultValues,
   });
 
@@ -75,13 +73,20 @@ export function CategoryDialog({
   }, [open, editingCategoryId, category, form]);
 
   const onSubmit = form.handleSubmit(async (data) => {
-    const name = data.name ?? '';
+    const rawName = data.name;
     const imageUrl =
       data.imageUrl && data.imageUrl !== '' ? data.imageUrl : undefined;
     if (isEdit && editingCategoryId) {
-      await updateMutation.mutateAsync({ name, imageUrl });
+      const updatePayload: UpdateCategoryInput = {
+        ...(rawName !== undefined && rawName !== category?.name
+          ? { name: rawName }
+          : {}),
+        imageUrl,
+      };
+      await updateMutation.mutateAsync(updatePayload);
       toast.success('Category updated successfully.');
     } else {
+      const name = rawName ?? '';
       await createMutation.mutateAsync({ name, imageUrl });
       toast.success('Category created successfully.');
     }
@@ -141,7 +146,7 @@ export function CategoryDialog({
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="absolute right-1 top-1"
+                          className="absolute top-1 right-1"
                           onClick={() => form.setValue('imageUrl', '')}
                           disabled={isPending}
                         >
