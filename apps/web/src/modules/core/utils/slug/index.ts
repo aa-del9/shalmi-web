@@ -8,6 +8,16 @@ import { generateId } from '@repo/utils/id';
 const FALLBACK_SLUG = 'product';
 
 /**
+ * Generates a unique slug for a category from its name.
+ * Uses slugify(name) + short random suffix to satisfy DB unique constraint.
+ */
+export function slugForCategory(name: string): string {
+  const base = slugify(name).trim() || 'category';
+  const suffix = generateId().slice(0, 6);
+  return `${base}-${suffix}`;
+}
+
+/**
  * Generates a unique slug for a product from its name.
  * Uses slugify(name) + short random suffix (from generateId) to satisfy DB unique constraint.
  * Result matches slug format: ^[a-z0-9]+(?:-[a-z0-9]+)*$

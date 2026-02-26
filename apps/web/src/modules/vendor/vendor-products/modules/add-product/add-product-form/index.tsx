@@ -1,9 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Trash2Icon } from 'lucide-react';
 import {
   Field,
@@ -15,86 +11,25 @@ import {
 import { Button } from '@repo/ui/components/button';
 import { Input } from '@repo/ui/components/input';
 import { Spinner } from '@repo/ui/components/spinner';
-import {
-  createProductSchema,
-  type CreateProductInput,
-} from '@repo/schemas/catalog/product';
 import { ImageUpload } from '@/modules/common/components/image-upload';
 import { ProductImageThumbnail } from '../../../components/product-image-thumbnail';
-import { useCreateProductMutation } from '../../../hooks/use-create-product-mutation';
-import { useUpdateProductMutation } from '../../../hooks/use-update-product-mutation';
-import { useVendorProductQuery } from '../../../hooks/use-vendor-product-query';
-import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
-import type { VendorProductDetail } from '../../../types';
-
-const defaultValues: CreateProductInput = {
-  name: '',
-  weightGrams: 500,
-  stock: 0,
-  images: [],
-  tiers: [{ minQty: 1, maxQty: null, price: 0 }],
-};
-
-function mapDetailToForm(detail: VendorProductDetail): CreateProductInput {
-  return {
-    name: detail.name,
-    weightGrams: detail.weightGrams,
-    stock: detail.stock,
-    images: detail.images ?? [],
-    tiers: (detail.tiers ?? []).map((t) => ({
-      minQty: t.minQty,
-      maxQty: t.maxQty,
-      price: t.price,
-    })),
-  };
-}
-
-type AddProductFormProps = {
-  productId?: string | null;
-};
+import { Checkbox } from '@repo/ui/components/checkbox';
+import { useAddProductForm } from './use-add-product-form';
+import { AddProductFormProps } from '../types';
 
 export function AddProductForm({ productId }: AddProductFormProps = {}) {
-  const router = useRouter();
-  const isEdit = Boolean(productId);
-  const createMutation = useCreateProductMutation();
-  const updateMutation = useUpdateProductMutation(productId ?? '');
-  const { data: product, isLoading: isLoadingProduct } = useVendorProductQuery(
-    productId ?? null
-  );
-
-  const form = useForm<CreateProductInput>({
-    resolver: zodResolver(createProductSchema),
-    defaultValues,
-  });
-
-  useEffect(() => {
-    if (isEdit && product) {
-      form.reset(mapDetailToForm(product));
-    }
-  }, [isEdit, product, form]);
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'tiers',
-  });
-
-  const handleAddTier = () => {
-    const tiers = form.getValues('tiers');
-    const last = tiers[tiers.length - 1];
-    const nextMin = last ? (last.maxQty ?? last.minQty) + 1 : 1;
-    append({ minQty: nextMin, maxQty: null, price: 0 });
-  };
-
-  const onSubmit = form.handleSubmit(async (data) => {
-    if (isEdit && productId) {
-      await updateMutation.mutateAsync(data);
-    } else {
-      await createMutation.mutateAsync(data);
-    }
-    router.push(ABSOLUTE_ROUTES.VENDOR_PRODUCTS);
-  });
-
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const {
+    form,
+    isEdit,
+    isLoadingProduct,
+    categoriesList,
+    isPending,
+    onSubmit,
+    handleAddTier,
+    fields,
+    product,
+    remove,
+  } = useAddProductForm({ productId });
 
   if (isEdit && isLoadingProduct) {
     return (
@@ -163,6 +98,56 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
           </Field>
 
           <Field>
+            <FieldLabel>Categories</FieldLabel>
+            <FieldContent>
+              {categoriesList.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  No categories available. Ask an admin to create categories.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  {categoriesList.map((cat) => {
+                    const selectedIds = form.watch('categoryIds') ?? [];
+                    const checked = selectedIds.includes(cat.id);
+                    return (
+                      <label
+                        key={cat.id}
+                        className="hover:bg-muted/50 flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(c) => {
+                            const current = form.getValues('categoryIds') ?? [];
+                            if (c === true) {
+                              form.setValue(
+                                'categoryIds',
+                                [...current, cat.id],
+                                {
+                                  shouldValidate: true,
+                                }
+                              );
+                            } else {
+                              form.setValue(
+                                'categoryIds',
+                                current.filter((id) => id !== cat.id),
+                                { shouldValidate: true }
+                              );
+                            }
+                          }}
+                          disabled={isPending}
+                          aria-label={`Select ${cat.name}`}
+                        />
+                        <span className="text-sm">{cat.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              <FieldError errors={[form.formState.errors.categoryIds]} />
+            </FieldContent>
+          </Field>
+
+          <Field>
             <FieldLabel>Product images</FieldLabel>
             <FieldContent>
               <ImageUpload
@@ -172,6 +157,7 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
                   form.setValue('images', [...current, result]);
                 }}
                 disabled={isPending}
+                uploadUrl="/api/vendor/upload"
               />
               <FieldError errors={[form.formState.errors.images]} />
               {Array.isArray(form.watch('images')) &&

@@ -4,7 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { VendorProductQueryKeys } from '../vendor-product-query-keys';
 import type { VendorProductDetail } from '../../types';
 
-async function fetchVendorProductApi(productId: string): Promise<VendorProductDetail> {
+async function fetchVendorProductApi(
+  productId: string
+): Promise<VendorProductDetail> {
   const res = await fetch(`/api/vendor/products/${productId}`);
   const data = await res.json();
   if (!res.ok || !data.success) {

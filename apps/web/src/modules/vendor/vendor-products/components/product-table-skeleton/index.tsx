@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@repo/ui/components/table';
+import { TableBody, TableCell, TableRow } from '@repo/ui/components/table';
 import { Skeleton } from '@repo/ui/components/skeleton';
 
 type ProductTableSkeletonProps = {
@@ -26,6 +22,9 @@ export function ProductTableSkeleton({
           </TableCell>
           <TableCell>
             <Skeleton className="h-5 w-12" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-20" />
           </TableCell>
           <TableCell>
             <Skeleton className="h-5 w-12" />

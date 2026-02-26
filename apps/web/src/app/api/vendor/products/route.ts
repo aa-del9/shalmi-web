@@ -1,7 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { eq, desc } from 'drizzle-orm';
-import { db, products, productPriceTiers } from '@repo/database';
+import { eq, desc, inArray } from 'drizzle-orm';
+import {
+  db,
+  products,
+  productPriceTiers,
+  productCategories,
+} from '@repo/database';
 import { createProductSchema } from '@repo/schemas/catalog/product';
 import { jsonSuccess, jsonError } from '@/modules/core/api';
 import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
@@ -36,7 +41,33 @@ export async function GET(req: NextRequest) {
       .where(eq(products.vendorId, vendorId))
       .orderBy(desc(products.createdAt));
 
-    return jsonSuccess(rows);
+    const productIds = rows.map((r) => r.id);
+    const categoryLinks =
+      productIds.length > 0
+        ? await db
+            .select({
+              productId: productCategories.productId,
+              categoryId: productCategories.categoryId,
+            })
+            .from(productCategories)
+            .where(inArray(productCategories.productId, productIds))
+        : [];
+
+    const categoryIdsByProductId = categoryLinks.reduce(
+      (acc, { productId, categoryId }) => {
+        if (!acc[productId]) acc[productId] = [];
+        acc[productId].push(categoryId);
+        return acc;
+      },
+      {} as Record<string, string[]>
+    );
+
+    const data = rows.map((row) => ({
+      ...row,
+      categoryIds: categoryIdsByProductId[row.id] ?? [],
+    }));
+
+    return jsonSuccess(data);
   } catch (err) {
     if (err instanceof Error) {
       const message = err.message;
@@ -72,12 +103,12 @@ export async function POST(req: NextRequest) {
 
     const parsed = createProductSchema.safeParse(payload);
     if (!parsed.success) {
-      const message =
-        parsed.error.flatten().formErrors[0] ?? 'Invalid input';
+      const message = parsed.error.flatten().formErrors[0] ?? 'Invalid input';
       return jsonError(message, 400);
     }
 
-    const { name, weightGrams, images, stock, tiers } = parsed.data;
+    const { name, weightGrams, images, stock, tiers, categoryIds } =
+      parsed.data;
     const slug = slugForProduct(name);
 
     const [inserted] = await db.transaction(async (tx) => {
@@ -105,6 +136,15 @@ export async function POST(req: NextRequest) {
       }));
 
       await tx.insert(productPriceTiers).values(mappedTiers);
+
+      if (categoryIds && categoryIds.length > 0) {
+        await tx.insert(productCategories).values(
+          categoryIds.map((categoryId) => ({
+            productId: product.id,
+            categoryId,
+          }))
+        );
+      }
 
       return [product];
     });

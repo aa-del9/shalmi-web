@@ -19,8 +19,7 @@ export async function uploadImageToStorage(
   bucket: string
 ): Promise<UploadImageResult> {
   const ext =
-    getExtensionFromFilename(file.name) ??
-    getExtensionFromMimeType(file.type);
+    getExtensionFromFilename(file.name) ?? getExtensionFromMimeType(file.type);
   const path = generateUniqueFilename(ext ?? undefined);
   const buffer = Buffer.from(await file.arrayBuffer());
 

@@ -25,6 +25,7 @@ export const createProductSchema = z.object({
   stock: z.number().int().min(0).optional().default(0),
   vendorId: z.string().uuid().optional(),
   tiers: createProductPriceTiersSchema,
+  categoryIds: z.array(z.string().uuid()).optional(),
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;

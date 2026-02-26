@@ -2,7 +2,7 @@ export type ImageUploadProps = {
   accept?: string;
   multiple?: boolean;
   onUploaded: (result: ImageUploadResult) => void;
-  uploadUrl?: string;
+  uploadUrl: string;
   compressBeforeUpload?: boolean;
   className?: string;
   disabled?: boolean;
@@ -17,6 +17,6 @@ export type UseImageUploadOptions = {
   accept?: string;
   multiple?: boolean;
   onUploaded: (result: ImageUploadResult) => void;
-  uploadUrl?: string;
+  uploadUrl: string;
   compressBeforeUpload?: boolean;
 };

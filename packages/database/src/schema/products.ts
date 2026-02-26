@@ -16,10 +16,7 @@ export const products = pgTable('products', {
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   weightGrams: integer('weight_grams').notNull(),
-  images: jsonb('images')
-    .$type<ProductImageRecord[]>()
-    .notNull()
-    .default([]),
+  images: jsonb('images').$type<ProductImageRecord[]>().notNull().default([]),
   stock: integer('stock').notNull().default(0),
   version: integer('version').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
