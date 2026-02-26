@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@repo/constants": "workspace:*",
-    "@repo/types": "workspace:*"
+    "@repo/types": "workspace:*",
+    "browser-image-compression": "^2.0.2"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
