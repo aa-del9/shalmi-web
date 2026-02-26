@@ -11,6 +11,7 @@ export type VendorProductListItem = {
   images: ProductImageItem[];
   stock: number;
   createdAt: string;
+  categoryIds: string[];
 };
 
 export type VendorProductTierItem = {
@@ -22,4 +23,5 @@ export type VendorProductTierItem = {
 
 export type VendorProductDetail = VendorProductListItem & {
   tiers: VendorProductTierItem[];
+  categoryIds: string[];
 };

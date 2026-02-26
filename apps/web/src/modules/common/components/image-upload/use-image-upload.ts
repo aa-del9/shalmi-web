@@ -5,13 +5,12 @@ import { compressImage } from '@repo/utils/image';
 import { ImageUploadResult, UseImageUploadOptions } from './image-upload.types';
 
 const DEFAULT_ACCEPT = 'image/jpeg,image/png,image/webp,image/gif';
-const DEFAULT_UPLOAD_URL = '/api/vendor/upload';
 
 export function useImageUpload({
   accept = DEFAULT_ACCEPT,
   multiple = true,
   onUploaded,
-  uploadUrl = DEFAULT_UPLOAD_URL,
+  uploadUrl,
   compressBeforeUpload = true,
 }: UseImageUploadOptions) {
   const [isUploading, setIsUploading] = useState(false);

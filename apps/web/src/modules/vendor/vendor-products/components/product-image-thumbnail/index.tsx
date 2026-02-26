@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@repo/ui/components/button';
 import { XIcon } from 'lucide-react';
-import { getBlurDataUrlFromBlurHash } from '../../utils/blurhash-to-data-url';
+import { useProductImageThumbnail } from './use-product-image-thumbnail';
 
 type ProductImageThumbnailProps = {
   url: string;
@@ -21,14 +20,12 @@ export function ProductImageThumbnail({
   disabled = false,
   alt = 'Product image',
 }: ProductImageThumbnailProps) {
-  const [blurDataUrl, setBlurDataUrl] = useState('');
-
-  useEffect(() => {
-    setBlurDataUrl(getBlurDataUrlFromBlurHash(blurHash));
-  }, [blurHash]);
+  const { blurDataUrl } = useProductImageThumbnail({
+    blurHash,
+  });
 
   return (
-    <div className="relative aspect-square w-full min-w-[100px] max-w-[140px] overflow-hidden rounded-lg border bg-muted">
+    <div className="bg-muted relative aspect-square w-full max-w-[140px] min-w-[100px] overflow-hidden rounded-lg border">
       <Image
         src={url}
         alt={alt}
@@ -42,7 +39,7 @@ export function ProductImageThumbnail({
         type="button"
         variant="destructive"
         size="icon"
-        className="absolute right-1 top-1 size-7"
+        className="absolute top-1 right-1 size-7"
         onClick={onRemove}
         disabled={disabled}
         aria-label="Remove image"

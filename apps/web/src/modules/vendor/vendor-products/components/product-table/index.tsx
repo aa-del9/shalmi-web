@@ -12,8 +12,10 @@ import {
 } from '@repo/ui/components/table';
 import { PencilIcon } from 'lucide-react';
 import type { VendorProductListItem } from '../../types';
+import type { CategoryListItem } from '@/modules/common/queries/categories';
 import { getVendorProductEditPath } from '../../constants/routes';
 import { ProductTableSkeleton } from '../product-table-skeleton';
+import { ProductCategoriesCell } from '../product-categories-cell';
 
 type ProductTableProps = {
   isLoading: boolean;
@@ -21,6 +23,7 @@ type ProductTableProps = {
   errorMessage: string;
   isSuccess: boolean;
   products: VendorProductListItem[];
+  categories: CategoryListItem[];
 };
 
 export function ProductTable({
@@ -29,6 +32,7 @@ export function ProductTable({
   errorMessage,
   isSuccess,
   products,
+  categories,
 }: ProductTableProps) {
   return (
     <div className="rounded-lg border">
@@ -38,6 +42,7 @@ export function ProductTable({
             <TableHead>Product</TableHead>
             <TableHead className="w-24">Weight</TableHead>
             <TableHead className="w-20">Stock</TableHead>
+            <TableHead>Categories</TableHead>
             <TableHead className="w-20">Images</TableHead>
             <TableHead className="w-[80px]">Actions</TableHead>
           </TableRow>
@@ -48,7 +53,7 @@ export function ProductTable({
             {hasError && (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-muted-foreground h-24 text-center"
                 >
                   {errorMessage}
@@ -58,7 +63,7 @@ export function ProductTable({
             {!hasError && isSuccess && products.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-muted-foreground h-24 text-center"
                 >
                   No products yet. Add your first product to get started.
@@ -73,6 +78,12 @@ export function ProductTable({
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.weightGrams}g</TableCell>
                   <TableCell>{product.stock}</TableCell>
+                  <TableCell>
+                    <ProductCategoriesCell
+                      categoryIds={product.categoryIds ?? []}
+                      categories={categories}
+                    />
+                  </TableCell>
                   <TableCell>
                     {Array.isArray(product.images) ? product.images.length : 0}
                   </TableCell>

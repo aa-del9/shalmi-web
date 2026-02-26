@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboardIcon, StoreIcon } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -17,11 +16,6 @@ import {
 } from '@repo/ui/components/sidebar';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 import { ADMIN_NAV_ITEMS } from './admin-sidebar.constants';
-
-const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  Dashboard: LayoutDashboardIcon,
-  Vendors: StoreIcon,
-};
 
 export const AdminSidebar = () => {
   const pathname = usePathname();
@@ -42,8 +36,7 @@ export const AdminSidebar = () => {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {ADMIN_NAV_ITEMS.map(({ label, href }) => {
-                const Icon = ICONS[label];
+              {ADMIN_NAV_ITEMS.map(({ label, href, Icon }) => {
                 const isActive =
                   href === pathname ||
                   (href !== ABSOLUTE_ROUTES.ADMIN_DASHBOARD &&

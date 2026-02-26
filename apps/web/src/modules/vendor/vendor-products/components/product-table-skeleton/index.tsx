@@ -28,6 +28,9 @@ export function ProductTableSkeleton({
             <Skeleton className="h-5 w-12" />
           </TableCell>
           <TableCell>
+            <Skeleton className="h-5 w-20" />
+          </TableCell>
+          <TableCell>
             <Skeleton className="h-5 w-12" />
           </TableCell>
           <TableCell>

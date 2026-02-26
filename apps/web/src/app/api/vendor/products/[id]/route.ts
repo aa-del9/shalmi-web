@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { eq, and, asc } from 'drizzle-orm';
-import { db, products, productPriceTiers } from '@repo/database';
+import { db, products, productPriceTiers, productCategories } from '@repo/database';
 import { updateProductSchema } from '@repo/schemas/catalog/product';
 import { jsonSuccess, jsonError } from '@/modules/core/api';
 import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
@@ -60,8 +60,15 @@ export async function GET(
       .where(eq(productPriceTiers.productId, id))
       .orderBy(asc(productPriceTiers.minQty));
 
+    const categoryRows = await db
+      .select({ categoryId: productCategories.categoryId })
+      .from(productCategories)
+      .where(eq(productCategories.productId, id));
+    const categoryIds = categoryRows.map((r) => r.categoryId);
+
     return jsonSuccess({
       ...product,
+      categoryIds,
       tiers: tiers.map((t) => ({
         id: t.id,
         minQty: t.minQty,
@@ -160,6 +167,18 @@ export async function PATCH(
             priceCents: tier.price,
           }))
         );
+      }
+
+      if (data.categoryIds !== undefined) {
+        await tx.delete(productCategories).where(eq(productCategories.productId, id));
+        if (data.categoryIds.length > 0) {
+          await tx.insert(productCategories).values(
+            data.categoryIds.map((categoryId) => ({
+              productId: id,
+              categoryId,
+            }))
+          );
+        }
       }
     });
 
