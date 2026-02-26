@@ -16,4 +16,5 @@ export * from './vendor-ledger';
 export * from './admin-audit-log';
 export * from './categories';
 export * from './product-categories';
+export * from './promotional-banners';
 export * from './relations';
