@@ -13,7 +13,13 @@ const revalidateBodySchema = z.object({
 export async function POST(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get('secret');
   const expected = serverEnv.REVALIDATE_SECRET_TOKEN;
-  if (expected != null && expected !== '' && secret !== expected) {
+  if (expected == null || expected === '') {
+    return jsonError(
+      'Unauthorized: revalidation secret is not configured',
+      401
+    );
+  }
+  if (secret !== expected) {
     return jsonError('Unauthorized', 401);
   }
 

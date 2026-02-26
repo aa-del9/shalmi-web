@@ -6,7 +6,8 @@ export const createBannerSchema = z.object({
   targetUrl: z
     .string()
     .regex(/^\/[a-zA-Z0-9/_-]*$/)
-    .optional(),
+    .optional()
+    .or(z.literal('')),
 });
 
 export const bulkUpdateBannerSchema = z.object({

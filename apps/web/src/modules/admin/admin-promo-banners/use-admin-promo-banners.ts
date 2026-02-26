@@ -113,8 +113,7 @@ export const useAdminPromoBanners = () => {
       setDraftBanners(serverBanners.map((b) => ({ ...b })));
       initialBannersRef.current = serverBanners.map((b) => ({ ...b }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, serverBanners.length]);
+  }, [data, serverBanners]);
 
   return {
     isLoading,
