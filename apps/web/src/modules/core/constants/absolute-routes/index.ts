@@ -14,6 +14,7 @@ export const ABSOLUTE_ROUTES = {
   ADMIN_DASHBOARD: `/admin/dashboard`,
   ADMIN_VENDORS: `/admin/vendors`,
   ADMIN_CATEGORIES: `/admin/categories`,
+  ADMIN_PROMO_BANNERS: '/admin/promo-banners',
 } as const;
 
 export const AUTH_REQUIRED_PREFIXES = [
