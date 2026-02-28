@@ -17,7 +17,8 @@
     "db:push:dev": "drizzle-kit push --config=drizzle-dev.config.ts",
     "db:push:prod": "drizzle-kit push --config=drizzle-prod.config.ts",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx src/seed.ts"
+    "db:seed": "tsx src/seed.ts",
+    "db:seed-products": "tsx src/seed-products.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",
