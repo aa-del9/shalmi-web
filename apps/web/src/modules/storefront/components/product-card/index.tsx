@@ -31,7 +31,9 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
         <CardContent className="p-3">
           <h3 className="truncate text-sm font-medium">{product.name}</h3>
-          <p className="text-muted-foreground text-xs">{product.weightGrams} g</p>
+          <p className="text-muted-foreground text-xs">
+            {product.weightGrams} g
+          </p>
           <p className="mt-1 text-sm font-semibold">From Rs. {priceDisplay}</p>
         </CardContent>
       </Card>

@@ -66,7 +66,7 @@ export function QuantitySelector({
         onKeyDown={(e) => {
           if (e.key === 'Enter') commitValue(draft);
         }}
-        className="h-8 w-14 text-center text-sm font-medium tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="h-8 w-14 [appearance:textfield] text-center text-sm font-medium tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
       <Button
         variant="outline"

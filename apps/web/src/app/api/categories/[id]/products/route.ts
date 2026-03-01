@@ -30,8 +30,12 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     const { searchParams } = new URL(req.url);
     const { page, limit, offset } = normalizePagination({
-      page: searchParams.get('page') ? Number(searchParams.get('page')) : undefined,
-      limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : undefined,
+      page: searchParams.get('page')
+        ? Number(searchParams.get('page'))
+        : undefined,
+      limit: searchParams.get('limit')
+        ? Number(searchParams.get('limit'))
+        : undefined,
     });
 
     const [countResult, rows] = await Promise.all([
@@ -39,6 +43,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
         .select({ total: countDistinct(products.id) })
         .from(productCategories)
         .innerJoin(products, eq(productCategories.productId, products.id))
+        .innerJoin(
+          productPriceTiers,
+          eq(products.id, productPriceTiers.productId)
+        )
         .where(eq(productCategories.categoryId, id)),
 
       db
@@ -52,7 +60,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
         })
         .from(productCategories)
         .innerJoin(products, eq(productCategories.productId, products.id))
-        .innerJoin(productPriceTiers, eq(products.id, productPriceTiers.productId))
+        .innerJoin(
+          productPriceTiers,
+          eq(products.id, productPriceTiers.productId)
+        )
         .where(eq(productCategories.categoryId, id))
         .groupBy(products.id)
         .orderBy(asc(products.name))

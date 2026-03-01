@@ -3,7 +3,11 @@
 import Link from 'next/link';
 import { Button } from '@repo/ui/components/button';
 import { Separator } from '@repo/ui/components/separator';
-import { useCartStore, getCartTotalItems, getCartTotalPrice } from '@/modules/cart/stores/cart-store';
+import {
+  useCartStore,
+  getCartTotalItems,
+  getCartTotalPrice,
+} from '@/modules/cart/stores/cart-store';
 import { formatPrice } from '@/modules/cart/utils/resolve-price';
 
 export function CartSummary() {
@@ -19,9 +23,7 @@ export function CartSummary() {
       <Separator className="my-4" />
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">
-            Items ({totalItems})
-          </span>
+          <span className="text-muted-foreground">Items ({totalItems})</span>
           <span>{formatPrice(totalPrice)}</span>
         </div>
         <div className="flex justify-between">

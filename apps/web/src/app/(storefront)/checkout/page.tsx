@@ -12,7 +12,11 @@ import { Label } from '@repo/ui/components/label';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Separator } from '@repo/ui/components/separator';
 import { useSession } from '@/modules/auth/client/auth-client';
-import { useCartStore, getCartTotalItems, getCartTotalPrice } from '@/modules/cart/stores/cart-store';
+import {
+  useCartStore,
+  getCartTotalItems,
+  getCartTotalPrice,
+} from '@/modules/cart/stores/cart-store';
 import { resolvePrice, formatPrice } from '@/modules/cart/utils/resolve-price';
 
 interface ShippingForm {
@@ -115,7 +119,9 @@ export default function CheckoutPage() {
       }
 
       clearCart();
-      router.push(`/checkout/success?orderId=${data.data.orderId}&displayId=${data.data.displayId}`);
+      router.push(
+        `/checkout/success?orderId=${data.data.orderId}&displayId=${data.data.displayId}`
+      );
     } catch {
       toast.error('Something went wrong. Please try again.');
     } finally {
@@ -209,7 +215,10 @@ export default function CheckoutPage() {
               </h2>
               <div className="divide-y">
                 {items.map((item) => {
-                  const unitPrice = resolvePrice(item.priceTiers, item.quantity);
+                  const unitPrice = resolvePrice(
+                    item.priceTiers,
+                    item.quantity
+                  );
                   return (
                     <div key={item.productId} className="flex gap-3 py-3">
                       <div className="bg-muted relative size-14 shrink-0 overflow-hidden rounded-md">

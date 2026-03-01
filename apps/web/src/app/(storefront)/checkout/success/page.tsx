@@ -12,7 +12,7 @@ export default function CheckoutSuccessPage() {
 
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-16">
-      <div className="bg-green-100 flex size-20 items-center justify-center rounded-full">
+      <div className="flex size-20 items-center justify-center rounded-full bg-green-100">
         <CheckCircle2 className="size-10 text-green-600" />
       </div>
 

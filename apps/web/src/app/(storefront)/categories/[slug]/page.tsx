@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getCategoryBySlug } from '@/modules/storefront/utils/get-products-by-category';
+import { getCategoryBySlug } from '@/modules/storefront/utils/get-category-by-slug';
 import { CategoryProductsGrid } from '@/modules/storefront/components/category-products-grid';
 
 interface CategoryPageProps {
@@ -16,8 +16,8 @@ export async function generateMetadata({
   if (!category) return { title: 'Category Not Found' };
 
   return {
-    title: `${category.name} — Shaalmi`,
-    description: `Browse ${category.name} products at wholesale prices on Shaalmi.`,
+    title: `${category.name} — Shalmi`,
+    description: `Browse ${category.name} products at wholesale prices on Shalmi.`,
   };
 }
 

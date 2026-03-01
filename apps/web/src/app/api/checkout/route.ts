@@ -122,6 +122,12 @@ export async function POST(req: NextRequest) {
       const product = productMap.get(item.productId)!;
       const tiers = tiersByProduct.get(item.productId) ?? [];
       const unitPrice = resolveTierPrice(tiers, item.quantity);
+      if (unitPrice <= 0) {
+        return jsonError(
+          'Cannot checkout product without a valid price tier.',
+          400
+        );
+      }
       const totalPrice = unitPrice * item.quantity;
 
       const group = vendorGroups.get(product.vendorId) ?? [];
