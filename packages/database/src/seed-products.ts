@@ -166,7 +166,6 @@ async function seedProducts() {
       row.weightGrams > 0 ? `${row.name} ${row.weightGrams}g` : row.name;
 
     const unitPriceRupees = row.totalPriceRupees / row.quantity;
-    const unitPriceCents = Math.round(unitPriceRupees * 100);
 
     const [product] = await db
       .insert(products)
@@ -187,7 +186,7 @@ async function seedProducts() {
 
     // Price tiers: single-unit retail price + bulk wholesale price
     if (row.quantity > 1) {
-      const retailCents = Math.round(unitPriceCents * 1.15); // 15% retail markup
+      const retailCents = Math.round(unitPriceRupees * 1.15); // 15% retail markup
       await db.insert(productPriceTiers).values([
         {
           productId: product.id,
@@ -199,7 +198,7 @@ async function seedProducts() {
           productId: product.id,
           minQty: row.quantity,
           maxQty: null,
-          priceCents: unitPriceCents,
+          priceCents: unitPriceRupees,
         },
       ]);
     } else {
@@ -207,7 +206,7 @@ async function seedProducts() {
         productId: product.id,
         minQty: 1,
         maxQty: null,
-        priceCents: unitPriceCents,
+        priceCents: unitPriceRupees,
       });
     }
 
@@ -223,8 +222,8 @@ async function seedProducts() {
     inserted++;
     const tierInfo =
       row.quantity > 1
-        ? `retail Rs ${((unitPriceCents * 1.15) / 100).toFixed(0)} | bulk(${row.quantity}+) Rs ${(unitPriceCents / 100).toFixed(0)}`
-        : `Rs ${(unitPriceCents / 100).toFixed(0)}`;
+        ? `retail Rs ${((unitPriceRupees * 1.15) / 100).toFixed(0)} | bulk(${row.quantity}+) Rs ${(unitPriceRupees / 100).toFixed(0)}`
+        : `Rs ${(unitPriceRupees / 100).toFixed(0)}`;
 
     console.log(`  ✓ ${productName} — ${tierInfo}`);
   }
