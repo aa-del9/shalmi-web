@@ -5,6 +5,7 @@
  */
 
 export * from './auth';
+export * from './addresses';
 export * from './products';
 export * from './product-price-tiers';
 export * from './vendors';

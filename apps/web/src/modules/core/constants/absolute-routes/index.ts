@@ -3,6 +3,9 @@ export const ABSOLUTE_ROUTES = {
   AUTH: '/auth',
   AUTH_OTP: '/auth/otp',
 
+  PROFILE: '/profile',
+  PROFILE_ADDRESSES: '/profile/addresses',
+
   VENDOR: '/vendor',
   VENDOR_DASHBOARD: '/vendor/dashboard',
   VENDOR_PRODUCTS: '/vendor/products',
@@ -20,6 +23,7 @@ export const ABSOLUTE_ROUTES = {
 export const AUTH_REQUIRED_PREFIXES = [
   ABSOLUTE_ROUTES.ADMIN,
   ABSOLUTE_ROUTES.VENDOR,
+  ABSOLUTE_ROUTES.PROFILE,
 ] as const;
 
 export const ADMIN_ONLY_PREFIX = ABSOLUTE_ROUTES.ADMIN;

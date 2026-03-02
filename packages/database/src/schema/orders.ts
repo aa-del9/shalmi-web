@@ -1,5 +1,6 @@
-import { pgTable, text, timestamp, integer } from 'drizzle-orm/pg-core';
-import { user } from './auth'; // Assuming auth schema exists
+import { pgTable, text, timestamp, integer, uuid } from 'drizzle-orm/pg-core';
+import { user } from './auth';
+import { addresses } from './addresses';
 
 export const orders = pgTable('orders', {
   id: text('id')
@@ -10,6 +11,13 @@ export const orders = pgTable('orders', {
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
+
+  // Shipping snapshot at order time
+  shippingName: text('shipping_name').notNull(),
+  shippingPhone: text('shipping_phone').notNull(),
+  shippingAddress: text('shipping_address').notNull(),
+  shippingCity: text('shipping_city').notNull(),
+  addressId: uuid('address_id').references(() => addresses.id),
 
   // Aggregates for UI display only (sum of sub-orders)
   totalItemsCost: integer('total_items_cost').notNull(),
