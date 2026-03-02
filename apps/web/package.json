@@ -46,6 +46,7 @@
     "lucide-react": "^0.460.0",
     "motion": "^11.11.17",
     "next": "^15.0.0",
+    "nextjs-toploader": "^3.9.17",
     "nuqs": "^2.2.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
