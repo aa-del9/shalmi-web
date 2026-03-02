@@ -1,19 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { AuthModal } from '@/modules/auth/components/auth-modal';
-import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
+import { Suspense } from 'react';
+import { AuthPageContent } from '@/modules/auth/components/auth-page-content';
 
 export default function AuthPage() {
-  const router = useRouter();
   return (
-    <AuthModal
-      open={true}
-      onOpenChange={(open) => {
-        if (!open) {
-          router.push(ABSOLUTE_ROUTES.ROOT);
-        }
-      }}
-    />
+    <Suspense fallback={<div className="min-h-[40vh]" />}>
+      <AuthPageContent />
+    </Suspense>
   );
 }

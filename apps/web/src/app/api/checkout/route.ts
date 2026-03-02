@@ -7,6 +7,7 @@ import {
   orders,
   subOrders,
   orderItems,
+  addresses,
 } from '@repo/database';
 import { checkoutCartPayloadSchema } from '@repo/schemas/orders/checkout';
 import { jsonSuccess, jsonError } from '@/modules/core/api';
@@ -55,7 +56,38 @@ export async function POST(req: NextRequest) {
       return jsonError('Invalid cart payload', 400);
     }
 
-    const { items: cartItems } = parsed.data;
+    const { items: cartItems, addressId: payloadAddressId, shippingAddress: payloadShippingAddress } =
+      parsed.data;
+
+    let shippingName: string;
+    let shippingPhone: string;
+    let shippingAddress: string;
+    let shippingCity: string;
+    let orderAddressId: string | null = null;
+
+    if (payloadAddressId) {
+      const [addressRow] = await db
+        .select()
+        .from(addresses)
+        .where(eq(addresses.id, payloadAddressId));
+
+      if (!addressRow || addressRow.userId !== userId) {
+        return jsonError('Invalid or unauthorized address', 400);
+      }
+      shippingName = addressRow.recipientName;
+      shippingPhone = addressRow.recipientPhone;
+      shippingAddress = addressRow.address;
+      shippingCity = addressRow.city;
+      orderAddressId = payloadAddressId;
+    } else if (payloadShippingAddress) {
+      shippingName = payloadShippingAddress.name;
+      shippingPhone = payloadShippingAddress.phone;
+      shippingAddress = payloadShippingAddress.address;
+      shippingCity = payloadShippingAddress.city;
+    } else {
+      return jsonError('Provide addressId or shippingAddress', 400);
+    }
+
     const productIds = cartItems.map((i) => i.productId);
 
     const dbProducts = await db
@@ -156,6 +188,11 @@ export async function POST(req: NextRequest) {
         .values({
           userId,
           displayId,
+          shippingName,
+          shippingPhone,
+          shippingAddress,
+          shippingCity,
+          addressId: orderAddressId,
           totalItemsCost,
           totalShippingCost: 0,
           grandTotal: totalItemsCost,

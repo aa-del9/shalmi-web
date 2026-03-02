@@ -63,8 +63,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Keep in sync with ABSOLUTE_ROUTES (ADMIN, VENDOR) in absolute-routes/index.ts.
 export const config = {
   runtime: 'nodejs',
-  matcher: ['/admin/:path*', '/vendor/:path*'],
+  matcher: ['/admin/:path*', '/vendor/:path*', '/profile/:path*'],
 };
