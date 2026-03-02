@@ -89,7 +89,9 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (mounted && !sessionLoading && !session?.user) {
-      router.push(`${ABSOLUTE_ROUTES.AUTH}?redirect=${encodeURIComponent(ABSOLUTE_ROUTES.CHECKOUT)}`);
+      router.push(
+        `${ABSOLUTE_ROUTES.AUTH}?redirect=${encodeURIComponent(ABSOLUTE_ROUTES.CHECKOUT)}`
+      );
     }
   }, [mounted, sessionLoading, session?.user, router]);
 
@@ -99,9 +101,8 @@ export default function CheckoutPage() {
     }
   }, [mounted, items.length, router]);
 
-  const handlePlaceOrder = shippingForm.handleSubmit(async () => {
+  const placeOrderLogic = async () => {
     const useManualForm = useDifferentAddress || !hasSavedAddresses;
-
     if (!useManualForm && !selectedAddressId) {
       toast.error('Please select a delivery address');
       return;
@@ -147,7 +148,20 @@ export default function CheckoutPage() {
     } finally {
       setSubmitting(false);
     }
-  });
+  };
+
+  const handlePlaceOrder = () => {
+    const useManualForm = useDifferentAddress || !hasSavedAddresses;
+    if (useManualForm) {
+      shippingForm.handleSubmit(placeOrderLogic)();
+    } else {
+      if (!selectedAddressId) {
+        toast.error('Please select a delivery address');
+        return;
+      }
+      placeOrderLogic();
+    }
+  };
 
   if (!mounted || sessionLoading) {
     return (
@@ -260,8 +274,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mt-4 rounded-md bg-amber-50 p-3 text-xs text-amber-800">
-                <strong>Cash on Delivery</strong> — Pay when your order
-                arrives.
+                <strong>Cash on Delivery</strong> — Pay when your order arrives.
               </div>
 
               <Button
