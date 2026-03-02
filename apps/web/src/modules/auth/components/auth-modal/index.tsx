@@ -16,6 +16,10 @@ import { Label } from '@repo/ui/components/label';
 import { authClient } from '@/modules/auth/client/auth-client';
 import { useModalStore } from '@/modules/core/stores/modal-store';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
+import {
+  isSafeRedirectUrl,
+  buildFullRedirectUrl,
+} from '@/modules/auth/utils/redirect';
 
 interface AuthModalProps {
   open: boolean;
@@ -55,12 +59,8 @@ export function AuthModal({ open, onOpenChange, redirectUrl }: AuthModalProps) {
 
     const params = new URLSearchParams();
     params.set('phone', phoneNumber.trim());
-    if (
-      redirectUrl &&
-      redirectUrl.startsWith('/') &&
-      !redirectUrl.startsWith('//')
-    ) {
-      params.set('redirect', redirectUrl);
+    if (redirectUrl && isSafeRedirectUrl(redirectUrl)) {
+      params.set('redirect', buildFullRedirectUrl(redirectUrl));
     }
     handleClose(false);
     router.push(`${ABSOLUTE_ROUTES.AUTH_OTP}?${params.toString()}`);

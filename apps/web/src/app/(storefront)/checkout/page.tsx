@@ -12,6 +12,7 @@ import { Button } from '@repo/ui/components/button';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Separator } from '@repo/ui/components/separator';
 import { useSession } from '@/modules/auth/client/auth-client';
+import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 import {
   useCartStore,
   getCartTotalItems,
@@ -88,7 +89,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (mounted && !sessionLoading && !session?.user) {
-      router.push('/auth?redirect=/checkout');
+      router.push(`${ABSOLUTE_ROUTES.AUTH}?redirect=${encodeURIComponent(ABSOLUTE_ROUTES.CHECKOUT)}`);
     }
   }, [mounted, sessionLoading, session?.user, router]);
 

@@ -3,6 +3,8 @@ export const ABSOLUTE_ROUTES = {
   AUTH: '/auth',
   AUTH_OTP: '/auth/otp',
 
+  CHECKOUT: '/checkout',
+
   PROFILE: '/profile',
   PROFILE_ADDRESSES: '/profile/addresses',
 
