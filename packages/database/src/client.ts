@@ -1,4 +1,4 @@
-import postgres from 'postgres';
+import postgres, { type Sql } from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
 
@@ -8,6 +8,15 @@ if (!connectionString) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
 
-const client = postgres(connectionString, { prepare: false });
+const globalForDb = globalThis as unknown as { pgClient: Sql | undefined };
+
+const client =
+  globalForDb.pgClient ??
+  postgres(connectionString, { prepare: false, max: 3 });
+
+// eslint-disable-next-line turbo/no-undeclared-env-vars
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.pgClient = client;
+}
 
 export const db = drizzle(client, { schema });

@@ -9,6 +9,7 @@ import { QuantitySelector } from '@/modules/cart/components/quantity-selector';
 import { useCartStore } from '@/modules/cart/stores/cart-store';
 import type { CartItemInput } from '@/modules/cart/types';
 import type { StorefrontProduct } from '../../types';
+import { formatPrice } from '@/modules/cart/utils/resolve-price';
 
 interface ProductCardProps {
   product: StorefrontProduct;
@@ -16,7 +17,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const firstImage = product.images[0];
-  const priceDisplay = (product.lowestPriceCents / 100).toLocaleString();
+  const priceDisplay = formatPrice(product.lowestPriceCents);
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
@@ -27,7 +28,9 @@ export function ProductCard({ product }: ProductCardProps) {
     e.stopPropagation();
     setAdding(true);
     try {
-      const res = await fetch(`/api/products/${encodeURIComponent(product.slug)}`);
+      const res = await fetch(
+        `/api/products/${encodeURIComponent(product.slug)}`
+      );
       const json = await res.json();
       if (!json.success || !json.data) {
         return;
@@ -40,7 +43,11 @@ export function ProductCard({ product }: ProductCardProps) {
         images: { url: string; blurHash: string | null }[];
         weightGrams: number;
         stock: number;
-        priceTiers: { minQty: number; maxQty: number | null; priceCents: number }[];
+        priceTiers: {
+          minQty: number;
+          maxQty: number | null;
+          priceCents: number;
+        }[];
       };
       if (p.stock <= 0) {
         return;
