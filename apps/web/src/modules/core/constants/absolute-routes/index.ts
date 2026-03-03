@@ -7,6 +7,7 @@ export const ABSOLUTE_ROUTES = {
 
   PROFILE: '/profile',
   PROFILE_ADDRESSES: '/profile/addresses',
+  PROFILE_ORDERS: '/profile/orders',
 
   VENDOR: '/vendor',
   VENDOR_DASHBOARD: '/vendor/dashboard',

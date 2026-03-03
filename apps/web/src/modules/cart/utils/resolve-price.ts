@@ -23,6 +23,6 @@ export function resolvePrice(
   return sorted[0]?.priceCents ?? 0;
 }
 
-export function formatPrice(cents: number): string {
-  return `Rs. ${(cents / 100).toLocaleString()}`;
+export function formatPrice(amount: number): string {
+  return `Rs. ${amount.toLocaleString()}`;
 }

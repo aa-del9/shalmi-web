@@ -20,8 +20,8 @@ const STATUS_ACTION: Record<
   handed_to_courier: null,
 };
 
-function formatPrice(cents: number) {
-  return `Rs. ${Math.round(cents / 100).toLocaleString()}`;
+function formatPrice(amount: number) {
+  return `Rs. ${amount.toLocaleString()}`;
 }
 
 function timeAgo(dateStr: string) {
