@@ -5,435 +5,326 @@
 
 @import 'tw-animate-css';
 
+/* Dark mode is intentionally deferred — the Pencil design system declares
+   no theme variants. The .dark class hook + next-themes dependency are
+   left in place for a future theme. See .claude-revamp/03-token-migration.md §3.5. */
 @custom-variant dark (&:is(.dark *));
 
 /* ==========================================================================
-   Primitives (RGB space-separated for rgb(var(--x)))
+   Pencil primitives (single source of truth)
+   ==========================================================================
+   Names mirror Pencil's `pencil:get_variables` output exactly. Most values
+   are flat hex literals. A handful (`ink`, `ink-2`, `green-2`, `red`,
+   `white`) are also exposed as RGB-channel tuples so Tailwind's
+   `bg-foo/N` opacity utilities work for re-derived states (Q10).
    ========================================================================== */
 
 :root,
 .light {
-  /* Primary (green theme) */
-  --primary-10: 236 253 245;
-  --primary-20: 209 250 229;
-  --primary-30: 167 243 208;
-  --primary-40: 110 231 183;
-  --primary-50: 52 211 153;
-  --primary-60: 16 185 129;
-  --primary-70: 5 150 105;
-  --primary-80: 4 120 87;
-  --primary-90: 6 95 70;
-  --primary-100: 6 78 59;
+  /* Brand */
+  --ink: #0f1411;
+  --ink-rgb: 15 20 17;
+  --ink-2: #2a2f2c;
+  --ink-2-rgb: 42 47 44;
+  --ink-3: #6b716d;
+  --ink-4: #a0a4a1;
 
-  /* Neutral */
-  --neutral-white: 255 255 255;
-  --neutral-10: 247 247 247;
-  --neutral-20: 237 237 237;
-  --neutral-30: 224 224 224;
-  --neutral-40: 209 209 209;
-  --neutral-50: 189 189 189;
-  --neutral-60: 87 87 87;
-  --neutral-70: 61 61 61;
-  --neutral-80: 46 46 46;
-  --neutral-90: 33 33 33;
-  --neutral-100: 23 23 23;
-  --neutral-110: 15 15 15;
-  --neutral-black: 0 0 0;
+  /* Greens (Pencil declares both `green-2`/`green-600` and `green`/`green-700`
+     with identical hex — preserved as aliases per user direction.) */
+  --green: #15803d;
+  --green-2: #16a34a;
+  --green-2-rgb: 22 163 74;
+  --green-200: #dcfce7;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --green-900: #14532d;
+  --green-bg: #f0fdf4;
 
-  /* Error */
-  --error-10: 255 241 241;
-  --error-20: 255 215 217;
-  --error-30: 255 179 184;
-  --error-40: 255 131 137;
-  --error-50: 250 77 86;
-  --error-60: 218 30 40;
-  --error-70: 162 25 31;
-  --error-80: 117 14 19;
-  --error-90: 82 4 8;
-  --error-100: 45 7 9;
+  /* Surfaces */
+  --paper: #fbfaf5;
+  --paper-2: #f5f2e8;
+  --paper-3: #ece7d6;
+  --white: #ffffff;
+  --white-rgb: 255 255 255;
 
-  /* Success */
-  --success-10: 222 251 230;
-  --success-20: 167 240 186;
-  --success-30: 111 220 140;
-  --success-40: 66 190 101;
-  --success-50: 36 161 72;
-  --success-60: 25 128 56;
-  --success-70: 14 96 39;
-  --success-80: 4 67 23;
-  --success-90: 2 45 13;
-  --success-100: 7 25 8;
+  /* Status */
+  --amber: #a16207;
+  --amber-bg: #fef7e0;
+  --red: #b91c1c;
+  --red-rgb: 185 28 28;
+  --red-bg: #fef2f2;
+  --blue: #1e40af;
+  --blue-bg: #eff4ff;
 
-  /* Warning */
-  --warning-10: 252 244 214;
-  --warning-20: 253 220 105;
-  --warning-30: 241 194 27;
-  --warning-40: 210 161 6;
-  --warning-50: 178 134 0;
-  --warning-60: 142 106 0;
-  --warning-70: 104 78 0;
-  --warning-80: 72 55 0;
-  --warning-90: 48 36 0;
-  --warning-100: 28 21 0;
+  /* Hairlines (alpha-encoded ink) */
+  --rule: #0f141119;
+  --rule-2: #0f141133;
 
-  /* Shadow color (for elevation) */
-  --shadow: 176 175 175;
+  /* Drawer-only shadow declared by Pencil */
+  --shadow-drawer: -12px 0 48px 0 #0f141140;
+  --bg-overlay: #0f141180;
 
   /* ========================================================================
-     Semantic tokens: Background
+     Legacy primitive aliases (kept until Phase 4 component migration
+     renames their consuming Tailwind classes — see 03-token-migration.md §3).
+     Each alias resolves to its closest Pencil-tokened equivalent.
      ======================================================================== */
-  --bg-primary: var(--neutral-white);
-  --bg-surface: var(--neutral-10);
-  --bg-surface-variant: var(--neutral-white);
-  --bg-surface-secondary: var(--neutral-20);
-  --bg-surface-secondary-variant: var(--neutral-10);
-  --bg-surface-tertiary: var(--neutral-30);
-  --bg-surface-tertiary-variant: var(--neutral-20);
-  --bg-surface-inverse: var(--neutral-110);
-  --bg-surface-elevated: var(--neutral-white);
-  --bg-surface-brand: var(--primary-10);
-  --bg-surface-success: var(--success-10);
-  --bg-surface-warning: var(--warning-10);
-  --bg-surface-critical: var(--error-10);
+  --primary-10: 240 253 244;  /* green-bg */
+  --primary-20: 220 252 231;  /* green-200 */
+  --primary-50: 34 197 94;    /* green-500 */
+  --primary-60: 22 163 74;    /* green-2 / green-600 */
+  --primary-70: 21 128 61;    /* green-700 / green */
+  --primary-90: 20 83 45;     /* green-900 */
 
-  --bg-fill: var(--neutral-10);
-  --bg-fill-hover: var(--neutral-20);
-  --bg-fill-active: var(--neutral-30);
-  --bg-fill-disabled: var(--neutral-10) / 0.5;
-  --bg-fill-variant: var(--neutral-white);
-  --bg-fill-variant-hover: var(--neutral-10);
-  --bg-fill-variant-active: var(--neutral-20);
-  --bg-fill-variant-disabled: var(--neutral-white) / 0.5;
-  --bg-fill-secondary: var(--neutral-20);
-  --bg-fill-secondary-hover: var(--neutral-30);
-  --bg-fill-secondary-active: var(--neutral-40);
-  --bg-fill-secondary-disabled: var(--neutral-20) / 0.5;
-  --bg-fill-tertiary: var(--neutral-30);
-  --bg-fill-tertiary-hover: var(--neutral-40);
-  --bg-fill-tertiary-active: var(--neutral-50);
-  --bg-fill-tertiary-disabled: var(--neutral-30) / 0.5;
-  --bg-fill-inverse: var(--neutral-110);
-  --bg-fill-inverse-hover: var(--neutral-100);
-  --bg-fill-inverse-active: var(--neutral-90);
-  --bg-fill-inverse-disabled: var(--neutral-110) / 0.5;
-  --bg-fill-elevated: var(--neutral-white);
-  --bg-fill-elevated-hover: var(--neutral-10);
-  --bg-fill-elevated-active: var(--neutral-20);
-  --bg-fill-elevated-disabled: var(--neutral-white) / 0.5;
-  --bg-fill-brand: var(--primary-60);
-  --bg-fill-brand-hover: var(--primary-70);
-  --bg-fill-brand-active: var(--primary-80);
-  --bg-fill-brand-disabled: var(--primary-60) / 0.5;
-  --bg-fill-brand-secondary: var(--primary-50) / 0.15;
-  --bg-fill-brand-secondary-hover: var(--primary-50) / 0.3;
-  --bg-fill-brand-secondary-active: var(--primary-60) / 0.3;
-  --bg-fill-brand-secondary-disabled: var(--primary-30) / 0.15;
-  --bg-fill-success: var(--success-50);
-  --bg-fill-success-hover: var(--success-60);
-  --bg-fill-success-active: var(--success-70);
-  --bg-fill-success-disabled: var(--success-50) / 0.5;
-  --bg-fill-warning: var(--warning-50);
-  --bg-fill-warning-hover: var(--warning-60);
-  --bg-fill-warning-active: var(--warning-70);
-  --bg-fill-warning-disabled: var(--warning-50) / 0.5;
-  --bg-fill-critical: var(--error-50);
-  --bg-fill-critical-hover: var(--error-60);
-  --bg-fill-critical-active: var(--error-70);
-  --bg-fill-critical-disabled: var(--error-50) / 0.5;
-  --bg-overlay: var(--neutral-black) / 0.2;
+  --neutral-white: 255 255 255;       /* white */
+  --neutral-10: 251 250 245;          /* paper */
+  --neutral-20: 245 242 232;          /* paper-2 */
+  --neutral-30: 236 231 214;          /* paper-3 */
+  --neutral-40: 160 164 161;          /* ink-4 */
+  --neutral-50: 160 164 161;          /* ink-4 */
+  --neutral-60: 107 113 109;          /* ink-3 */
+  --neutral-70: 42 47 44;             /* ink-2 */
+  --neutral-80: 42 47 44;             /* ink-2 */
+  --neutral-90: 42 47 44;             /* ink-2 */
+  --neutral-100: 15 20 17;            /* ink */
+  --neutral-110: 15 20 17;            /* ink (still used as `text-neutral-110` in 9 files) */
+  --neutral-black: 15 20 17;          /* collapsed to ink */
+
+  --error-10: 254 242 242;            /* red-bg */
+  --error-50: 185 28 28;              /* red */
+  --error-60: 185 28 28;              /* red */
+
+  --success-10: 240 253 244;          /* green-bg */
+  --success-50: 22 163 74;            /* green-2 */
+  --success-60: 21 128 61;            /* green-700 */
+
+  --warning-10: 254 247 224;          /* amber-bg */
+  --warning-50: 161 98 7;             /* amber */
+  --warning-60: 161 98 7;             /* amber */
+
+  /* Shadow scale collapsed to none per Q9 (Pencil is hairline-only).
+     Existing `shadow-xs/sm/md/lg` class users render flat. */
+  --shadow: 15 20 17;
 
   /* ========================================================================
-     Semantic tokens: Content (text)
+     Semantic tokens — rebound to Pencil primitives per §1.2
+     Names preserved so existing component classes (bg-bg-surface,
+     text-content-primary, etc.) keep working.
      ======================================================================== */
-  --content-primary: var(--neutral-110);
-  --content-primary-disabled: var(--neutral-110) / 0.3;
-  --content-secondary: var(--neutral-60);
-  --content-secondary-disabled: var(--neutral-60) / 0.3;
-  --content-tertiary: var(--neutral-110) / 0.5;
-  --content-tertiary-disabled: var(--neutral-110) / 0.15;
-  --content-inverse: var(--neutral-white);
-  --content-inverse-disabled: var(--neutral-white) / 0.5;
-  --content-secondary-inverse: var(--neutral-50);
-  --content-secondary-inverse-disabled: var(--neutral-50) / 0.5;
-  --content-fixed: var(--neutral-110);
-  --content-fixed-disabled: var(--neutral-110) / 0.5;
-  --content-inverse-fixed: var(--neutral-white);
-  --content-inverse-fixed-disabled: var(--neutral-white) / 0.5;
-  --content-brand: var(--primary-70);
-  --content-brand-hover: var(--primary-80);
-  --content-brand-active: var(--primary-90);
-  --content-brand-disabled: var(--primary-70) / 0.5;
-  --content-success: var(--success-50);
-  --content-success-hover: var(--success-60);
-  --content-success-active: var(--success-70);
-  --content-success-disabled: var(--success-50) / 0.5;
-  --content-warning: var(--warning-50);
-  --content-warning-hover: var(--warning-60);
-  --content-warning-active: var(--warning-70);
-  --content-warning-disabled: var(--warning-50) / 0.5;
-  --content-critical: var(--error-50);
-  --content-critical-hover: var(--error-60);
-  --content-critical-active: var(--error-70);
-  --content-critical-disabled: var(--error-50) / 0.5;
+  --bg-primary: var(--paper);
+  --bg-surface: var(--white);
+  --bg-surface-variant: var(--white);
+  --bg-surface-secondary: var(--paper-2);
+  --bg-surface-secondary-variant: var(--paper-2);
+  --bg-surface-tertiary: var(--paper-3);
+  --bg-surface-tertiary-variant: var(--paper-3);
+  --bg-surface-inverse: var(--ink);
+  --bg-surface-elevated: var(--white);
+  --bg-surface-brand: var(--green-bg);
+  --bg-surface-success: var(--green-bg);
+  --bg-surface-warning: var(--amber-bg);
+  --bg-surface-critical: var(--red-bg);
 
-  /* ========================================================================
-     Semantic tokens: Border
-     ======================================================================== */
-  --border-primary: var(--neutral-20);
-  --border-primary-hover: var(--neutral-30);
-  --border-primary-disabled: var(--neutral-20) / 0.5;
-  --border-secondary: var(--neutral-30);
-  --border-secondary-hover: var(--neutral-40);
-  --border-secondary-disabled: var(--neutral-30) / 0.5;
-  --border-tertiary: var(--neutral-40);
-  --border-tertiary-hover: var(--neutral-50);
-  --border-tertiary-disabled: var(--neutral-40) / 0.5;
-  --border-inverse: var(--neutral-110);
-  --border-inverse-hover: var(--neutral-100);
-  --border-inverse-disabled: var(--neutral-110) / 0.5;
-  --border-elevated: var(--neutral-20);
-  --border-elevated-hover: var(--neutral-30);
-  --border-elevated-disabled: var(--neutral-20) / 0.5;
-  --border-brand: var(--primary-60);
-  --border-brand-hover: var(--primary-70);
-  --border-brand-disabled: var(--primary-60) / 0.5;
-  --border-brand-secondary: var(--primary-50) / 0.15;
-  --border-brand-secondary-hover: var(--primary-50) / 0.3;
-  --border-brand-secondary-disabled: var(--primary-30) / 0.15;
-  --border-success: var(--success-50);
-  --border-success-hover: var(--success-60);
-  --border-success-disabled: var(--success-50) / 0.5;
-  --border-warning: var(--warning-50);
-  --border-warning-hover: var(--warning-60);
-  --border-warning-disabled: var(--warning-50) / 0.5;
-  --border-critical: var(--error-50);
-  --border-critical-hover: var(--error-60);
-  --border-critical-disabled: var(--error-50) / 0.5;
+  --bg-fill: var(--paper-2);
+  --bg-fill-hover: var(--paper-3);
+  --bg-fill-active: var(--paper-3);
+  --bg-fill-disabled: rgb(var(--ink-rgb) / 0.05);
+  --bg-fill-variant: var(--white);
+  --bg-fill-variant-hover: var(--paper);
+  --bg-fill-variant-active: var(--paper-2);
+  --bg-fill-variant-disabled: rgb(var(--white-rgb) / 0.5);
+  --bg-fill-secondary: var(--paper-2);
+  --bg-fill-secondary-hover: var(--paper-3);
+  --bg-fill-secondary-active: var(--paper-3);
+  --bg-fill-secondary-disabled: rgb(var(--ink-rgb) / 0.05);
+  --bg-fill-tertiary: var(--paper-3);
+  --bg-fill-tertiary-hover: var(--paper-3);
+  --bg-fill-tertiary-active: var(--paper-3);
+  --bg-fill-tertiary-disabled: rgb(var(--ink-rgb) / 0.05);
+  --bg-fill-inverse: var(--ink);
+  --bg-fill-inverse-hover: var(--ink-2);
+  --bg-fill-inverse-active: var(--ink-2);
+  --bg-fill-inverse-disabled: rgb(var(--ink-rgb) / 0.5);
+  --bg-fill-elevated: var(--white);
+  --bg-fill-elevated-hover: var(--paper);
+  --bg-fill-elevated-active: var(--paper-2);
+  --bg-fill-elevated-disabled: rgb(var(--white-rgb) / 0.5);
+  --bg-fill-brand: var(--green-2);
+  --bg-fill-brand-hover: var(--green-700);
+  --bg-fill-brand-active: var(--green-900);
+  --bg-fill-brand-disabled: rgb(var(--green-2-rgb) / 0.4);
+  --bg-fill-brand-secondary: var(--green-bg);
+  --bg-fill-brand-secondary-hover: var(--green-200);
+  --bg-fill-brand-secondary-active: var(--green-200);
+  --bg-fill-brand-secondary-disabled: rgb(var(--green-2-rgb) / 0.1);
+  --bg-fill-success: var(--green-2);
+  --bg-fill-success-hover: var(--green-700);
+  --bg-fill-success-active: var(--green-900);
+  --bg-fill-success-disabled: rgb(var(--green-2-rgb) / 0.4);
+  --bg-fill-warning: var(--amber);
+  --bg-fill-warning-hover: var(--amber);
+  --bg-fill-warning-active: var(--amber);
+  --bg-fill-warning-disabled: var(--amber-bg);
+  --bg-fill-critical: var(--red);
+  --bg-fill-critical-hover: var(--red);
+  --bg-fill-critical-active: var(--red);
+  --bg-fill-critical-disabled: rgb(var(--red-rgb) / 0.4);
 
-  /* ========================================================================
-     Elevation: Shadow & Drop shadow
-     ======================================================================== */
-  --shadow-xs: 0px 2px 4px 0px rgb(var(--shadow) / 0.16);
-  --shadow-sm: 0px 4px 8px 0px rgb(var(--shadow) / 0.2);
-  --shadow-md: 0px 8px 16px 0px rgb(var(--shadow) / 0.22);
-  --shadow-lg: 0px 12px 24px 0px rgb(var(--shadow) / 0.25);
-  --drop-shadow-xs: 0px 2px 4px 0px rgb(var(--shadow) / 0.16);
-  --drop-shadow-sm: 0px 4px 8px 0px rgb(var(--shadow) / 0.2);
-  --drop-shadow-md: 0px 8px 16px 0px rgb(var(--shadow) / 0.22);
-  --drop-shadow-lg: 0px 12px 24px 0px rgb(var(--shadow) / 0.25);
-}
+  /* Content (text) */
+  --content-primary: var(--ink-2);
+  --content-primary-disabled: rgb(var(--ink-2-rgb) / 0.4);
+  --content-secondary: var(--ink-3);
+  --content-secondary-disabled: rgb(var(--ink-2-rgb) / 0.3);
+  --content-tertiary: var(--ink-4);
+  --content-tertiary-disabled: rgb(var(--ink-2-rgb) / 0.2);
+  --content-inverse: var(--white);
+  --content-inverse-disabled: rgb(var(--white-rgb) / 0.5);
+  --content-secondary-inverse: var(--ink-4);
+  --content-secondary-inverse-disabled: rgb(var(--white-rgb) / 0.5);
+  --content-fixed: var(--ink);
+  --content-fixed-disabled: rgb(var(--ink-rgb) / 0.5);
+  --content-inverse-fixed: var(--white);
+  --content-inverse-fixed-disabled: rgb(var(--white-rgb) / 0.5);
+  --content-brand: var(--green-700);
+  --content-brand-hover: var(--green-900);
+  --content-brand-active: var(--green-900);
+  --content-brand-disabled: rgb(var(--green-2-rgb) / 0.4);
+  --content-success: var(--green-700);
+  --content-success-hover: var(--green-900);
+  --content-success-active: var(--green-900);
+  --content-success-disabled: rgb(var(--green-2-rgb) / 0.4);
+  --content-warning: var(--amber);
+  --content-warning-hover: var(--amber);
+  --content-warning-active: var(--amber);
+  --content-warning-disabled: var(--amber);
+  --content-critical: var(--red);
+  --content-critical-hover: var(--red);
+  --content-critical-active: var(--red);
+  --content-critical-disabled: rgb(var(--red-rgb) / 0.4);
 
-.dark {
-  --bg-primary: var(--neutral-110);
-  --bg-surface: var(--neutral-100);
-  --bg-surface-variant: var(--neutral-100);
-  --bg-surface-secondary: var(--neutral-90);
-  --bg-surface-secondary-variant: var(--neutral-90);
-  --bg-surface-tertiary: var(--neutral-80);
-  --bg-surface-tertiary-variant: var(--neutral-80);
-  --bg-surface-inverse: var(--neutral-white);
-  --bg-surface-elevated: var(--neutral-90);
-  --bg-surface-brand: var(--primary-90);
-  --bg-surface-success: var(--success-90);
-  --bg-surface-warning: var(--warning-90);
-  --bg-surface-critical: var(--error-90);
-  --bg-fill: var(--neutral-100);
-  --bg-fill-hover: var(--neutral-90);
-  --bg-fill-active: var(--neutral-80);
-  --bg-fill-disabled: var(--neutral-100) / 0.3;
-  --bg-fill-variant: var(--neutral-100);
-  --bg-fill-variant-hover: var(--neutral-90);
-  --bg-fill-variant-active: var(--neutral-80);
-  --bg-fill-variant-disabled: var(--neutral-100) / 0.3;
-  --bg-fill-secondary: var(--neutral-90);
-  --bg-fill-secondary-hover: var(--neutral-80);
-  --bg-fill-secondary-active: var(--neutral-70);
-  --bg-fill-secondary-disabled: var(--neutral-90) / 0.3;
-  --bg-fill-tertiary: var(--neutral-80);
-  --bg-fill-tertiary-hover: var(--neutral-70);
-  --bg-fill-tertiary-active: var(--neutral-60);
-  --bg-fill-tertiary-disabled: var(--neutral-80) / 0.3;
-  --bg-fill-inverse: var(--neutral-white);
-  --bg-fill-inverse-hover: var(--neutral-10);
-  --bg-fill-inverse-active: var(--neutral-90);
-  --bg-fill-inverse-disabled: var(--neutral-white) / 0.3;
-  --bg-fill-elevated: var(--neutral-90);
-  --bg-fill-elevated-hover: var(--neutral-80);
-  --bg-fill-elevated-active: var(--neutral-70);
-  --bg-fill-elevated-disabled: var(--neutral-90) / 0.3;
-  --bg-fill-brand: var(--primary-60);
-  --bg-fill-brand-hover: var(--primary-50);
-  --bg-fill-brand-active: var(--primary-40);
-  --bg-fill-brand-disabled: var(--primary-60) / 0.3;
-  --bg-fill-brand-secondary: var(--primary-70) / 0.3;
-  --bg-fill-brand-secondary-hover: var(--primary-70) / 0.5;
-  --bg-fill-brand-secondary-active: var(--primary-60) / 0.5;
-  --bg-fill-brand-secondary-disabled: var(--primary-90) / 0.3;
-  --bg-fill-success: var(--success-50);
-  --bg-fill-success-hover: var(--success-40);
-  --bg-fill-success-active: var(--success-30);
-  --bg-fill-success-disabled: var(--success-50) / 0.3;
-  --bg-fill-warning: var(--warning-50);
-  --bg-fill-warning-hover: var(--warning-40);
-  --bg-fill-warning-active: var(--warning-30);
-  --bg-fill-warning-disabled: var(--warning-50) / 0.3;
-  --bg-fill-critical: var(--error-50);
-  --bg-fill-critical-hover: var(--error-40);
-  --bg-fill-critical-active: var(--error-30);
-  --bg-fill-critical-disabled: var(--error-50) / 0.3;
-  --bg-overlay: var(--neutral-black) / 0.5;
+  /* Borders — Pencil's hairlines */
+  --border-primary: var(--rule);
+  --border-primary-hover: var(--rule-2);
+  --border-primary-disabled: var(--rule);
+  --border-secondary: var(--rule-2);
+  --border-secondary-hover: var(--ink);
+  --border-secondary-disabled: var(--rule);
+  --border-tertiary: var(--rule-2);
+  --border-tertiary-hover: var(--ink);
+  --border-tertiary-disabled: var(--rule);
+  --border-inverse: var(--ink);
+  --border-inverse-hover: var(--ink-2);
+  --border-inverse-disabled: rgb(var(--ink-rgb) / 0.5);
+  --border-elevated: var(--rule);
+  --border-elevated-hover: var(--rule-2);
+  --border-elevated-disabled: var(--rule);
+  --border-brand: var(--green-2);
+  --border-brand-hover: var(--green-700);
+  --border-brand-disabled: rgb(var(--green-2-rgb) / 0.4);
+  --border-brand-secondary: var(--green-200);
+  --border-brand-secondary-hover: var(--green-500);
+  --border-brand-secondary-disabled: var(--green-200);
+  --border-success: var(--green-700);
+  --border-success-hover: var(--green-900);
+  --border-success-disabled: rgb(var(--green-2-rgb) / 0.4);
+  --border-warning: var(--amber);
+  --border-warning-hover: var(--amber);
+  --border-warning-disabled: var(--amber-bg);
+  --border-critical: var(--red);
+  --border-critical-hover: var(--red);
+  --border-critical-disabled: rgb(var(--red-rgb) / 0.4);
 
-  --content-primary: var(--neutral-white);
-  --content-primary-disabled: var(--neutral-white) / 0.3;
-  --content-secondary: var(--neutral-50);
-  --content-secondary-disabled: var(--neutral-50) / 0.3;
-  --content-tertiary: var(--neutral-white) / 0.5;
-  --content-tertiary-disabled: var(--neutral-white) / 0.15;
-  --content-inverse: var(--neutral-110);
-  --content-inverse-disabled: var(--neutral-110) / 0.3;
-  --content-secondary-inverse: var(--neutral-60);
-  --content-secondary-inverse-disabled: var(--neutral-60) / 0.3;
-  --content-fixed: var(--neutral-110);
-  --content-fixed-disabled: var(--neutral-110) / 0.3;
-  --content-inverse-fixed: var(--neutral-white);
-  --content-inverse-fixed-disabled: var(--neutral-white) / 0.3;
-  --content-brand: var(--primary-30);
-  --content-brand-hover: var(--primary-40);
-  --content-brand-active: var(--primary-50);
-  --content-brand-disabled: var(--primary-30) / 0.3;
-  --content-success: var(--success-50);
-  --content-success-hover: var(--success-40);
-  --content-success-active: var(--success-30);
-  --content-success-disabled: var(--success-50) / 0.3;
-  --content-warning: var(--warning-50);
-  --content-warning-hover: var(--warning-40);
-  --content-warning-active: var(--warning-30);
-  --content-warning-disabled: var(--warning-50) / 0.3;
-  --content-critical: var(--error-50);
-  --content-critical-hover: var(--error-40);
-  --content-critical-active: var(--error-30);
-  --content-critical-disabled: var(--error-50) / 0.3;
-
-  --border-primary: var(--neutral-90);
-  --border-primary-hover: var(--neutral-80);
-  --border-primary-disabled: var(--neutral-90) / 0.3;
-  --border-secondary: var(--neutral-80);
-  --border-secondary-hover: var(--neutral-70);
-  --border-secondary-disabled: var(--neutral-80) / 0.3;
-  --border-tertiary: var(--neutral-70);
-  --border-tertiary-hover: var(--neutral-60);
-  --border-tertiary-disabled: var(--neutral-70) / 0.3;
-  --border-inverse: var(--neutral-white);
-  --border-inverse-hover: var(--neutral-10);
-  --border-inverse-disabled: var(--neutral-white) / 0.3;
-  --border-elevated: var(--neutral-80);
-  --border-elevated-hover: var(--neutral-70);
-  --border-elevated-disabled: var(--neutral-80) / 0.3;
-  --border-brand: var(--primary-60);
-  --border-brand-hover: var(--primary-50);
-  --border-brand-disabled: var(--primary-60) / 0.3;
-  --border-brand-secondary: var(--primary-70) / 0.3;
-  --border-brand-secondary-hover: var(--primary-70) / 0.5;
-  --border-brand-secondary-disabled: var(--primary-90) / 0.3;
-  --border-success: var(--success-50);
-  --border-success-hover: var(--success-40);
-  --border-success-disabled: var(--success-50) / 0.3;
-  --border-warning: var(--warning-50);
-  --border-warning-hover: var(--warning-40);
-  --border-warning-disabled: var(--warning-50) / 0.3;
-  --border-critical: var(--error-50);
-  --border-critical-hover: var(--error-40);
-  --border-critical-disabled: var(--error-50) / 0.3;
-
-  --shadow-xs: 0px 2px 4px 0px rgb(var(--neutral-black) / 0.16);
-  --shadow-sm: 0px 4px 8px 0px rgb(var(--neutral-black) / 0.2);
-  --shadow-md: 0px 8px 16px 0px rgb(var(--neutral-black) / 0.22);
-  --shadow-lg: 0px 12px 24px 0px rgb(var(--neutral-black) / 0.25);
-  --drop-shadow-xs: 0px 2px 4px 0px rgb(var(--neutral-black) / 0.16);
-  --drop-shadow-sm: 0px 4px 8px 0px rgb(var(--neutral-black) / 0.2);
-  --drop-shadow-md: 0px 8px 16px 0px rgb(var(--neutral-black) / 0.22);
-  --drop-shadow-lg: 0px 12px 24px 0px rgb(var(--neutral-black) / 0.25);
+  /* Shadow / drop-shadow scale collapsed to none per Q9.
+     Existing `shadow-xs/sm/md/lg` and `drop-shadow-*` users render flat. */
+  --shadow-xs: 0 0 #0000;
+  --shadow-sm: 0 0 #0000;
+  --shadow-md: 0 0 #0000;
+  --shadow-lg: 0 0 #0000;
+  --drop-shadow-xs: 0 0 #0000;
+  --drop-shadow-sm: 0 0 #0000;
+  --drop-shadow-md: 0 0 #0000;
+  --drop-shadow-lg: 0 0 #0000;
 }
 
 /* ==========================================================================
-   Shadcn/UI compatibility (map to semantic tokens)
+   Shadcn/UI compatibility (mapped to Pencil tokens per §1.3)
    ========================================================================== */
 :root {
-  --radius: 0.625rem;
-  --background: rgb(var(--bg-primary));
-  --foreground: rgb(var(--content-primary));
-  --card: rgb(var(--bg-surface-elevated));
-  --card-foreground: rgb(var(--content-primary));
-  --popover: rgb(var(--bg-surface-elevated));
-  --popover-foreground: rgb(var(--content-primary));
-  --primary: rgb(var(--primary-60));
-  --primary-foreground: rgb(var(--neutral-white));
-  --secondary: rgb(var(--bg-fill-secondary));
-  --secondary-foreground: rgb(var(--content-primary));
-  --muted: rgb(var(--bg-fill));
-  --muted-foreground: rgb(var(--content-secondary));
-  --accent: rgb(var(--bg-fill-brand-secondary));
-  --accent-foreground: rgb(var(--content-brand));
-  --destructive: rgb(var(--error-50));
-  --destructive-foreground: rgb(var(--neutral-white));
-  --input: rgb(var(--border-primary));
-  --ring: rgb(var(--primary-60));
-  --sidebar: rgb(var(--bg-surface-brand));
-  --sidebar-foreground: rgb(var(--content-primary));
-  --sidebar-primary: rgb(var(--primary-70));
-  --sidebar-primary-foreground: rgb(var(--neutral-white));
-  --sidebar-accent: rgb(var(--primary-20));
-  --sidebar-accent-foreground: rgb(var(--content-brand));
-  --sidebar-border: rgb(var(--border-primary));
-  --sidebar-ring: rgb(var(--primary-60));
-  --border: rgb(var(--border-primary));
-}
+  /* Radius — Pencil scale: 0 / 4 / 6 / 8 / 12 / 999 */
+  --radius: 0.5rem;             /* 8px → cards/surfaces */
+  --radius-sm: 0.375rem;        /* 6px → buttons, inputs */
+  --radius-md: 0.5rem;          /* 8px → cards */
+  --radius-lg: 0.75rem;         /* 12px → KPI / dashboard widgets */
+  --radius-xl: 1rem;            /* 16px → hero blocks */
+  --radius-stamp: 3px;          /* status pills (Q8) */
 
-.dark {
-  --background: rgb(var(--bg-primary));
-  --foreground: rgb(var(--content-primary));
-  --card: rgb(var(--bg-surface-elevated));
-  --card-foreground: rgb(var(--content-primary));
-  --popover: rgb(var(--bg-surface-elevated));
-  --popover-foreground: rgb(var(--content-primary));
-  --primary: rgb(var(--primary-50));
-  --primary-foreground: rgb(var(--neutral-110));
-  --secondary: rgb(var(--bg-fill-secondary));
-  --secondary-foreground: rgb(var(--content-primary));
-  --muted: rgb(var(--bg-fill));
-  --muted-foreground: rgb(var(--content-secondary));
-  --accent: rgb(var(--bg-fill-brand-secondary));
-  --accent-foreground: rgb(var(--content-brand));
-  --destructive: rgb(var(--error-50));
-  --destructive-foreground: rgb(var(--neutral-white));
-  --input: rgb(var(--border-primary));
-  --ring: rgb(var(--primary-50));
-  --sidebar: rgb(var(--bg-surface));
-  --sidebar-foreground: rgb(var(--content-primary));
-  --sidebar-primary: rgb(var(--primary-40));
-  --sidebar-primary-foreground: rgb(var(--neutral-110));
-  --sidebar-accent: rgb(var(--bg-fill-secondary));
-  --sidebar-accent-foreground: rgb(var(--content-primary));
-  --sidebar-border: rgb(var(--border-primary));
-  --sidebar-ring: rgb(var(--primary-50));
-  --border: rgb(var(--border-primary));
+  --background: var(--paper);
+  --foreground: var(--ink-2);
+  --card: var(--white);
+  --card-foreground: var(--ink-2);
+  --popover: var(--white);
+  --popover-foreground: var(--ink-2);
+  --primary: var(--green-2);
+  --primary-foreground: var(--white);
+  --secondary: var(--paper-2);
+  --secondary-foreground: var(--ink-2);
+  --muted: var(--paper-2);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--green-bg);
+  --accent-foreground: var(--green-700);
+  --destructive: var(--red);
+  --destructive-foreground: var(--white);
+  --input: var(--rule-2);
+  --ring: var(--green-2);
+  --sidebar: var(--white);
+  --sidebar-foreground: var(--ink-2);
+  --sidebar-primary: var(--green-700);
+  --sidebar-primary-foreground: var(--white);
+  --sidebar-accent: var(--paper-2);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--green-2);
+  --border: var(--rule);
 }
 
 /* ==========================================================================
    Tailwind v4 @theme: design tokens → utilities
    ========================================================================== */
 @theme inline {
-  /* Primitives (primary = green) */
+  /* Pencil primitives */
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-green: var(--green);
+  --color-green-2: var(--green-2);
+  --color-green-200: var(--green-200);
+  --color-green-500: var(--green-500);
+  --color-green-600: var(--green-600);
+  --color-green-700: var(--green-700);
+  --color-green-900: var(--green-900);
+  --color-green-bg: var(--green-bg);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-white: var(--white);
+  --color-amber: var(--amber);
+  --color-amber-bg: var(--amber-bg);
+  --color-red: var(--red);
+  --color-red-bg: var(--red-bg);
+  --color-blue: var(--blue);
+  --color-blue-bg: var(--blue-bg);
+  --color-rule: var(--rule);
+  --color-rule-2: var(--rule-2);
+
+  /* Legacy primitive aliases (kept for Phase 4 migration window) */
   --color-primary-10: rgb(var(--primary-10));
   --color-primary-20: rgb(var(--primary-20));
-  --color-primary-30: rgb(var(--primary-30));
-  --color-primary-40: rgb(var(--primary-40));
   --color-primary-50: rgb(var(--primary-50));
   --color-primary-60: rgb(var(--primary-60));
   --color-primary-70: rgb(var(--primary-70));
-  --color-primary-80: rgb(var(--primary-80));
   --color-primary-90: rgb(var(--primary-90));
-  --color-primary-100: rgb(var(--primary-100));
   --color-neutral-white: rgb(var(--neutral-white));
   --color-neutral-10: rgb(var(--neutral-10));
   --color-neutral-20: rgb(var(--neutral-20));
@@ -447,64 +338,67 @@
   --color-neutral-100: rgb(var(--neutral-100));
   --color-neutral-110: rgb(var(--neutral-110));
   --color-neutral-black: rgb(var(--neutral-black));
+  --color-error-10: rgb(var(--error-10));
   --color-error-50: rgb(var(--error-50));
   --color-error-60: rgb(var(--error-60));
+  --color-success-10: rgb(var(--success-10));
   --color-success-50: rgb(var(--success-50));
   --color-success-60: rgb(var(--success-60));
+  --color-warning-10: rgb(var(--warning-10));
   --color-warning-50: rgb(var(--warning-50));
   --color-warning-60: rgb(var(--warning-60));
 
   /* Background semantic → bg-* */
-  --color-bg-primary: rgb(var(--bg-primary));
-  --color-bg-surface: rgb(var(--bg-surface));
-  --color-bg-surface-variant: rgb(var(--bg-surface-variant));
-  --color-bg-surface-secondary: rgb(var(--bg-surface-secondary));
-  --color-bg-surface-tertiary: rgb(var(--bg-surface-tertiary));
-  --color-bg-surface-inverse: rgb(var(--bg-surface-inverse));
-  --color-bg-surface-elevated: rgb(var(--bg-surface-elevated));
-  --color-bg-surface-brand: rgb(var(--bg-surface-brand));
-  --color-bg-surface-success: rgb(var(--bg-surface-success));
-  --color-bg-surface-warning: rgb(var(--bg-surface-warning));
-  --color-bg-surface-critical: rgb(var(--bg-surface-critical));
-  --color-bg-fill: rgb(var(--bg-fill));
-  --color-bg-fill-hover: rgb(var(--bg-fill-hover));
-  --color-bg-fill-active: rgb(var(--bg-fill-active));
-  --color-bg-fill-variant: rgb(var(--bg-fill-variant));
-  --color-bg-fill-secondary: rgb(var(--bg-fill-secondary));
-  --color-bg-fill-tertiary: rgb(var(--bg-fill-tertiary));
-  --color-bg-fill-inverse: rgb(var(--bg-fill-inverse));
-  --color-bg-fill-elevated: rgb(var(--bg-fill-elevated));
-  --color-bg-fill-brand: rgb(var(--bg-fill-brand));
-  --color-bg-fill-brand-hover: rgb(var(--bg-fill-brand-hover));
-  --color-bg-fill-brand-secondary: rgb(var(--bg-fill-brand-secondary));
-  --color-bg-fill-success: rgb(var(--bg-fill-success));
-  --color-bg-fill-warning: rgb(var(--bg-fill-warning));
-  --color-bg-fill-critical: rgb(var(--bg-fill-critical));
-  --color-bg-overlay: rgb(var(--bg-overlay));
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-surface-variant: var(--bg-surface-variant);
+  --color-bg-surface-secondary: var(--bg-surface-secondary);
+  --color-bg-surface-tertiary: var(--bg-surface-tertiary);
+  --color-bg-surface-inverse: var(--bg-surface-inverse);
+  --color-bg-surface-elevated: var(--bg-surface-elevated);
+  --color-bg-surface-brand: var(--bg-surface-brand);
+  --color-bg-surface-success: var(--bg-surface-success);
+  --color-bg-surface-warning: var(--bg-surface-warning);
+  --color-bg-surface-critical: var(--bg-surface-critical);
+  --color-bg-fill: var(--bg-fill);
+  --color-bg-fill-hover: var(--bg-fill-hover);
+  --color-bg-fill-active: var(--bg-fill-active);
+  --color-bg-fill-variant: var(--bg-fill-variant);
+  --color-bg-fill-secondary: var(--bg-fill-secondary);
+  --color-bg-fill-tertiary: var(--bg-fill-tertiary);
+  --color-bg-fill-inverse: var(--bg-fill-inverse);
+  --color-bg-fill-elevated: var(--bg-fill-elevated);
+  --color-bg-fill-brand: var(--bg-fill-brand);
+  --color-bg-fill-brand-hover: var(--bg-fill-brand-hover);
+  --color-bg-fill-brand-secondary: var(--bg-fill-brand-secondary);
+  --color-bg-fill-success: var(--bg-fill-success);
+  --color-bg-fill-warning: var(--bg-fill-warning);
+  --color-bg-fill-critical: var(--bg-fill-critical);
+  --color-bg-overlay: var(--bg-overlay);
 
   /* Content semantic → text-content-* */
-  --color-content-primary: rgb(var(--content-primary));
-  --color-content-secondary: rgb(var(--content-secondary));
-  --color-content-tertiary: rgb(var(--content-tertiary));
-  --color-content-inverse: rgb(var(--content-inverse));
-  --color-content-brand: rgb(var(--content-brand));
-  --color-content-success: rgb(var(--content-success));
-  --color-content-warning: rgb(var(--content-warning));
-  --color-content-critical: rgb(var(--content-critical));
+  --color-content-primary: var(--content-primary);
+  --color-content-secondary: var(--content-secondary);
+  --color-content-tertiary: var(--content-tertiary);
+  --color-content-inverse: var(--content-inverse);
+  --color-content-brand: var(--content-brand);
+  --color-content-success: var(--content-success);
+  --color-content-warning: var(--content-warning);
+  --color-content-critical: var(--content-critical);
 
   /* Border semantic → border-border-* */
-  --color-border-primary: rgb(var(--border-primary));
-  --color-border-secondary: rgb(var(--border-secondary));
-  --color-border-tertiary: rgb(var(--border-tertiary));
-  --color-border-inverse: rgb(var(--border-inverse));
-  --color-border-elevated: rgb(var(--border-elevated));
-  --color-border-brand: rgb(var(--border-brand));
-  --color-border-brand-secondary: rgb(var(--border-brand-secondary));
-  --color-border-success: rgb(var(--border-success));
-  --color-border-warning: rgb(var(--border-warning));
-  --color-border-critical: rgb(var(--border-critical));
+  --color-border-primary: var(--border-primary);
+  --color-border-secondary: var(--border-secondary);
+  --color-border-tertiary: var(--border-tertiary);
+  --color-border-inverse: var(--border-inverse);
+  --color-border-elevated: var(--border-elevated);
+  --color-border-brand: var(--border-brand);
+  --color-border-brand-secondary: var(--border-brand-secondary);
+  --color-border-success: var(--border-success);
+  --color-border-warning: var(--border-warning);
+  --color-border-critical: var(--border-critical);
 
-  /* Shadcn compatibility (background, foreground, etc.) */
+  /* Shadcn aliases */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -533,63 +427,92 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-border: var(--border);
 
-  /* Radius */
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Radius (Pencil scale) */
+  --radius-none: 0;
+  --radius-xs: 0.25rem;          /* 4px */
+  --radius-sm: 0.375rem;         /* 6px */
+  --radius-md: 0.5rem;           /* 8px */
+  --radius-lg: 0.75rem;          /* 12px */
+  --radius-xl: 1rem;             /* 16px */
+  --radius-stamp: 3px;
+  --radius-full: 9999px;
 
-  /* Shadow & drop shadow */
+  /* Shadow & drop shadow — flat per Q9; drawer is a one-off */
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
+  --shadow-drawer: var(--shadow-drawer);
   --drop-shadow-xs: var(--drop-shadow-xs);
   --drop-shadow-sm: var(--drop-shadow-sm);
   --drop-shadow-md: var(--drop-shadow-md);
   --drop-shadow-lg: var(--drop-shadow-lg);
 
-  /* Font size scale (display, heading, body, label) */
+  /* Font families (Q12: --font-ar declared but font not loaded yet) */
+  --font-sans: var(--font-sans, 'Plus Jakarta Sans', ui-sans-serif, system-ui,
+    sans-serif);
+  --font-mono: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  --font-ar: var(--font-ar, 'Noto Nastaliq Urdu', serif);
+
+  /* ----------------------------------------------------------------
+     Type scale.
+     - Sizes that match a Pencil specimen row are tagged in the comment.
+     - Steps without a Pencil row are kept (per Q6) so existing classes
+       (e.g. `text-heading-xl`) don't break; they retain prior pixel
+       values. Phase 4 components migrate to Pencil-aligned steps.
+     ---------------------------------------------------------------- */
   --text-display-md: 72px;
   --text-display-md--line-height: 84px;
   --text-display-sm: 60px;
   --text-display-sm--line-height: 72px;
-  --text-display-xs: 48px;
-  --text-display-xs--line-height: 56px;
+  --text-display-xs: 56px;            /* Pencil HERO 56/800 */
+  --text-display-xs--line-height: 64px;
+
   --text-heading-2xl: 40px;
   --text-heading-2xl--line-height: 48px;
-  --text-heading-xl: 36px;
+  --text-heading-xl: 36px;            /* Pencil H1 36/800 */
   --text-heading-xl--line-height: 44px;
   --text-heading-lg: 32px;
   --text-heading-lg--line-height: 40px;
-  --text-heading-md: 28px;
-  --text-heading-md--line-height: 36px;
+  --text-heading-md: 26px;            /* Pencil H2 26/700 */
+  --text-heading-md--line-height: 32px;
   --text-heading-sm: 24px;
   --text-heading-sm--line-height: 32px;
-  --text-heading-xs: 20px;
+  --text-heading-xs: 20px;            /* Pencil H3 20/700 */
   --text-heading-xs--line-height: 24px;
+
   --text-body-xl: 20px;
   --text-body-xl--line-height: 28px;
   --text-body-lg: 18px;
   --text-body-lg--line-height: 28px;
-  --text-body-md: 16px;
+  --text-body-md: 16px;               /* Pencil BODY 16/400 */
   --text-body-md--line-height: 24px;
-  --text-body-sm: 14px;
+  --text-body-sm: 14px;               /* Pencil SMALL 14/400 */
   --text-body-sm--line-height: 20px;
-  --text-body-xs: 12px;
+  --text-body-xs: 12px;               /* Pencil CAPTION 12/400 */
   --text-body-xs--line-height: 16px;
+
   --text-label-2xl: 20px;
   --text-label-2xl--line-height: 24px;
   --text-label-xl: 18px;
   --text-label-xl--line-height: 24px;
-  --text-label-lg: 16px;
+  --text-label-lg: 16px;              /* Buttons */
   --text-label-lg--line-height: 20px;
-  --text-label-md: 14px;
+  --text-label-md: 14px;              /* Default button label */
   --text-label-md--line-height: 20px;
   --text-label-sm: 12px;
   --text-label-sm--line-height: 16px;
-  --text-label-xs: 11px;
+  --text-label-xs: 11px;              /* Pencil MONO LABEL 11/600 */
   --text-label-xs--line-height: 16px;
+
+  /* Pencil MONO NUMERIC family (NEW) */
+  --text-numeric-md: 17px;
+  --text-numeric-md--line-height: 24px;
+  --text-numeric-sm: 14px;
+  --text-numeric-sm--line-height: 20px;
+
+  /* Tracking helpers for mono labels / stamps */
+  --tracking-mono-label: 0.08em;
 }
 
 @layer base {
@@ -598,5 +521,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
 }

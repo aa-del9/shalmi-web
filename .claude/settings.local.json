@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/Moeed 8th Sem/Fyp/Code/shalmi-web/Pencil-Design/**)",
+      "Read(//d/Moeed 8th Sem/Fyp/Code/shalmi-web/Pencil Design//**)"
+    ]
+  }
+}
