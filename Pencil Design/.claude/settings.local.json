@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sL \"https://api.anthropic.com/v1/design/h/nFDMbcCuq5uKca-67bkwaQ\" -o /tmp/design.bin)",
+      "Read(//tmp/**)"
+    ]
+  }
+}
