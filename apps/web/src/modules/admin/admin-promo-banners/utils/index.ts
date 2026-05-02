@@ -1,5 +1,50 @@
-import { Banner } from '../types';
+import type { promotionalBanners } from '@repo/database';
+import { deriveBannerState, type Banner } from '../types';
 
+type Row = typeof promotionalBanners.$inferSelect;
+
+export function rowToBanner(row: Row): Banner {
+  const startsAt =
+    row.startsAt instanceof Date
+      ? row.startsAt.toISOString()
+      : row.startsAt
+        ? new Date(row.startsAt).toISOString()
+        : null;
+  const endsAt =
+    row.endsAt instanceof Date
+      ? row.endsAt.toISOString()
+      : row.endsAt
+        ? new Date(row.endsAt).toISOString()
+        : null;
+  const status = (row.status ?? 'paused') as Banner['status'];
+  return {
+    id: row.id,
+    title: row.title,
+    internalName: row.internalName ?? null,
+    eyebrow: row.eyebrow ?? null,
+    ctaLabel: row.ctaLabel ?? null,
+    imageUrl: row.imageUrl,
+    targetUrl: row.targetUrl ?? null,
+    position: (row.position ?? 'hero') as Banner['position'],
+    status,
+    startsAt,
+    endsAt,
+    isActive: row.isActive,
+    displayOrder: row.displayOrder,
+    derivedState: deriveBannerState({ status, startsAt, endsAt }),
+    createdAt:
+      row.createdAt instanceof Date
+        ? row.createdAt.toISOString()
+        : (row.createdAt as unknown as string),
+    updatedAt:
+      row.updatedAt instanceof Date
+        ? row.updatedAt.toISOString()
+        : (row.updatedAt as unknown as string),
+  };
+}
+
+// Legacy bulk-PUT comparator. Kept for the unchanged
+// `/api/admin/banners/bulk` endpoint; not used by the revamped UI.
 export function normalizeForCompare(banners: Banner[]) {
   return banners
     .slice()
