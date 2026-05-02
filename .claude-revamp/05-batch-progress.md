@@ -11,6 +11,9 @@
 2026-05-03T03:14Z | admin-vendors | SHIPPED | 2269710
 2026-05-03T03:36Z | admin-banners | SHIPPED | 228a5f4
 2026-05-03T03:54Z | admin-dashboard | SHIPPED | 1d531c6
+2026-05-03T05:25Z | buyer-product | STOPPED | code complete (commit 025ce17); smoke gate blocked on dev-DB migration 0009 apply
+2026-05-03T05:30Z | buyer-cart | STOPPED | code complete (commit ff77c96); populated-cart smoke pending DB migration 0009 (empty-state smoke passes)
+2026-05-03T05:35Z | buyer-checkout | STOPPED | code complete (commit 0981401); smoke pending DB migration 0009 apply
 
 ---
 
