@@ -17,7 +17,7 @@ export default function HomePage() {
   // Each section is a Server Component that fetches its own cached data.
   // Composition order matches Pencil bid1Y / X0SzkF.
   return (
-    <div className="flex flex-col bg-paper pb-8">
+    <div className="bg-paper flex flex-col">
       <HomeHeroSection />
       <HomeCategoriesGrid />
       <HomePopularSection />

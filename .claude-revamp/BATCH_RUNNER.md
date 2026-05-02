@@ -146,3 +146,12 @@ to `.claude-revamp/05-batch-progress.md` in the form:
 `<timestamp> | <slug> | STOPPED | <one-line reason>`
 
 This is your batch ledger. Append-only.
+
+The STATUS.md file you write must include a placeholder line:
+
+## Resolution
+
+(none yet — operator will fill this in once unblocked)
+
+The runner will pick up the screen for retry only after this section
+contains real content.

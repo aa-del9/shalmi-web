@@ -17,9 +17,9 @@ export default function StorefrontLayout({ children }: StorefrontLayoutProps) {
           the existing per-screen mobile chrome (e.g. buyer-orders' app
           bar) remains the topmost element. */}
       <UtilStrip />
-      <Subnav />
       <StorefrontHeader />
-      <main className="min-h-screen bg-paper">{children}</main>
+      <Subnav />
+      <main className="bg-paper min-h-screen">{children}</main>
       <StorefrontFooter />
     </>
   );
