@@ -5,6 +5,8 @@ export type StorefrontProduct = {
   name: string;
   slug: string;
   images: ProductImageRecord[];
-  weightGrams: number;
+  packWeightGrams: number;
+  packSize: number;
+  unitLabel: string | null;
   lowestPriceCents: number;
 };

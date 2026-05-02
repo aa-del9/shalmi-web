@@ -64,6 +64,13 @@
       "when": 1777749601699,
       "tag": "0008_fine_leo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1777836001000,
+      "tag": "0009_pack_pricing",
+      "breakpoints": true
     }
   ]
 }

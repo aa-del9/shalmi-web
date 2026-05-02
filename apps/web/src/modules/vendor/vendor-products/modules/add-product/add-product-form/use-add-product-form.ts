@@ -41,14 +41,20 @@ export const useAddProductForm = ({ productId }: UseAddProductFormProps) => {
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'tiers',
+    name: 'packTiers',
   });
 
   const handleAddTier = () => {
-    const tiers = form.getValues('tiers');
+    const tiers = form.getValues('packTiers');
     const last = tiers[tiers.length - 1];
-    const nextMin = last ? (last.maxQty ?? last.minQty) + 1 : 1;
-    append({ minQty: nextMin, maxQty: null, price: 0 });
+    const nextPackQty = last ? last.packQty + 1 : 1;
+    const nextPrice = last ? Math.max(1, last.pricePerPackCents - 1) : 0;
+    append({
+      packQty: nextPackQty,
+      pricePerPackCents: nextPrice,
+      badge: null,
+      isDefault: false,
+    });
   };
 
   const onSubmit = form.handleSubmit(async (data) => {

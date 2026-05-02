@@ -6,13 +6,20 @@ export function mapDetailToForm(
 ): CreateProductInput {
   return {
     name: detail.name,
-    weightGrams: detail.weightGrams,
+    packWeightGrams: detail.packWeightGrams,
+    packSize: detail.packSize,
+    unitWeightGrams: detail.unitWeightGrams ?? null,
+    unitLabel: detail.unitLabel ?? null,
+    packMrpCents: detail.packMrpCents ?? null,
+    packWholesalePriceCents: detail.packWholesalePriceCents,
+    pricePerUnitCents: detail.pricePerUnitCents ?? null,
     stock: detail.stock,
     images: detail.images ?? [],
-    tiers: (detail.tiers ?? []).map((t) => ({
-      minQty: t.minQty,
-      maxQty: t.maxQty,
-      price: t.price,
+    packTiers: (detail.packTiers ?? []).map((t) => ({
+      packQty: t.packQty,
+      pricePerPackCents: t.pricePerPackCents,
+      badge: t.badge,
+      isDefault: t.isDefault,
     })),
     categoryIds: detail.categoryIds ?? [],
   };

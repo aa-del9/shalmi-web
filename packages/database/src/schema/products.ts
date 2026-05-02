@@ -15,7 +15,19 @@ export const products = pgTable('products', {
     .references(() => vendors.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
-  weightGrams: integer('weight_grams').notNull(),
+  // Pack-pricing model (Batch 3 schema migration). `pack_weight_grams` is
+  // per-pack net weight (used by checkout shipping math). `unit_weight_grams`
+  // is per-unit (what one bottle/sachet inside the pack weighs); rendered
+  // in the PDP title eyebrow.
+  packWeightGrams: integer('pack_weight_grams').notNull(),
+  packSize: integer('pack_size').notNull().default(1),
+  unitWeightGrams: integer('unit_weight_grams'),
+  unitLabel: text('unit_label'),
+  packMrpCents: integer('pack_mrp_cents'),
+  packWholesalePriceCents: integer('pack_wholesale_price_cents')
+    .notNull()
+    .default(0),
+  pricePerUnitCents: integer('price_per_unit_cents'),
   images: jsonb('images').$type<ProductImageRecord[]>().notNull().default([]),
   stock: integer('stock').notNull().default(0),
   version: integer('version').notNull().default(0),

@@ -17,6 +17,14 @@ import { Checkbox } from '@repo/ui/components/checkbox';
 import { useAddProductForm } from './use-add-product-form';
 import { AddProductFormProps } from '../types';
 
+/**
+ * Vendor add-product form — pack-pricing edition.
+ *
+ * Note: this is a minimum-compatibility update for Batch 3 (which lands
+ * the pack-pricing schema). The visual revamp of this form to match the
+ * Pencil "PRICING / Bundle pricing" inline-form per `vendor-products`
+ * gap-analysis is owned by Batch 4.
+ */
 export function AddProductForm({ productId }: AddProductFormProps = {}) {
   const {
     form,
@@ -65,25 +73,151 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
             </FieldContent>
           </Field>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="product-packSize">Pack size (units)</FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-packSize"
+                  type="number"
+                  min={1}
+                  {...form.register('packSize', { valueAsNumber: true })}
+                  disabled={isPending}
+                  aria-invalid={Boolean(form.formState.errors.packSize)}
+                />
+                <FieldError errors={[form.formState.errors.packSize]} />
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="product-unitLabel">Pack noun</FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-unitLabel"
+                  placeholder="e.g. carton, pack, bag"
+                  value={form.watch('unitLabel') ?? ''}
+                  onChange={(e) =>
+                    form.setValue(
+                      'unitLabel',
+                      e.target.value === '' ? null : e.target.value,
+                      { shouldValidate: true }
+                    )
+                  }
+                  disabled={isPending}
+                />
+              </FieldContent>
+            </Field>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="product-packWeightGrams">
+                Pack net weight (grams)
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-packWeightGrams"
+                  type="number"
+                  min={1}
+                  {...form.register('packWeightGrams', { valueAsNumber: true })}
+                  disabled={isPending}
+                  aria-invalid={Boolean(form.formState.errors.packWeightGrams)}
+                />
+                <FieldError errors={[form.formState.errors.packWeightGrams]} />
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="product-unitWeightGrams">
+                Per-unit weight (grams)
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-unitWeightGrams"
+                  type="number"
+                  min={1}
+                  value={form.watch('unitWeightGrams') ?? ''}
+                  onChange={(e) =>
+                    form.setValue(
+                      'unitWeightGrams',
+                      e.target.value === '' ? null : Number(e.target.value),
+                      { shouldValidate: true }
+                    )
+                  }
+                  disabled={isPending}
+                />
+              </FieldContent>
+            </Field>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="product-mrp">MRP (cents)</FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-mrp"
+                  type="number"
+                  min={1}
+                  placeholder="Optional"
+                  value={form.watch('packMrpCents') ?? ''}
+                  onChange={(e) =>
+                    form.setValue(
+                      'packMrpCents',
+                      e.target.value === '' ? null : Number(e.target.value),
+                      { shouldValidate: true }
+                    )
+                  }
+                  disabled={isPending}
+                />
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="product-wholesale">
+                Wholesale per pack (cents)
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-wholesale"
+                  type="number"
+                  min={1}
+                  {...form.register('packWholesalePriceCents', {
+                    valueAsNumber: true,
+                  })}
+                  disabled={isPending}
+                  aria-invalid={Boolean(
+                    form.formState.errors.packWholesalePriceCents
+                  )}
+                />
+                <FieldError
+                  errors={[form.formState.errors.packWholesalePriceCents]}
+                />
+              </FieldContent>
+            </Field>
+          </div>
+
           <Field>
-            <FieldLabel htmlFor="product-weightGrams">
-              Weight (grams)
+            <FieldLabel htmlFor="product-pricePerUnit">
+              Price per unit (cents)
             </FieldLabel>
             <FieldContent>
               <Input
-                id="product-weightGrams"
+                id="product-pricePerUnit"
                 type="number"
                 min={1}
-                {...form.register('weightGrams', { valueAsNumber: true })}
+                placeholder="Optional caption value"
+                value={form.watch('pricePerUnitCents') ?? ''}
+                onChange={(e) =>
+                  form.setValue(
+                    'pricePerUnitCents',
+                    e.target.value === '' ? null : Number(e.target.value),
+                    { shouldValidate: true }
+                  )
+                }
                 disabled={isPending}
-                aria-invalid={Boolean(form.formState.errors.weightGrams)}
               />
-              <FieldError errors={[form.formState.errors.weightGrams]} />
             </FieldContent>
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="product-stock">Stock</FieldLabel>
+            <FieldLabel htmlFor="product-stock">Stock (in packs)</FieldLabel>
             <FieldContent>
               <Input
                 id="product-stock"
@@ -117,7 +251,8 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
                         <Checkbox
                           checked={checked}
                           onCheckedChange={(c) => {
-                            const current = form.getValues('categoryIds') ?? [];
+                            const current =
+                              form.getValues('categoryIds') ?? [];
                             if (c === true) {
                               form.setValue(
                                 'categoryIds',
@@ -187,7 +322,7 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">Pricing tiers</h3>
+            <h3 className="text-sm font-medium">Bundle pricing</h3>
             <Button
               type="button"
               variant="secondary"
@@ -195,85 +330,114 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
               onClick={handleAddTier}
               disabled={isPending}
             >
-              Add Pricing Tier
+              Add tier
             </Button>
           </div>
 
-          <FieldError errors={[form.formState.errors.tiers]} />
+          <FieldError errors={[form.formState.errors.packTiers]} />
 
           <div className="space-y-3">
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="flex flex-wrap items-end gap-2 rounded-md border p-3"
+                className="space-y-2 rounded-md border p-3"
               >
-                <Field className="min-w-[80px] flex-1">
-                  <FieldLabel className="text-xs">Min qty</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      type="number"
-                      min={1}
-                      {...form.register(`tiers.${index}.minQty`, {
-                        valueAsNumber: true,
-                      })}
+                <div className="flex flex-wrap items-end gap-2">
+                  <Field className="min-w-[80px] flex-1">
+                    <FieldLabel className="text-xs">Pack qty</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        type="number"
+                        min={1}
+                        {...form.register(`packTiers.${index}.packQty`, {
+                          valueAsNumber: true,
+                        })}
+                        disabled={isPending}
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field className="min-w-[120px] flex-1">
+                    <FieldLabel className="text-xs">
+                      Per-pack price (cents)
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        type="number"
+                        min={1}
+                        {...form.register(
+                          `packTiers.${index}.pricePerPackCents`,
+                          {
+                            valueAsNumber: true,
+                          }
+                        )}
+                        disabled={isPending}
+                      />
+                    </FieldContent>
+                  </Field>
+                  {index > 0 && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => remove(index)}
                       disabled={isPending}
-                      aria-invalid={Boolean(
-                        form.formState.errors.tiers?.[index]?.minQty
-                      )}
-                    />
-                  </FieldContent>
-                </Field>
-                <Field className="min-w-[80px] flex-1">
-                  <FieldLabel className="text-xs">Max qty</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      type="number"
-                      min={1}
-                      placeholder="Leave blank for 'and above'"
-                      value={form.watch(`tiers.${index}.maxQty`) ?? ''}
-                      onChange={(e) => {
-                        const v = e.target.value;
+                      aria-label="Remove tier"
+                    >
+                      <Trash2Icon className="size-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-4 pt-1">
+                  <label className="flex items-center gap-2 text-xs">
+                    <Checkbox
+                      checked={
+                        form.watch(`packTiers.${index}.badge`) === 'save'
+                      }
+                      onCheckedChange={(c) =>
                         form.setValue(
-                          `tiers.${index}.maxQty`,
-                          v === '' ? null : Number(v),
+                          `packTiers.${index}.badge`,
+                          c === true ? 'save' : null,
                           { shouldValidate: true }
-                        );
+                        )
+                      }
+                      disabled={isPending}
+                    />
+                    Show &ldquo;SAVE&rdquo; badge
+                  </label>
+                  <label className="flex items-center gap-2 text-xs">
+                    <Checkbox
+                      checked={
+                        form.watch(`packTiers.${index}.badge`) === 'best'
+                      }
+                      onCheckedChange={(c) =>
+                        form.setValue(
+                          `packTiers.${index}.badge`,
+                          c === true ? 'best' : null,
+                          { shouldValidate: true }
+                        )
+                      }
+                      disabled={isPending}
+                    />
+                    Show &ldquo;BEST&rdquo; badge
+                  </label>
+                  <label className="flex items-center gap-2 text-xs">
+                    <Checkbox
+                      checked={form.watch(`packTiers.${index}.isDefault`) === true}
+                      onCheckedChange={(c) => {
+                        const tiers = form.getValues('packTiers');
+                        const updated = tiers.map((t, i) => ({
+                          ...t,
+                          isDefault: i === index ? c === true : false,
+                        }));
+                        form.setValue('packTiers', updated, {
+                          shouldValidate: true,
+                        });
                       }}
                       disabled={isPending}
-                      aria-invalid={Boolean(
-                        form.formState.errors.tiers?.[index]?.maxQty
-                      )}
                     />
-                  </FieldContent>
-                </Field>
-                <Field className="min-w-[80px] flex-1">
-                  <FieldLabel className="text-xs">Price (cents)</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      type="number"
-                      min={1}
-                      {...form.register(`tiers.${index}.price`, {
-                        valueAsNumber: true,
-                      })}
-                      disabled={isPending}
-                      aria-invalid={Boolean(
-                        form.formState.errors.tiers?.[index]?.price
-                      )}
-                    />
-                  </FieldContent>
-                </Field>
-                {index > 0 && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => remove(index)}
-                    disabled={isPending}
-                    aria-label="Remove tier"
-                  >
-                    <Trash2Icon className="size-4" />
-                  </Button>
-                )}
+                    Default tier on PDP
+                  </label>
+                </div>
               </div>
             ))}
           </div>

@@ -26,6 +26,10 @@ export const orders = pgTable('orders', {
 
   status: text('status').notNull(), // 'processing', 'partially_fulfilled', 'completed'
 
+  // Optional rider notes captured at checkout (max 500 chars enforced at
+  // API; per buyer-checkout gap-analysis Q3).
+  riderNotes: text('rider_notes'),
+
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

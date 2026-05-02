@@ -1,3 +1,5 @@
+import type { PackTierBadge } from '@repo/schemas/catalog/product';
+
 export type ProductImageItem = {
   url: string;
   blurHash: string | null;
@@ -7,21 +9,28 @@ export type VendorProductListItem = {
   id: string;
   name: string;
   slug: string;
-  weightGrams: number;
+  packWeightGrams: number;
+  packSize: number;
+  unitLabel: string | null;
   images: ProductImageItem[];
   stock: number;
   createdAt: string;
   categoryIds: string[];
 };
 
-export type VendorProductTierItem = {
+export type VendorProductPackTierItem = {
   id?: string;
-  minQty: number;
-  maxQty: number | null;
-  price: number;
+  packQty: number;
+  pricePerPackCents: number;
+  badge: PackTierBadge | null;
+  isDefault: boolean;
 };
 
 export type VendorProductDetail = VendorProductListItem & {
-  tiers: VendorProductTierItem[];
+  unitWeightGrams: number | null;
+  packMrpCents: number | null;
+  packWholesalePriceCents: number;
+  pricePerUnitCents: number | null;
+  packTiers: VendorProductPackTierItem[];
   categoryIds: string[];
 };

@@ -2,9 +2,22 @@ import { CreateProductInput } from '@repo/schemas/catalog/product';
 
 export const createProductDefaultValues: CreateProductInput = {
   name: '',
-  weightGrams: 500,
+  packWeightGrams: 500,
+  packSize: 1,
+  unitWeightGrams: null,
+  unitLabel: null,
+  packMrpCents: null,
+  packWholesalePriceCents: 0,
+  pricePerUnitCents: null,
   stock: 0,
   images: [],
-  tiers: [{ minQty: 1, maxQty: null, price: 0 }],
+  packTiers: [
+    {
+      packQty: 1,
+      pricePerPackCents: 100,
+      badge: null,
+      isDefault: true,
+    },
+  ],
   categoryIds: [],
 };

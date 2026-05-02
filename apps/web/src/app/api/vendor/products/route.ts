@@ -4,7 +4,7 @@ import { eq, desc, inArray } from 'drizzle-orm';
 import {
   db,
   products,
-  productPriceTiers,
+  productPackTiers,
   productCategories,
 } from '@repo/database';
 import { createProductSchema } from '@repo/schemas/catalog/product';
@@ -32,7 +32,9 @@ export async function GET(req: NextRequest) {
         id: products.id,
         name: products.name,
         slug: products.slug,
-        weightGrams: products.weightGrams,
+        packWeightGrams: products.packWeightGrams,
+        packSize: products.packSize,
+        unitLabel: products.unitLabel,
         images: products.images,
         stock: products.stock,
         createdAt: products.createdAt,
@@ -107,8 +109,20 @@ export async function POST(req: NextRequest) {
       return jsonError(message, 400);
     }
 
-    const { name, weightGrams, images, stock, tiers, categoryIds } =
-      parsed.data;
+    const {
+      name,
+      packWeightGrams,
+      packSize,
+      unitWeightGrams,
+      unitLabel,
+      packMrpCents,
+      packWholesalePriceCents,
+      pricePerUnitCents,
+      images,
+      stock,
+      packTiers,
+      categoryIds,
+    } = parsed.data;
     const slug = slugForProduct(name);
 
     const [inserted] = await db.transaction(async (tx) => {
@@ -118,7 +132,13 @@ export async function POST(req: NextRequest) {
           vendorId,
           name,
           slug,
-          weightGrams,
+          packWeightGrams,
+          packSize,
+          unitWeightGrams: unitWeightGrams ?? null,
+          unitLabel: unitLabel ?? null,
+          packMrpCents: packMrpCents ?? null,
+          packWholesalePriceCents,
+          pricePerUnitCents: pricePerUnitCents ?? null,
           images: images as { url: string; blurHash: string | null }[],
           stock: stock ?? 0,
         })
@@ -128,14 +148,15 @@ export async function POST(req: NextRequest) {
         throw new Error('Product insert did not return id');
       }
 
-      const mappedTiers = tiers.map((tier) => ({
-        productId: product.id,
-        minQty: tier.minQty,
-        maxQty: tier.maxQty,
-        priceCents: tier.price,
-      }));
-
-      await tx.insert(productPriceTiers).values(mappedTiers);
+      await tx.insert(productPackTiers).values(
+        packTiers.map((tier) => ({
+          productId: product.id,
+          packQty: tier.packQty,
+          pricePerPackCents: tier.pricePerPackCents,
+          badge: tier.badge ?? null,
+          isDefault: tier.isDefault ?? false,
+        }))
+      );
 
       if (categoryIds && categoryIds.length > 0) {
         await tx.insert(productCategories).values(

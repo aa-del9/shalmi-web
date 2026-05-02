@@ -4,39 +4,26 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Package as PackageIcon, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { cn } from '@repo/ui/lib/utils';
 
 import { useCartStore } from '@/modules/cart/stores/cart-store';
-import type { CartItemInput } from '@/modules/cart/types';
+import type { CartItemInput, PackTier } from '@/modules/cart/types';
+import { findDefaultTier, buildPackEyebrow } from '@/modules/cart/utils/pack-pricing';
 
 import { formatRupeesFromCents } from '@/modules/core/utils/format-price';
 import type { StorefrontProduct } from '@/modules/storefront/types';
 
 interface Prod1CardProps {
   product: StorefrontProduct;
-  /** Optional pencil eyebrow override ("HOT", "-12%"). Hidden in Batch 1
-   *  by default — schema for list/sale price + isTrending lands in Batch 3/4. */
+  /** Optional pencil eyebrow override ("HOT", "-12%"). */
   badgeText?: string | null;
-  /** Override eyebrow above name ("TAPAL", "DALDA"). Until brand schema
-   *  ships, vendors → eyebrow when supplied; otherwise "SHALMI WAREHOUSE". */
+  /** Override eyebrow above name ("TAPAL", "DALDA"). */
   vendorEyebrow?: string | null;
 }
 
 const DEFAULT_VENDOR_EYEBROW = 'SHALMI WAREHOUSE';
-
-function buildPackEyebrow(weightGrams: number): string {
-  // Pencil shows pack metadata like "950 G · CARTON × 12". The full pack
-  // model lands with the Batch 3 pack-pricing migration (gap-analysis Q11
-  // STUBBED). For Batch 1 we render only what we have today: weight in
-  // grams or kg, with a generic "PACK" suffix.
-  // TODO(post-v1): fold in pack size + packagingUnit once schema lands.
-  if (weightGrams >= 1000) {
-    const kg = Math.round((weightGrams / 1000) * 10) / 10;
-    return `${kg} KG · PACK`;
-  }
-  return `${weightGrams} G · PACK`;
-}
 
 export function Prod1Card({
   product,
@@ -46,7 +33,6 @@ export function Prod1Card({
   const firstImage = product.images[0];
   const addItem = useCartStore((s) => s.addItem);
   const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(false);
 
   async function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
@@ -64,28 +50,32 @@ export function Prod1Card({
         name: string;
         slug: string;
         vendorId: string;
+        vendorName: string | null;
         images: { url: string; blurHash: string | null }[];
-        weightGrams: number;
+        packWeightGrams: number;
+        packSize: number;
+        unitLabel: string | null;
         stock: number;
-        priceTiers: {
-          minQty: number;
-          maxQty: number | null;
-          priceCents: number;
-        }[];
+        packTiers: PackTier[];
       };
       if (p.stock <= 0) return;
+      const defaultTier = findDefaultTier(p.packTiers);
+      if (!defaultTier) return;
       const cartInput: CartItemInput = {
         productId: p.id,
         name: p.name,
         slug: p.slug,
         image: p.images[0] ?? null,
-        weightGrams: p.weightGrams,
+        packWeightGrams: p.packWeightGrams,
+        packSize: p.packSize,
+        unitLabel: p.unitLabel,
         vendorId: p.vendorId,
-        priceTiers: p.priceTiers,
+        vendorName: p.vendorName ?? '',
+        packTiers: p.packTiers,
+        selectedPackQty: defaultTier.packQty,
       };
       addItem(cartInput, 1);
-      setAdded(true);
-      window.setTimeout(() => setAdded(false), 1500);
+      toast.success('Added to cart');
     } finally {
       setAdding(false);
     }
@@ -98,11 +88,7 @@ export function Prod1Card({
         className="group flex flex-col"
         prefetch={false}
       >
-        {/* Image / placeholder area */}
         <div className="relative flex h-[200px] flex-col justify-between overflow-hidden bg-paper-2 p-3.5">
-          {/* Top row: discount badge (left) + heart (right). Both hidden
-              in Batch 1 — wishlist DEFERRED (Q12), discount needs list-vs-
-              sale price (Q11 → pack-pricing Batch 3). */}
           {badgeText ? (
             <div className="flex items-start justify-between">
               <span className="rounded-xs bg-red px-2 py-1 font-mono text-[11px] font-bold text-white">
@@ -112,7 +98,6 @@ export function Prod1Card({
             </div>
           ) : null}
 
-          {/* Centered package glyph or product image */}
           <div className="flex flex-1 items-center justify-center">
             {firstImage ? (
               <div className="relative h-full w-full">
@@ -133,31 +118,30 @@ export function Prod1Card({
             )}
           </div>
 
-          {/* Bottom: vendor / brand eyebrow */}
           <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-ink-3">
             {vendorEyebrow ?? DEFAULT_VENDOR_EYEBROW}
           </span>
         </div>
 
-        {/* Body */}
         <div className="flex flex-col gap-2 p-3.5">
           <h3 className="line-clamp-2 text-sm font-bold leading-snug text-ink">
             {product.name}
           </h3>
           <p className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-ink-3">
-            {buildPackEyebrow(product.weightGrams)}
+            {buildPackEyebrow({
+              packWeightGrams: product.packWeightGrams,
+              packSize: product.packSize,
+              unitLabel: product.unitLabel,
+            })}
           </p>
           <div className="flex items-end gap-2">
             <span className="font-mono text-lg font-extrabold text-ink">
               {formatRupeesFromCents(product.lowestPriceCents)}
             </span>
-            {/* TODO(post-v1): show strikethrough list price once pack
-                pricing migration lands (gap-analysis Q11). */}
           </div>
         </div>
       </Link>
 
-      {/* Add button */}
       <div className="px-3.5 pb-3.5">
         <button
           type="button"
@@ -169,9 +153,7 @@ export function Prod1Card({
             'disabled:cursor-not-allowed disabled:opacity-60'
           )}
         >
-          {added ? (
-            'Added'
-          ) : adding ? (
+          {adding ? (
             '…'
           ) : (
             <>
