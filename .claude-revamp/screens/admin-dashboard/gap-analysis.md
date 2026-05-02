@@ -352,19 +352,27 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
    - **Question:** Is the brand mark + wordmark identical to the storefront brand, or is this a separate admin-only brand block? Should the ADMIN stamp use the existing `Stamp` primitive (`variant="neutral"` with white border on ink fill is non-standard — Pencil uses `#FFFFFF66` stroke, white text)?
    - **Plausible answers:** (a) reuse storefront brand component; (b) admin-only brand component; (c) new component shared across admin/vendor (vendor chrome has the same shape).
 
+   **Answer:** New shared component across admin/vendor (vendor chrome has the same shape). Reduces duplication.
+
 2. **Q-SEARCH-1 — Admin global search behavior.**
    - **Observed:** Pencil shows a 320w dark search field with placeholder "Search vendors, products, orders…" in the top bar. No code equivalent.
    - **Question:** What is the result behavior — inline dropdown of grouped results, or push to a `/admin/search?q=…` route? What entities does it search (vendors, products, orders only, or also categories / banners / users)?
    - **Plausible answers:** (a) inline dropdown grouped by entity; (b) full-page search results route; (c) entity-specific deep links (jump straight to /admin/vendors?q=…).
 
+   **Answer:** STUBBED — see 06-scope-cut.md feature: Search route `/search`. Implement with placeholder: Inline dropdown grouped by entity (vendors / products / orders) — simplest UX, mirrors typical admin UX. Add `// TODO(post-v1):` comment at every touch point.
+
 3. **Q-BELL-1 — Bell icon despite "ignore bell" answer.**
    - **Observed:** The Pencil top bar has a bell icon (36×36). User answer to 02 Q19 was "ignore More tab, and bell icon."
    - **Question:** Does "ignore" mean (a) drop the bell entirely from the implementation, (b) render the bell as a non-functional placeholder for visual fidelity, or (c) render and wire later?
+
+   **Answer:** DEFERRED — see 06-scope-cut.md feature: Notifications / bell icon (DROPPED in scope-cut). Do not implement this question's scope. UI placeholder: render visually inert (no badge, no surface).
 
 4. **Q-AVATAR-1 — Avatar + name + chev cluster.**
    - **Observed:** Pencil shows avatar (green-2 fill, "ZA" initials), full name "Zaid Ahmed", and `chevron-down`. Code today has `LogoutButton` only.
    - **Question:** Is the chev a dropdown trigger, and if so what items go in it? Pencil doesn't draw the dropdown contents. Should logout move from explicit chrome button into this dropdown?
    - **Plausible answers:** (a) avatar opens a dropdown with `Profile / Settings / Logout`; (b) avatar opens the storefront-style account drawer (see `EYc0L`); (c) avatar links to a `/admin/profile` page.
+
+   **Answer:** Avatar opens DropdownMenu with `Profile / Settings / Logout`; existing `LogoutButton` semantics moved into menu item.
 
 ### Sidebar
 
@@ -372,33 +380,49 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
    - **Observed:** Pencil sidebar splits items into OVERVIEW / CATALOG / OPERATIONS. Existing has one "Navigation" group.
    - **Question:** Should `ADMIN_NAV_ITEMS` change shape to `{ section, items: [...] }[]`, or remain flat with an optional `section` field per item?
 
+   **Answer:** STUBBED — see 06-scope-cut.md feature: Admin/Vendor chrome revamp (ink top bar, sectioned sidebar, mobile bottom tab bar). Implement with placeholder: `ADMIN_NAV_ITEMS` shape changes to `{ section, items: [...] }[]`. Add `// TODO(post-v1):` comment at every touch point.
+
 6. **Q-SB-2 — "Sales reports" nav item destination.**
    - **Observed:** New nav row with `chart-line` icon. No `/admin/sales-reports` route exists.
    - **Question:** Should this point to a placeholder route (404-able), or is the screen in scope for the revamp?
+
+   **Answer:** Routes to placeholder `/admin/sales-reports/page.tsx` (per scope, IN_SCOPE but undesigned → ships as "Coming soon" placeholder route).
 
 7. **Q-SB-3 — "Products" nav item destination.**
    - **Observed:** New admin-side `/admin/products`. Vendor side has `/vendor/products` already.
    - **Question:** What's the admin-side product surface — a read-only catalog browser across all vendors, or full product CRUD with vendor override? Does it reuse `/api/vendor/products` or need a new admin endpoint?
 
+   **Answer:** Read-only catalog browser at `/admin/products` reusing `GET /api/vendor/products` (joined across all vendors); placeholder shell while design pass lands.
+
 8. **Q-SB-4 — "Orders" nav item destination + badge count.**
    - **Observed:** New `/admin/orders` nav with mono "24" pill (ink fill).
    - **Question:** What does "24" represent — open orders, pending sub-orders, dispute count? Is the badge real-time (polled), per-render, or static?
+
+   **Answer:** Count of open `sub_orders` (`status IN ('pending','packed','handed_to_courier')`); polled via React Query (matches existing `useVendorOrdersQuery` 5s refetch pattern).
 
 9. **Q-SB-5 — "Banners" vs "Promo Banners" copy difference.**
    - **Observed:** Pencil label "Banners"; existing label "Promo Banners"; route stays `/admin/promo-banners`.
    - **Question:** Rename label to "Banners" only, or also rename the route?
 
+   **Answer:** Title-only rename in nav; keep route `/admin/promo-banners`.
+
 10. **Q-SB-6 — Categories icon.**
     - **Observed:** Pencil uses `folder-tree`; code uses `TagIcon`.
     - **Question:** Adopt `folder-tree` for visual fidelity, or keep `TagIcon`?
+
+    **Answer:** Adopt `folder-tree` lucide; cosmetic.
 
 11. **Q-SB-7 — 11th sidebar item label is missing in Pencil.**
     - **Observed:** Last sidebar row (`U7w55U`) contains only a `users` icon — no text label drawn (likely a Pencil omission).
     - **Question:** Confirm the label is "Users" / "Customers" / "Team" / something else, and confirm the destination route.
 
+    **Answer:** "Users" → `/admin/users` (per scope IN_SCOPE; placeholder route).
+
 12. **Q-SB-8 — Logout placement.**
     - **Observed:** Pencil sidebar has no explicit logout row; admin top bar has no explicit logout button. Existing layout puts `LogoutButton` in the header.
     - **Question:** Confirm logout moves into the avatar dropdown (Q-AVATAR-1) and the explicit header `LogoutButton` is removed.
+
+    **Answer:** Confirmed — logout moves into avatar dropdown; explicit header `LogoutButton` removed.
 
 ### Header
 
@@ -406,21 +430,31 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
     - **Observed:** Pencil title sub-line is "Performance for May 2026 · last sync 2 min ago" (dynamic data + cache-recency indicator). Existing copy is "Overview of your admin portal." (static).
     - **Question:** Is the sub-line wholly dynamic (range-month + last-sync time computed live), or partially static? If dynamic, is "last sync" the cache age of the analytics cache or the underlying DB read time?
 
+    **Answer:** Show "Performance for {currentMonth}" only (interpolated server-side); drop "last sync" until cache strategy lands.
+
 14. **Q-HDR-2 — Title size.**
     - **Observed:** Pencil "Dashboard" is 32/800 sans, letter-spacing -0.02. Existing uses Tailwind `text-heading-lg font-bold` (32/40 per token map; per 04 log heading-lg is 32 size with the existing line-height).
     - **Question:** Adopt 32/800 (heavier weight than current heading-lg's 700 default), or keep current heading-lg with `font-bold`? Is this a per-page heading style or a new "page-h1" token?
+
+    **Answer:** Adopt 32/800 sans, letter-spacing -0.02.
 
 15. **Q-RNG-1 — Range options.**
     - **Observed:** "Last 30 days" button with chev. No dropdown contents drawn.
     - **Question:** What are the available range presets (Today / 7d / 30d / This month / Last month / Custom)? Does "custom" open a date picker?
 
+    **Answer:** Today / 7 days / 30 days / This month / Last month / Custom (custom opens calendar). Most-common preset set.
+
 16. **Q-EXP-1 — Export CSV scope.**
     - **Observed:** "Export CSV" button. Scope not drawn.
     - **Question:** What gets exported — the recent-orders table (visible 7 rows), all orders in the selected range, or a different report (e.g. KPIs)?
 
+    **Answer:** DEFERRED — see 06-scope-cut.md feature: Statement / CSV downloads (vendor ledger PDFs, admin exports). Do not implement this question's scope. UI placeholder: render but inert.
+
 17. **Q-RPT-1 — "+ New report" destination.**
     - **Observed:** Green primary CTA. No reports model in DB; no destination drawn.
     - **Question:** Is this a placeholder for a future feature (defer), or does the revamp need to introduce a `reports` model and creation flow now?
+
+    **Answer:** Routes to `/admin/sales-reports/new` placeholder (Sales Reports IN_SCOPE per scope-cut).
 
 ### KPI cards
 
@@ -428,13 +462,19 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
     - **Observed:** Sales formatted as lakhs ("L" suffix); other monetary values in the page use full digits with South-Asian grouping ("Rs. 1,16,380").
     - **Question:** Should KPIs collapse to lakhs/crores when ≥1 lakh, or always show full digits? If conditional, what threshold?
 
+    **Answer:** STUBBED — see 06-scope-cut.md feature: Currency formatter (South-Asian grouping + lakh notation). Implement with placeholder: collapse to lakhs (`L`) at threshold ≥ 1,00,000. Add `// TODO(post-v1):` comment at every touch point.
+
 19. **Q-KPI-2 — KPI 2 "TOTAL ITEMS LISTED" delta is absolute, others are %.**
     - **Observed:** k1/k3 deltas are percentages, k2 is "+412 added", k4 is "−2 deactivated".
     - **Question:** Is delta format per-KPI (some absolute, some %) — confirm per card. Is k4 measuring "active vendor count change" or "deactivation events" specifically?
 
+    **Answer:** Match Pencil per card — k1/k3 percentages; k2 absolute count; k4 absolute count of deactivation events. Documented in a constants file.
+
 20. **Q-KPI-3 — Comparison period for deltas.**
     - **Observed:** Deltas say "vs last month" / "this month" — but the range button is "Last 30 days".
     - **Question:** When the user changes the range to e.g. "7 days", does the delta copy change to "vs last week", or do KPIs always compare month-over-month regardless of range?
+
+    **Answer:** KPIs always compare month-over-month regardless of range — simplest rule; copy stays "vs last month".
 
 ### Sales by vendor
 
@@ -442,9 +482,13 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
     - **Observed:** `sub_orders` has multiple int columns (COD/payout/cost breakdown per `01-codebase-map.md`). Pencil shows raw sales totals per vendor.
     - **Question:** Which column is "vendor sales" — gross order value, vendor net (after platform fee), or COD collected? Need a clear contract before aggregating.
 
+    **Answer:** gross order value
+
 22. **Q-SBV-2 — "See all vendors" destination.**
     - **Observed:** Plain text link top-right. No drawn target.
     - **Question:** Link goes to `/admin/vendors` (sorted by sales)? Or to a `/admin/vendors/sales` view? Or a sales-reports sub-route?
+
+    **Answer:** Link to `/admin/vendors` sorted by sales desc.
 
 ### Order status
 
@@ -452,17 +496,25 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
     - **Observed:** Pencil tile is "PENDING 32". DB sub-order statuses are `pending / packed / handed_to_courier / delivered / cancelled`. Per 02 Q9 these are display labels only — no schema migration.
     - **Question:** Does "PENDING" in this widget mean only `status = 'pending'`, or does it group `pending + packed + handed_to_courier` (i.e. "anything not delivered/cancelled")? Per-status counts not drawn.
 
+    **Answer:** Group `pending + packed + handed_to_courier` (i.e., "anything not delivered/cancelled"). Matches scope-cut placeholder semantics.
+
 24. **Q-OS-2 — Status stamp mapping in recent-orders table.**
     - **Observed:** Table shows DELIVERED / OUT FOR DELIVERY / AT MNP HUB / PENDING. Per 02 Q9, these are display labels onto existing DB statuses.
     - **Question:** Is the mapping `delivered → DELIVERED`, `handed_to_courier → AT MNP HUB`, `packed → ???`, `pending → PENDING`? Where does "OUT FOR DELIVERY" come from — is it a sub-state of `handed_to_courier` (e.g. when courier marks "out for delivery"), and if so what's the source field? The DB has no such sub-status today.
+
+    **Answer:** STUBBED — see 06-scope-cut.md feature: Status display-label mapping table. Implement with placeholder: `pending → PENDING`, `packed → PACKED`, `handed_to_courier → AT MNP HUB`, `delivered → DELIVERED`, `cancelled → CANCELLED`. (OUT FOR DELIVERY is a synonym; collapse — see buyer-orders Q5.) Add `// TODO(post-v1):` comment at every touch point.
 
 25. **Q-OS-3 — Avg fulfillment computation.**
     - **Observed:** "Avg fulfillment 1.8 days".
     - **Question:** Computed as `AVG(deliveredAt − createdAt)` over delivered orders in range — but `01-codebase-map.md` shows `sub_orders.handedAt` not `deliveredAt`. Is fulfillment measured at hand-off or delivery, and if delivery is the right anchor, do we need a new `deliveredAt` timestamp?
 
+    **Answer:** Use `AVG(handedAt − createdAt)` (existing field) as the anchor; defer adding `deliveredAt` until tracking surface lands.
+
 26. **Q-OS-4 — SLA target source.**
     - **Observed:** "SLA target 2 days" hardcoded-feeling copy.
     - **Question:** Is "2 days" a true config value (env var? `system_settings` table?), or hardcoded in this widget for now?
+
+    **Answer:** Hardcoded constant in shared module.
 
 ### Recent orders table
 
@@ -470,21 +522,31 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
     - **Observed:** Customer cell shows two lines, e.g. "Tariq Ahmed / Tariq Kiryana Store". `user` schema has `name` only. `addresses.title` exists ("Home", "Shop", etc.) but isn't a shop brand.
     - **Question:** Where does the second line come from? Options: (a) `addresses.title` of the order's address; (b) a new `user.shopName` column for retailers; (c) join via a future "retailer-profile" table. **Likely a schema change.**
 
+    **Answer:** STUBBED — see 06-scope-cut.md feature: Buyer business / shop name (`user.businessName`). Implement with placeholder: `user.businessName` IN_SCOPE. Add `// TODO(post-v1):` comment at every touch point.
+
 28. **Q-RT-2 — `displayId` format.**
     - **Observed:** Pencil ids are `#SH-24891`. Existing format per `01-codebase-map.md` is `ORD-…`.
     - **Question:** Is the prefix changing from `ORD-` to `SH-`, or is `SH-` a Pencil placeholder (treat as visual only)?
+
+    **Answer:** Treat `SH-` as visual placeholder; keep `ORD-` prefix in db. Smallest delta — no migration.
 
 29. **Q-RT-3 — Order-level status when sub-orders disagree.**
     - **Observed:** Each row shows a single status stamp. An order may have multiple `sub_orders` with different statuses.
     - **Question:** What is the order-level status — `orders.status` (`processing/partially_fulfilled/completed`) which has different vocabulary, or a derived rollup of sub-order statuses (e.g. "all delivered" → DELIVERED, "any cancelled" → CANCELLED, else worst-case)?
 
+    **Answer:** Derived rollup: any cancelled→CANCELLED; all delivered→DELIVERED; any handed_to_courier→AT MNP HUB; else worst-case (PACKED → PENDING). Pure helper, no schema.
+
 30. **Q-RT-4 — Row click behavior.**
     - **Observed:** No hover/click affordance drawn.
     - **Question:** Does clicking a row navigate to an order-detail page? There is no `/admin/orders/[id]` route today. Should rows be inert (status display only) until that route exists?
 
+    **Answer:** Rows inert until `/admin/orders/[id]` route exists; per scope Admin Orders IN_SCOPE so this becomes a clickable row to a placeholder detail page.
+
 31. **Q-RT-5 — Items count column (e.g. "—" empty in some rows).**
     - **Observed:** Some sample rows show items count, others (e.g. #SH-24890, #SH-24887) appear to omit it in Pencil's frame data.
     - **Question:** Are blank items counts real (e.g. when items haven't been fulfilled yet) or just Pencil omissions in the design source?
+
+    **Answer:** Always show count; treat blanks in design as oversights.
 
 ### Top sellers
 
@@ -492,9 +554,13 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
     - **Observed:** Each row has rank + name + amount + trend icon, no click affordance drawn.
     - **Question:** Click navigates to vendor detail (`/admin/vendors/[id]`) or to a vendor-sales detail?
 
+    **Answer:** Click → `/admin/vendors/[id]`.
+
 33. **Q-TS-2 — Trend computation period.**
     - **Observed:** Trend arrow is up/down/flat per row.
     - **Question:** Is the comparison "this week vs last week" or "vs vendor's own avg"? Threshold for "flat"?
+
+    **Answer:** This week vs last week (matches "Top sellers this week" eyebrow). Threshold for flat: ≤ 5% change.
 
 ### Audit log
 
@@ -502,17 +568,25 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
     - **Observed:** "−2 deactivated" delta on Active Vendors KPI implies a count of deactivation events in range.
     - **Question:** Where does "deactivation event" come from — a new `vendors.deactivatedAt` timestamp, or rows in `admin_audit_log` with a known `action` value?
 
+    **Answer:** STUBBED — see 06-scope-cut.md feature: Admin audit log (writers + viewer feed). Implement with placeholder: Add nullable `vendors.deactivatedAt timestamp`. Smallest additive column. Add `// TODO(post-v1):` comment at every touch point.
+
 35. **Q-AUD-2 — Audit log writers don't exist today.**
     - **Observed:** `admin_audit_log` table exists but no admin mutation appears to write to it (verified via reading `01-codebase-map.md` API surface — none of the admin routes call into it).
     - **Question:** Is the audit log meant to be written from the existing admin mutations (vendor create/update/deactivate, banner create/bulk-update, category create/update, etc.) as part of this revamp? Or is it written from a separate admin-events service that doesn't exist yet?
+
+    **Answer:** STUBBED — see 06-scope-cut.md feature: Admin audit log (writers + viewer feed). Implement with placeholder: Wire writers into vendor activate/deactivate, banner publish, category delete only (per scope-cut placeholder). Add `// TODO(post-v1):` comment at every touch point.
 
 36. **Q-AUD-3 — Action vocabulary + target resolver.**
     - **Observed:** Pencil samples: "Approved vendor", "Edited banner", "Removed product", "Activated category", "Reviewed dispute". DB column `action` is freeform text.
     - **Question:** (a) Define a controlled enum of action verbs, or accept freeform sentence-cased strings? (b) "Reviewed dispute" implies a `disputes` entity that doesn't exist in the schema map — is dispute resolution in scope, or is this Pencil sample noise?
 
+    **Answer:** DEFERRED — see 06-scope-cut.md feature: Admin "Reviewed dispute" entries / disputes entity (DROPPED in scope-cut). Do not implement this question's scope. UI placeholder: Define a controlled enum of action verbs (e.g. `vendor.activate`, `vendor.deactivate`, `banner.publish`, `category.delete`).
+
 37. **Q-AUD-4 — Pagination / "View more" affordance.**
     - **Observed:** 5 entries shown, no link to more.
     - **Question:** Is there a "View all" affordance that should appear (and a `/admin/audit-log` route), or does the dashboard widget always show only the latest 5 with no escape hatch?
+
+    **Answer:** Show only latest 5; "View all" link routes to `/admin/audit-log` placeholder route.
 
 ### Mobile
 
@@ -520,15 +594,21 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
     - **Observed:** Mobile dashboard shows only 2 KPI tiles in the snapshot (`URtey` + `mAWJr` inside `ForHQ`), not 4.
     - **Question:** Are the other 2 KPIs (Total Orders, Active Vendors) below the fold in a 2×2 stack, omitted entirely on mobile, or in a horizontal scroll?
 
+    **Answer:** Other 2 KPIs are below the fold in a 2×2 stack.
+
 ### Removed elements
 
 39. **Q-EX-1 — Existing placeholder copy.**
     - **Observed:** Existing dashboard renders "Welcome to Admin / Use the sidebar to navigate between Dashboard and Vendors. / This is the main dashboard. Add widgets and stats here." — none of this appears in Pencil.
     - **Question:** Confirm this is being entirely replaced by the new dashboard content (not preserved as a fallback empty state).
 
+    **Answer:** Confirmed — replaced entirely.
+
 40. **Q-STATES-1 — Empty / loading / error states.**
     - **Observed:** Pencil draws no loading skeletons, no empty states ("no orders this period"), no error states.
     - **Question:** For each widget (KPIs, sales-by-vendor, order status, recent orders, top sellers, audit log), what should render when (a) data is loading, (b) the range has zero data, (c) the query fails? Should the shell still show range/header controls during error?
+
+    **Answer:** Card-level skeletons (using existing `Skeleton` primitive); empty-state copy with optional action; error renders inline retry button.
 
 ### Formatting
 
@@ -536,8 +616,12 @@ Numbered for reference. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHAN
     - **Observed:** KPI 1 displays "Rs. 18.4 L"; recent orders rows show "Rs. 1,16,380" (full).
     - **Question:** Confirm two display modes coexist (compact for KPI hero numbers, full for table rows). Threshold for switching to lakh/crore?
 
+    **Answer:** STUBBED — see 06-scope-cut.md feature: Currency formatter (South-Asian grouping + lakh notation). Implement with placeholder: confirms two display modes coexist (compact for KPI hero, full for tables; threshold ≥ 1,00,000). Add `// TODO(post-v1):` comment at every touch point.
+
 ---
 
 **File written to:** `D:\Moeed 8th Sem\Fyp\Code\shalmi-web\.claude-revamp\screens\admin-dashboard\gap-analysis.md`
 
 (End of Phase 4.1 Admin · Dashboard gap analysis. Stopping here per instructions — no implementation started.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

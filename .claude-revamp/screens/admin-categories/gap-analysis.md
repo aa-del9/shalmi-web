@@ -308,6 +308,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (b) `MAX(admin_audit_log.createdAt) WHERE targetType='category'`.
   (c) Hardcoded placeholder (just visual filler in the design).
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: drop live counts; keep static descriptive copy ("Manage product categories.").
+
 ---
 
 **Q2 — Breadcrumb hierarchy.**
@@ -317,6 +319,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (a) Visual-only label — non-clickable middle segment.
   (b) Future grouping — sidebar will get a "Catalog" section that contains Categories + (e.g.) Products/Brands.
   (c) Move route to `/admin/catalog/categories`.
+
+**Answer:** STUBBED — see 06-scope-cut.md feature: Admin "Catalog" sidebar grouping + Breadcrumb component. Implement with placeholder: Visual-only label — non-clickable middle "Catalog" segment. No route move. Add `// TODO(post-v1):` comment at every touch point.
 
 ---
 
@@ -328,6 +332,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (b) Only the pencil icon opens; row click is reserved for bulk-select (checkbox tap).
   (c) Either; URL syncs via `?selected=<id>` (nuqs is already in the stack).
 
+**Answer:** Full-row click opens panel; trash and overflow icons stop propagation. URL not synced.
+
 ---
 
 **Q4 — "Add category" flow target.**
@@ -338,6 +344,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (b) Modal Dialog (current behavior, retained for create-only).
   (c) Separate route `/admin/categories/new`.
 
+**Answer:** Same right-side Edit panel in empty/create mode; header reads "New category"; on save panel switches to edit mode.
+
 ---
 
 **Q5 — Icon picker (NEW_FIELD `iconKey`) vs existing `imageUrl`.**
@@ -346,6 +354,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (a) Replace `imageUrl` with `iconKey` (drop image upload entirely)?
   (b) Keep both: `iconKey` for admin/category-list, `imageUrl` for storefront category tile (the storefront `category-section` currently renders `imageUrl`)?
   (c) Migrate existing categories' `imageUrl` to a fallback `iconKey` (auto-pick? seed?) — and is there a curated icon set or is the picker a full Lucide search?
+
+**Answer:** STUBBED — see 06-scope-cut.md feature: Category icons (Lucide map). Implement with placeholder: Keep both — `iconKey` for admin/category-list, `imageUrl` for storefront tile (least destructive). Add `// TODO(post-v1):` comment at every touch point.
 
 ---
 
@@ -357,6 +367,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (b) Optional, no cap, also displayed at top of `/categories/[slug]` storefront page.
   (c) Required.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: `description` field hidden in edit panel; row body fragment dropped.
+
 ---
 
 **Q7 — Parent category (self-referencing FK).**
@@ -366,6 +378,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (a) Single-level: `parentId` exists but UI/storefront only treats it as a tag for grouping in the breadcrumb.
   (b) Two-level (parent → leaf), enforced by the "None (top-level)" copy implying only one tier above.
   (c) Unlimited depth.
+
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: Parent category select hidden in edit panel.
 
 ---
 
@@ -377,6 +391,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (b) Auto-assigned (`MAX(sortOrder) + 1` on insert), edited only via Reorder mode.
   (c) Both — manual override permitted; Reorder rebalances to a 1..N sequence.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: Sort order column hidden; Sort order field hidden in edit panel.
+
 ---
 
 **Q9 — `isActive` field & storefront semantics.**
@@ -387,6 +403,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (b) Hide from public list, keep direct slug accessible.
   (c) Soft-hide: still listed, but greyed/labeled in storefront.
 
+**Answer:** STUBBED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Implement with placeholder: Hide from public list, keep direct slug accessible. Smallest behavioral change vs current public feed. Add `// TODO(post-v1):` comment at every touch point.
+
 ---
 
 **Q10 — Audit ("created by / last edited by").**
@@ -395,6 +413,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (a) New columns `createdBy` / `updatedBy` on `categories` referencing `user.id`, joined to `user.name`.
   (b) Read from existing `admin_audit_log` (`adminId`, `action`, `targetType='category'`, `targetId`) joined to `user`.
   (c) Hardcoded placeholder until audit log is wired.
+
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Admin audit log (writers + viewer feed). Do not implement this question's scope. UI placeholder: Audit block hidden in edit panel.
 
 ---
 
@@ -406,6 +426,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (b) Materialized view or denormalized counter on `categories` updated via triggers/queue.
   (c) Visual placeholder, not real data yet.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: PRODUCTS / VENDORS columns hidden.
+
 ---
 
 **Q12 — Admin list endpoint (filtering, sorting, search, pagination).**
@@ -414,6 +436,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   - Promote to a separate `GET /api/admin/categories` (admin-only, gated by `requireAdmin`) with `?page=&limit=&q=&sort=&dir=&status=` query params, leaving public `GET /api/categories` untouched?
   - Or extend `GET /api/categories` with optional admin-side params?
   - Server-side filtering vs client-side with `useCategoriesQuery` returning the full list?
+
+**Answer:** Promote to `GET /api/admin/categories` with `?page=&limit=&q=&sort=&dir=&status=` query params, mirroring existing `GET /api/admin/vendors` (`apps/web/src/app/api/admin/vendors/route.ts`). Public `GET /api/categories` stays untouched.
 
 ---
 
@@ -425,6 +449,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   - What's the rule when the category has products attached via `product_categories` — block, cascade-detach (keep products, drop link), or refuse with 409?
   - Confirmation UX — modal `Dialog`, inline confirm-prompt, or none?
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: Trash + Remove affordances hidden.
+
 ---
 
 **Q14 — "Reorder" header CTA + mobile tap-to-edit destination.**
@@ -433,11 +459,15 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   - **14a (Reorder):** Toggle drag-mode in-place (rows show drag handles, Save/Cancel appears) — modeled after the existing promo-banners reorder (`useBulkUpdateBannersMutation`)? Or a separate `/admin/categories/reorder` view?
   - **14b (Mobile edit target):** Same right-side Edit panel reused as a full-screen `Sheet`? A separate route `/admin/categories/[id]/edit`? Or expand the row inline?
 
+**Answer:** Q14a — DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: Hide Reorder button. Q14b — Same right-side Edit panel reused as a full-screen `Sheet` (mirrors buyer-account-drawer mobile pattern).
+
 ---
 
 **Q15 — "Export CSV" header CTA.**
 - Observed: Outline button with `download` icon.
 - Question: Streaming CSV response from a new endpoint. Does export respect the current tab/search filter, or always emit the full set? Which columns are included (e.g. icon name, slug, parent slug, isActive, productCount, vendorCount)?
+
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Statement / CSV downloads (vendor ledger PDFs, admin exports). Do not implement this question's scope. UI placeholder: render visible but click is no-op (toast "Coming soon").
 
 ---
 
@@ -448,6 +478,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   - "+2 added this month" — `categories.createdAt >= startOfMonth()`? Rolling 30-day? Calendar month?
   - "+412 this month" — products created this month, or products added to a category this month?
   - Should KPI be live-aggregated on every page load, or cached?
+
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: render KPI cards with "—" or hide row.
 
 ---
 
@@ -461,11 +493,15 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (d) Reorder-batch (move all to a sort range).
   (e) Decorative — not wired in v1.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: bulk-select hidden.
+
 ---
 
 **Q18 — "Add Category" → "Add category" copy change (sentence vs title case).**
 - Observed: Pencil consistently uses sentence case for action labels ("Add category", "Save changes", "Export CSV"). Existing button text is title case ("Add Category").
 - Question: Is the design system standardizing on sentence case for all button labels in admin? If so, this affects every admin button across the codebase (`Add Vendor`, `Add Banner`, etc.) — not just this screen.
+
+**Answer:** Adopt sentence case across admin button labels; this is the new convention per Pencil.
 
 ---
 
@@ -475,6 +511,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   - Allow user-editable slug, with uniqueness still enforced (existing 409)?
   - When a slug changes, do we need a redirect record so old `/categories/<old-slug>` URLs don't 404? (No `category_slug_history` table exists.)
   - Storefront URL is `/categories/<slug>` (per `getCategoryBySlug`); a redirect strategy is missing.
+
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: Slug field stays read-only (server-derived from name); no redirect table.
 
 ---
 
@@ -486,6 +524,8 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (b) Just View on storefront + Copy slug.
   (c) Only Delete (and trash icon is redundant).
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Do not implement this question's scope. UI placeholder: Trash + ellipsis overflow hidden.
+
 ---
 
 **Q21 — Removed columns (Image, Created date).**
@@ -496,11 +536,15 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
   (b) Created moves to a tooltip on row hover.
   (c) Image kept as a fallback when `iconKey IS NULL`.
 
+**Answer:** Intentional — image swatch replaces image column; created moves into Edit panel.
+
 ---
 
 **Q22 — "Visible to buyers in storefront" copy.**
 - Observed: Edit panel status sublabel "Visible to buyers in storefront" — implies inactive categories are hidden from buyers but still managed by admin. Storefront does not currently filter on any active flag.
 - Question: Confirm the buyer-side semantics tie exactly to `isActive` (not, e.g., a derived "has products" flag). And confirm the storefront `GET /api/categories` should add `WHERE isActive = true` while admin sees all.
+
+**Answer:** STUBBED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Implement with placeholder: confirm semantics tie exactly; storefront `GET /api/categories` adds `WHERE isActive = true`. Add `// TODO(post-v1):` comment at every touch point.
 
 ---
 
@@ -508,11 +552,15 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
 - Observed: Three stamps used — ACTIVE / NEEDS REVIEW / INACTIVE. Pencil's general stamp inventory (DELIVERED, AT MNP HUB, PACKED, DELAYED, CANCELLED) does not include these category-specific labels — they are screen-local.
 - Question: Treat ACTIVE / INACTIVE / NEEDS REVIEW as new screen-local stamp variants on the existing `Stamp` primitive (success / critical / warning intent), or extend the primitive's variant set with category-specific names? Per `02-design-inventory.md` Q9 the user said stamps are display-only mappings — so the visual variants `success`, `critical`, `warning` already cover this. Confirm.
 
+**Answer:** STUBBED — see 06-scope-cut.md feature: Categories rich model (icon, description, parent, sort order, isActive, audit, slug-edit, aggregates). Implement with placeholder: ACTIVE / INACTIVE only; `NEEDS REVIEW` deferred. Use existing `Stamp` primitive `success` and `critical` variants. Add `// TODO(post-v1):` comment at every touch point.
+
 ---
 
 **Q24 — Loading / empty / error / form-error states.**
 - Observed: None drawn.
 - Question: Should I extract per-state guidance from existing code (current skeleton, "No categories yet.", inline error row), retoken to the new design system, and ship as-is? Or is there a Pencil frame for these states elsewhere I should look at?
+
+**Answer:** Extract from existing `CategoriesTableSkeleton`, "No categories yet." copy, inline error row; retoken to design system; ship as-is.
 
 ---
 
@@ -520,13 +568,19 @@ Each row in §2 with a category of NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION /
 - Observed: `cEMeta` audit block is part of the Edit panel — only meaningful for existing categories.
 - Question: When the panel is in "Add" mode (Q4), is `cEMeta` hidden, replaced with an empty-state hint, or left visible with placeholders?
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Admin audit log (writers + viewer feed). Do not implement this question's scope. UI placeholder: Audit block hidden in edit panel (both Add and Edit modes).
+
 ---
 
 **Q26 — "Catalog" sidebar grouping vs current sidebar.**
 - Observed: The sidebar (`Ivd02`) in this Pencil frame is the admin-shell sidebar, not part of the screen body. But the breadcrumb implies a `Catalog` section that may need a sidebar group label.
 - Question: Out-of-scope for this gap analysis (chrome, not screen) but flagging for cross-cutting work — is the admin sidebar getting a `CATALOG` section header above Categories (and Vendors? Banners?)?
 
+**Answer:** STUBBED — see 06-scope-cut.md feature: Admin "Catalog" / "Operations" sidebar grouping (constants change only). Implement with placeholder: add `CATALOG` section eyebrow. Add `// TODO(post-v1):` comment at every touch point.
+
 ---
 
 (End of gap analysis. Per workflow, this file is the only output of this
 phase. Stopping here — no implementation.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

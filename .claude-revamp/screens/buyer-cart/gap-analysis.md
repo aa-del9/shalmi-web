@@ -261,6 +261,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Hold the cart revamp on this surface until pack-pricing ships; eyebrow shows "VENDOR · WEIGHT" only until then.
   - (b) Add the "PACK" segment now; cart consumes a (yet-to-be-added) `packUnits` field that pack-pricing will provide.
   - (c) Drop "PACK" from the design — vendor + weight is enough.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: N/A — already user-confirmed; not a candidate for deferral. Add `// TODO(post-v1):` comment at every touch point.
 
 ---
 
@@ -273,6 +274,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Snapshot at add-time: extend `CartItemInput` + `CartItem` with `vendorName: string` (requires updating every call site that adds to the cart, plus a `persist` migration for existing localStorage entries keyed `'shalmi-cart'`).
   - (b) Fetch at render time: new public endpoint that returns name+id pairs for a list of productIds.
   - (c) Drop vendor name from the cart eyebrow; show only weight/pack info.
+**Answer:** Snapshot at add-time — extend `CartItem` (`apps/web/src/modules/cart/types.ts`) with `vendorName`. Mirrors existing snapshot pattern (`weightGrams`, `priceTiers`); `cart-store.ts` `persist` migration handled in same change.
 
 ---
 
@@ -285,6 +287,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Adopt verbatim; keep the desktop/mobile difference (mobile drops the word "items" for space).
   - (b) Adopt "Your cart" but show item count consistently across breakpoints.
   - (c) Keep "Shopping Cart" title; just append the count.
+**Answer:** Adopt verbatim — "Your cart · 12 items" desktop, "Your cart · 12" mobile.
 
 ---
 
@@ -297,6 +300,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Per-pack/unit weight as configured (just `weightGrams / 1000` formatted).
   - (b) Line total weight (qty × weightGrams / 1000).
   - (c) Per individual unit inside the pack (i.e. 21g shown as 0.021 kg) — unlikely given the value `1.008 KG` matches 48 × 21g.
+**Answer:** Per-pack/unit weight as configured (`weightGrams / 1000`), not line total.
 
 ---
 
@@ -309,6 +313,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Pencil-literal: drop typing; +/- only.
   - (b) Keep typing (existing affordance) but restyle to single segmented frame; the "2" cell becomes the editable input.
   - (c) Pencil-literal on cart row but keep typeable variant elsewhere (PDP, vendor product form).
+**Answer:** Keep typeable input (existing `QuantitySelector` pattern); restyle to a single segmented frame so the "2" cell becomes the editable input.
 
 ---
 
@@ -321,6 +326,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Remove entirely — cart is a transactional surface, navigating away is a back-button trip.
   - (b) Keep link, drop underline/hover styling so the affordance is invisible (per Pencil).
   - (c) Keep link only on title, not image.
+**Answer:** Keep `<Link>` on title; drop underline/hover styling. Image is inert.
 
 ---
 
@@ -333,6 +339,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Removal happens by tapping `−` until qty=0 (existing store already supports this).
   - (b) Add a swipe-to-delete gesture (new interaction not drawn in Pencil).
   - (c) Pencil simply forgot to draw the icon; keep the explicit remove icon on mobile too.
+**Answer:** Remove via `−` until qty=0 (existing store already removes at qty=0). No swipe gesture.
 
 ---
 
@@ -345,6 +352,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Mobile has no clear-cart affordance — intentional; users remove items individually.
   - (b) Add an overflow menu (`…`) in the mobile header.
   - (c) Pencil oversight; add a "Clear cart" link below the item list.
+**Answer:** Mobile has no clear-cart affordance — intentional; users remove items individually.
 
 ---
 
@@ -357,6 +365,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Remove; the title-bar `· 12 items` already conveys the count.
   - (b) Keep; add it back as a Pencil oversight.
   - (c) Move it to a less-prominent position (e.g. caption under TOTAL).
+**Answer:** Remove; the title bar `· 12 items` already conveys the count.
 
 ---
 
@@ -369,6 +378,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Static copy; no computation. Threshold and copy live in a constants file.
   - (b) Live: when `subtotal ≥ 50,000`, set delivery to zero in the receipt; relabel to "Delivery (free over Rs. 50,000)"; gauge stays informational only.
   - (c) Live but only suppresses the amber tip when the threshold is reached, not the delivery cost.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Free delivery threshold + same-day cutoff (business rule). Implement with placeholder: Render the strip as static marketing copy; cart delivery line continues to use weight tier regardless. Add `// TODO(post-v1):` comment at every touch point.
 
 ---
 
@@ -385,6 +395,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Hide the tip whenever there's no next-cheaper tier; otherwise compute delta + savings; mobile never shows it.
   - (b) Always show; default to "Cheapest tier reached" copy when at 50+ kg.
   - (c) Show on both breakpoints (Pencil oversight on mobile).
+**Answer:** STUBBED — see 06-scope-cut.md feature: Weight gauge + delivery tier table. Implement with placeholder: Weight gauge hidden on cart/reorder; checkout shipping line stays "Calculated at checkout" / `Rs. 0`. Add `// TODO(post-v1):` comment at every touch point.
 
 ---
 
@@ -398,6 +409,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Always pinned; inline mobile CTA does not exist (mobile collapse drops it). Body bottom-padding offsets the bar.
   - (b) Pinned only when the inline summary scrolls out of view; inline CTA still rendered on mobile.
   - (c) Pinned only when items > 0; hidden on empty state.
+**Answer:** Always pinned; inline mobile CTA does not exist; body padding-bottom reserves bar height.
 
 ---
 
@@ -410,6 +422,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Keep existing modal behavior; visual treatment matches Pencil but the click handler still gates.
   - (b) Drop the modal; `/checkout` page already redirects unauthenticated users.
   - (c) Show a separate "Sign in to continue" button when signed out, instead of the green CTA.
+**Answer:** Keep existing modal behavior (`openAuthModal`); visual matches Pencil but click handler still gates.
 
 ---
 
@@ -422,6 +435,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Keep current copy + structure; restyle to Pencil tokens; no logic change.
   - (b) Pencil intentionally omits — design a fresh empty state in this revamp pass (paper-2 placeholder card with "Your cart is empty · Browse the bazaar" copy).
   - (c) Auto-redirect to `/` when items.length === 0 (don't render the cart screen at all).
+**Answer:** Keep current copy + structure; restyle to Pencil tokens; no logic change.
 
 ---
 
@@ -434,6 +448,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Remove entirely.
   - (b) Keep; Pencil oversight.
   - (c) Move to mobile only, immediately above the sticky bar.
+**Answer:** Remove entirely.
 
 ---
 
@@ -446,6 +461,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Adopt verbatim.
   - (b) Adopt icon + casing, keep ghost-button shape.
   - (c) Keep current treatment (no icon).
+**Answer:** Adopt verbatim — trash-2 + "Clear cart" sentence-case + inline non-button styling.
 
 ---
 
@@ -458,6 +474,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Adopt the three-piece composition exactly (`PetUj` card + `A3uckC` CTA + `eqqJe` caption as siblings).
   - (b) Move the CTA inside the receipt card (single block) but apply paper-2 + rule-2 styling.
   - (c) Adopt three-piece on desktop; collapse to single block above the sticky bar on mobile.
+**Answer:** Adopt three-piece composition exactly (paper-2 receipt + standalone CTA + free-delivery caption as siblings).
 
 ---
 
@@ -470,6 +487,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Hardcoded constant `GST_RATE = 0.18` in `modules/cart/utils/`; one place to change later.
   - (b) Env var (`NEXT_PUBLIC_GST_RATE`).
   - (c) DB-driven (new `tax_rates` table) for future flexibility — overkill for now.
+**Answer:** DEFERRED — see 06-scope-cut.md feature: GST 18% on orders. Do not implement this question's scope. UI placeholder: GST row hidden across receipts. Total = subtotal + delivery only.
 
 ---
 
@@ -482,6 +500,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Constant in `modules/cart/utils/delivery-tiers.ts`.
   - (b) DB-backed (`delivery_tiers` table) so admin can edit later.
   - (c) Pull from existing `vendor_ledger` cost-per-kg figures (unlikely; those are vendor-side reimbursements).
+**Answer:** STUBBED — see 06-scope-cut.md feature: Weight gauge + delivery tier table. Implement with placeholder: Weight gauge hidden on cart/reorder; checkout shipping line stays "Calculated at checkout" / `Rs. 0`. Add `// TODO(post-v1):` comment at every touch point.
 
 ---
 
@@ -493,6 +512,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Inclusive on min, exclusive on max: `tier.minKg <= kg < tier.maxKg`. At 0 kg, no tier is highlighted (or first tier is highlighted).
   - (b) Inclusive on both: at 10 kg, both tiers 1 and 2 are highlighted (visual conflict).
   - (c) Highlight the *cheapest reachable* tier rather than the current weight tier.
+**Answer:** Inclusive on min, exclusive on max: `tier.minKg ≤ kg < tier.maxKg`. At 0 kg, first tier is highlighted (matches "current weight bracket" semantics).
 
 ---
 
@@ -505,6 +525,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Yes — exact format above; localizable later.
   - (b) Show range only without the word "tier" ("Delivery (10–25 kg)") — matches the mobile receipt copy `aDBD9` which omits "tier".
   - (c) Show just "Delivery" with no parenthetical, since the gauge above already shows the tier visually.
+**Answer:** Exact format `Delivery ({minKg}–{maxKg} kg tier)` for bounded tiers, `Delivery ({minKg}+ kg tier)` for last tier.
 
 ---
 
@@ -515,6 +536,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
 - **Plausible answers:**
   - (a) Intentional — match Pencil verbatim.
   - (b) Standardize to one wording across breakpoints (pick one).
+**Answer:** Standardize to one wording across breakpoints — keep the longer desktop variant ("10–25 kg tier") for clarity.
 
 ---
 
@@ -527,6 +549,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Unit price per pack at the currently-active tier — i.e. `resolvePrice(item.priceTiers, item.quantity)`. Mobile drops it for space.
   - (b) Unit price *before* tier discount (struck-through), to surface the discount delta — but no strikethrough is drawn in this row (unlike `prod1` product card).
   - (c) Per-unit (per individual unit inside a pack), not per-pack — would require pack-units knowledge (depends on Q1).
+**Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: N/A — already user-confirmed; not a candidate for deferral. Add `// TODO(post-v1):` comment at every touch point.
 
 ---
 
@@ -539,12 +562,14 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Adopt verbatim.
   - (b) Keep Trash2; retoken to `ink-3` (no destructive red, since Pencil clearly de-emphasizes the action).
   - (c) Keep Trash2 + destructive red.
+**Answer:** Adopt verbatim — `x` lucide ink-3.
 
 ---
 
 **Q25 — Cart row image is not a Link in Pencil** *(CHANGED_INTERACTION; subset of Q6)*
 
 - Same as Q6; tracked separately because it's specifically about the image element having `<Link>` removed in addition to (or instead of) the title.
+**Answer:** Same as Q6 — image inert; title keeps the link.
 
 ---
 
@@ -556,6 +581,7 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
   - (a) Auto-truncate the desktop string with `text-overflow: ellipsis` (CSS) — mobile renders a single line.
   - (b) Different display string per breakpoint, computed from product fields (name + pack count).
   - (c) Pencil sample data only; the same name string renders at both breakpoints, just truncated visually.
+**Answer:** Auto-truncate desktop string with `text-overflow: ellipsis`; same string at both breakpoints.
 
 ---
 
@@ -565,7 +591,10 @@ These can all live as exported pure functions alongside existing `getCartTotalIt
 - **Observed (code):** Two rows — "Items (N)" + "Shipping" then a separator and "Subtotal" total-style row.
 - **Question:** Confirm the receipt has only Subtotal / Delivery / GST / Total — no "Items (N)" prefix and no separator before Subtotal?
 - *(See Q9 for the structural removal; this question is about the label text change only.)*
+**Answer:** Confirmed via Q9 — Subtotal / Delivery / GST / Total only; no "Items (N)" prefix.
 
 ---
 
 (End of gap analysis. No code proposed.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

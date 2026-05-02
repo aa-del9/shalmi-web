@@ -431,6 +431,7 @@ Plausible answers:
 1. All approved as-is.
 2. All approved except the phone number (real number TBD by the user).
 3. Use as placeholder until i18n / copy review pass.
+**Answer:** All approved as-is except phone number `0300-SHALMI` (placeholder until real support number is set — Q15 below resolves source).
 
 ### Hero block
 
@@ -439,30 +440,35 @@ Plausible answers:
 1. Each surface owns its format string verbatim from Pencil; build per-surface format helpers.
 2. One global formatter with `variant: 'long' | 'short' | 'kpi'` parameters.
 3. Server returns pre-formatted strings.
+**Answer:** Per-surface format helpers (long for ledger hero, short for mobile, KPI form for dashboard tile).
 
 **Q3. Source of truth for `next payout release date`.** Drawn but not in any column. Per `vendor-portal.md` §1 Q1 flagged. **Question: should the release date be (a) computed at request time as "next Friday after now, accounting for cutoff", (b) stored as `payout_runs.releasesAt` on the active row, or (c) stored at the org level so the cycle is configurable?** (See `surface-map §7 Q1` answered "yes a new table" — but does that new table own this date, or is it computed?)
 Plausible answers:
 1. Computed each request; pure helper, no column.
 2. Stored on the active `payout_runs` row.
 3. Org-level `payout_cycle_settings` table.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Vendor weekly payouts (`payout_runs` + 7-day return window + ledger surface). Implement with placeholder: stored on the active `payout_runs` row as `releasesAt`. Add `// TODO(post-v1):` comment at every touch point.
 
 **Q4. All Net-payout / Gross-sales / Returns / MNP-fees / counts are NEW_FIELDs.** None exist in any existing endpoint or column today. Per `surface-map §7 Q1` answered "new table." **Question: confirm the active week reads from a "draft" `payout_runs` row that is upserted continuously as the week accrues — versus recomputed-on-read with no DB row until cycle-close?**
 Plausible answers:
 1. Active week has a draft `payout_runs` row (status `pending`) that's upserted on each new sale/return.
 2. Active week is recomputed on every read (no DB row); only cycle-close materializes a row.
 3. Hybrid — header counts cached, breakdown recomputed.
+**Answer:** Active week has a draft `payout_runs` row (status `pending`) upserted continuously as the week accrues. Cleanest.
 
 **Q5. Countdown granularity and re-render policy.** Drawn as "2 days". **Question: is "days" the only unit ever shown, or does the day-of payout switch to "hours" / "minutes"? And on the client, is the countdown live-tickering (per minute / per visibility change) or static-server-rendered (refreshes on navigation only)?**
 Plausible answers:
 1. Days only; static (no client tick).
 2. Days only; client-tick once per midnight.
 3. Days→hours→minutes; live-tick.
+**Answer:** Days only; static (no client tick); refreshes on navigation.
 
 **Q6. Statement download buttons.** Three download affordances drawn (hero "Download statement", history subtitle "download PDF anytime", history `Export all`). Per `surface-map §7 Q6` answered "ignore it for now." **Question: confirm — for this implementation phase, should the buttons be (a) hidden entirely, (b) rendered but disabled (with a tooltip "Coming soon"), or (c) rendered and POST to a stub endpoint that returns 501?**
 Plausible answers:
 1. Hidden until backend ships.
 2. Disabled with a "coming soon" affordance.
 3. Stubbed endpoint that returns a fixture PDF or 501.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Statement / CSV downloads (vendor ledger PDFs, admin exports). Implement with placeholder: render visible but click no-op. Add `// TODO(post-v1):` comment at every touch point.
 
 ### Breakdown card
 
@@ -471,36 +477,42 @@ Plausible answers:
 1. Full 7-day cycle; display label strips weekends as a presentation rule.
 2. Mon–Fri cycle; weekend orders carry to next cycle.
 3. Configurable per market (`payout_cycle_settings`).
+**Answer:** Full 7-day cycle (Sat–Fri) per `surface-map §7 Q2`; display label strips weekends to Mon–Fri.
 
 **Q8. 7-day return window before payout-eligibility.** Implied by the policy line "7-day return window before completion." Today, `sub_orders.handedAt` is set when the order is handed to courier; there is no `deliveredAt` or `eligibleForPayoutAt`. **Question: should payout-eligibility be (a) `delivered AND handedAt < now − 7d`, (b) a new `deliveredAt` column with the rule against it, or (c) a new `eligibleForPayoutAt` column written when the 7-day timer fires?**
 Plausible answers:
 1. Reuse `handedAt` (or its delta against `now`).
 2. New `deliveredAt` + business rule.
 3. New `eligibleForPayoutAt` column.
+**Answer:** Reuse `handedAt` with delta against `now`. Smallest delta — no new column.
 
 **Q9. Weight format "512.4 kg".** No unit/precision rule exists today. **Question: is "kg with one decimal" the canonical format, or does the design imply something more flexible (kg with no decimals when integer; tonnes for very large vendors)?**
 Plausible answers:
 1. Always "X.X kg" (fixed 1-decimal).
 2. "X kg" when integer, else "X.X kg".
 3. Format-from-grams helper with thresholding (kg → tonnes at ≥ 1000 kg).
+**Answer:** Always "X.X kg" (fixed 1-decimal).
 
 **Q10. "Returns" semantics in the breakdown row.** Per `surface-map §7 Q4` answered (a): cancelled sub-orders are treated as returns; the label is presentational only. **Question: is the deduction amount (a) recomputed by summing `cancelled` sub-orders' totals each request, or (b) sourced from a `vendor_ledger` debit line written when the cancellation is recorded? If (b), which `vendor_ledger.type` value?** (Today's enum has no `return`-style entry.)
 Plausible answers:
 1. Recomputed from `sub_orders` totals on read.
 2. Stored as `vendor_ledger` debits with a new `type = 'return'` enum value.
 3. Stored as `vendor_ledger` debits using existing `type = 'penalty'` repurposed.
+**Answer:** Recomputed from `sub_orders` totals on read where `status='cancelled'` AND falls in cycle window. No new ledger type.
 
 **Q11. "MNP delivery fees" source column.** `vendor_ledger.type = logistics_reimbursement` is a *credit* type today (vendor receives reimbursement). The design's "− MNP delivery fees" row is a *deduction*. **Question: is the deduction sourced from (a) per-sub-order cost-breakdown columns on `sub_orders` (and which?), (b) `vendor_ledger` debit lines with a new type, or (c) a separate fee-table not yet present?**
 Plausible answers:
 1. Aggregated from a `sub_orders` column (e.g., one of the existing "COD/payout/cost breakdown ints" — column needs to be identified).
 2. New `vendor_ledger.type = 'mnp_fee'` debit lines.
 3. Standalone `mnp_fees` table.
+**Answer:** User answer: A11: lets keep it under courier_cost column.
 
 **Q12. Mobile breakdown drops `Items packed` and `Weight shipped`.** Per `surface-map §7 Q11` answered "intentional information-density decision." **Question: confirm — neither value is reachable on mobile (e.g., not behind a tooltip or accordion), and the per-run detail modal (Q22) is the only mobile path to those numbers?**
 Plausible answers:
 1. Confirmed — mobile users see them only in the detail modal.
 2. Tooltip on the breakdown card surfaces them.
 3. Accordion / "Show details" toggle.
+**Answer:** Confirmed — mobile users see them only in the per-run detail modal.
 
 ### Bank info card
 
@@ -509,24 +521,28 @@ Plausible answers:
 1. Both intentional; desktop uses 3 mask groups, mobile uses 2 (per width budget).
 2. The mobile shorter form is canonical for both (typo on desktop / vice versa).
 3. Single canonical mask "PKNN BBBB •••• •••• NNNN" everywhere.
+**Answer:** Both intentional per width — desktop uses 3 mask groups, mobile 2.
 
 **Q14. Bank-edit flow.** Per `surface-map §7 Q5` answered "yes implement a self-service edit endpoint." The pencil icon affordance is drawn but the **flow is not**. **Question: choose between (a) a modal Dialog with form, (b) an inline-on-card edit, (c) a separate subroute `/vendor/ledger/bank`, and choose security posture (a) password re-entry, (b) OTP via existing Twilio plugin, (c) admin-approval queue?**
 Plausible answers:
 1. Dialog modal + OTP confirmation (reuse existing better-auth phone OTP).
 2. Inline edit on card + admin-approval queue.
 3. Separate `/vendor/ledger/bank` subroute + password re-entry.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Vendor self-service bank-info edit + admin moderation. Implement with placeholder: Dialog modal + OTP confirmation (reuses existing better-auth phone OTP plugin from `apps/web/src/modules/auth/server/services/otp/`). Add `// TODO(post-v1):` comment at every touch point.
 
 **Q15. Phone number `0300-SHALMI`.** Drawn verbatim in the policy row. **Question: is this a placeholder or the actual support line? If actual, is it stored anywhere centrally (env var? `org_settings` table?) or hardcoded in the copy?**
 Plausible answers:
 1. Placeholder — replace with real number at copy review.
 2. Real — hardcoded in the copy.
 3. Real — sourced from a config/env var.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Support phone number (`0300-SHALMI`). Implement with placeholder: hardcoded constant in `packages/constants/src/support.ts`; user supplies real number when ready. Add `// TODO(post-v1):` comment at every touch point.
 
 **Q16. Mobile policy-block tooltip.** Per `surface-map §7 Q8` answered "a tooltip on the card." **Question: which icon or area triggers it (the bank icon? a separate info icon? long-press the whole row?), and on mobile (where there's no hover) is it a tap-to-toggle popover or a sheet?**
 Plausible answers:
 1. New info-icon (`info` lucide) on the bank row triggers a Popover.
 2. Tap-and-hold on the bank row opens a bottom sheet.
 3. A separate "View payout policies" link surfaces.
+**Answer:** New `info` lucide icon on the bank row triggers a Popover (built on shadcn).
 
 ### History card
 
@@ -535,36 +551,42 @@ Plausible answers:
 1. Reuse the amber-pending row variant for held/clearing; introduce a red-bordered stamp for failed.
 2. Three new visual variants — held (blue), clearing (blue), failed (red).
 3. Surface only `pending` and `paid` initially; defer failed/held to a later phase.
+**Answer:** Surface only `pending` and `paid` initially; defer `failed`/`held`/`clearing` to a later phase.
 
 **Q18. `payout_runs` ↔ `vendor_ledger.type='payout'` duplication.** Per `surface-map §7 Q1` answered "yes a new table." **Question: when a run is paid, is a `vendor_ledger` debit row also written (so the ledger remains the cash-flow authority), or does `payout_runs` replace the `payout` enum value entirely?**
 Plausible answers:
 1. Both: `payout_runs` carries display + status; `vendor_ledger` writes one debit row per paid run with `referenceId = payout_runs.id`.
 2. `payout_runs` only; `vendor_ledger.type='payout'` becomes unused / removed.
 3. `vendor_ledger` only with a "run grouping" view; no `payout_runs` table.
+**Answer:** Both: `payout_runs` carries display + status; `vendor_ledger` writes one debit row per paid run with `referenceId = payout_runs.id`. Preserves existing ledger as cash-flow authority.
 
 **Q19. Lifetime totals source.** Footer reads "Lifetime: Rs. 84,12,400 across 218 weeks." **Question: is the amount sourced from `sum(payout_runs.netPayoutCents WHERE status='paid')` or `sum(vendor_ledger.amount WHERE type='payout' AND direction='debit')`? And is the count "218 weeks" `count(payout_runs WHERE status='paid')` or `weeks-since-vendor-onboarded`?**
 Plausible answers:
 1. Both are over `payout_runs` (recommended for consistency with the table).
 2. Amount over `vendor_ledger`, count over weeks-since-onboarded.
 3. Pre-aggregated into a `vendor_lifetime_stats` cache.
+**Answer:** Both amount and count over `payout_runs` (consistent with the history table).
 
 **Q20. "View older weeks" pagination + mobile-omission.** Desktop has a "View older weeks" link; mobile drops it (only the lifetime pill remains). **Question: is this intentional (mobile users never see beyond the visible cards), or design churn? And what's the pagination model — cursor by week-end date? page-of-N?**
 Plausible answers:
 1. Intentional; mobile is fixed-window 6 cards, link omitted by design.
 2. Design churn; mobile should also expose "View older weeks" as a button.
 3. Reachable on mobile but via a different surface (e.g., scroll-to-end triggers infinite-scroll fetch).
+**Answer:** Intentional — mobile is fixed-window 6 cards; link omitted by design. Pagination: cursor by week-end date.
 
 **Q21. Mobile pending-stamp fill `#FBFAF5` (paper) instead of `$amber-bg`.** Likely an authoring slip. **Question: is the intended fill `$amber-bg` (consistent with desktop), or is the paper-on-amber-bg-card mismatch intentional for visual contrast?**
 Plausible answers:
 1. Authoring slip — should be `$amber-bg`.
 2. Intentional — pending stamp uses paper fill specifically on mobile.
 3. Either is acceptable; defer to design system rule for "stamp on tinted surface."
+**Answer:** Authoring slip — should be `$amber-bg`.
 
 **Q22. Per-run detail modal.** Per `surface-map §7 Q10` answered "rows are interactive and open a per-run detail modal." **The modal layout is not drawn.** **Question: what does the modal show — the same Breakdown component as the active week (re-rendered against the historical run snapshot), or a different layout (e.g., a per-sub-order list)? And is the row's entire height the click target, or only an explicit "View details" affordance?**
 Plausible answers:
 1. Same Breakdown layout, hydrated from the run snapshot; full row clickable.
 2. Sub-order-level drill-down list; explicit affordance.
 3. Compact summary + Download statement button only; full row clickable.
+**Answer:** Same Breakdown layout, hydrated from the run snapshot; full row clickable.
 
 ### Existing-code elements absent from design
 
@@ -573,12 +595,14 @@ Plausible answers:
 1. Folded into "Returns".
 2. Folded into a "Penalties" row not yet drawn — design omission.
 3. Silently deducted in `Net payout` math only.
+**Answer:** Silently subtracted from Net payout math only (no visible row). Penalties are rare and design doesn't draw a row for them.
 
 **Q24. `vendor_ledger.referenceId` and `description` per-line metadata.** Not surfaced anywhere on the screen. **Question: are these intentionally hidden from vendors (admin-only), or expected to surface inside the per-run detail modal (Q22) as a transaction list?**
 Plausible answers:
 1. Hidden from vendors — admin-only.
 2. Expected in the detail modal as a transaction list.
 3. Surfaced in the statement PDF only (deferred per Q6).
+**Answer:** Hidden from vendors — admin-only metadata.
 
 ### Cross-surface / chrome / design-system gaps
 
@@ -587,20 +611,25 @@ Plausible answers:
 1. Ledger ships against current chrome; chrome revamp is a separate ticket.
 2. Chrome revamp blocks ledger.
 3. Partial — ship the ink top bar + paper-2 active sidebar entries with this ticket; defer mobile bottom tab bar.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Admin/Vendor chrome revamp (ink top bar, sectioned sidebar, mobile bottom tab bar). Implement with placeholder: ledger ships against the new chrome (per user override making this IN_SCOPE all). Add `// TODO(post-v1):` comment at every touch point.
 
 **Q-DS-1. Tooltip primitive missing.** Mobile bank-info policy block requires a tooltip (per `surface-map §7 Q8` answered). No `Tooltip` primitive exists in `@repo/ui` or in the design inventory. Per `02 §7 Q8` answer, missing primitives may be added via shadcn or built from scratch. **Question: install shadcn `tooltip` (Radix-backed) before this screen ships?**
 Plausible answers:
 1. Install shadcn `tooltip` now.
 2. Build a minimal Tooltip atom from Radix Primitives in `@repo/ui`.
 3. Use a Popover (already implied by shadcn's primitives — verify availability) instead of a Tooltip on mobile.
+**Answer:** Install shadcn `tooltip` once and retoken (matches `04` add-when-needed convention).
 
 **Q-DATA-1. Vendor session payload shape.** It is unclear whether the current better-auth session payload exposes the vendor's bank fields (`bankName`, `accountTitle`, `iban`) or whether a separate query is required. **Question: confirm the session shape so the bank-info card can decide between reusing the session and issuing a dedicated `GET /api/vendor/me` query.**
 Plausible answers:
 1. Session already exposes bank fields — reuse.
 2. Issue a new `GET /api/vendor/me` query; cache via React Query.
 3. Bake bank info into the same `GET /api/vendor/payouts/next` response.
+**Answer:** Issue a new `GET /api/vendor/me` query (separate from session); cache via React Query. Mirrors how addresses are fetched (`useAddressesQuery`).
 
 ---
 
 (End of Vendor · Ledger gap analysis. Stopping here per instructions —
 no implementation, no code proposals, no defaults assumed.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

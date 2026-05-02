@@ -308,157 +308,187 @@ do not pick an answer where I have hypotheses — I list them.
    - **Observed in code:** 3 tabs `pending` (default) / `shipped` / `delivered`, no Cancelled, no All; emoji + Urdu/Roman labels.
    - **Question:** Confirm the new tab inventory (`All` / `In transit` / `Delivered` / `Cancelled`), the new default (`All`), and that the old `pending` / Roman-Urdu labels are dropped intentionally — *or* that I should preserve a "Pending/Naye" partition somewhere.
    - **Plausible answers:** (a) Adopt design as drawn; drop pending. (b) Adopt design but add a hidden 5th `pending` tab. (c) Keep pending and rename to "Awaiting packing" or similar.
+   - **Answer:** Adopt design as drawn — All / In transit / Delivered / Cancelled, default `All`; drop existing `pending`/Roman-Urdu tabs.
 
 2. **Mapping rule for tab `In transit` from `sub_orders.status`.**
    - **Observed in design:** Tab is "In transit" with its own count.
    - **Observed in code:** `categorizeOrder()` says "any sub-order with status `handed_to_courier`" → "shipped"; otherwise pending unless terminal.
    - **Question:** Does "In transit" continue to mean "any sub-order in `handed_to_courier`", or does it now also include `packed` orders (since those are "in progress" but not yet delivered)? What about partially-delivered (some `delivered`, some `handed_to_courier`)?
    - **Plausible answers:** (a) "Any non-terminal" = pending/packed/handed_to_courier. (b) Strict: at least one `handed_to_courier`. (c) Order-level: derive from `orders.status` (`processing` / `partially_fulfilled` / `completed`).
+   - **Answer:** Strict — at least one sub-order in `handed_to_courier`. Doesn't double-count packed orders.
 
 3. **Mapping rule for tab `Cancelled`.**
    - **Observed in design:** "Cancelled" tab with count 2.
    - **Observed in code:** No Cancelled tab. Code's terminal logic treats "all delivered or cancelled" as the `delivered` tab.
    - **Question:** Is "Cancelled" = every sub-order cancelled, or any cancelled, or `orders.status` based?
    - **Plausible answers:** (a) All sub-orders cancelled. (b) Any sub-order cancelled (would overlap with "In transit" if some are still moving). (c) `orders.status` flag — but no `cancelled` value exists in `orders.status` enum (only `processing` / `partially_fulfilled` / `completed`).
+   - **Answer:** All sub-orders cancelled. Avoids overlap with In Transit.
 
 4. **Subtitle aggregates: "24 orders · Rs. 18,40,260 lifetime".**
    - **Observed in design:** Static string with two metrics — total order count and lifetime grand-total sum.
    - **Observed in code:** No aggregates of any kind on `/api/retailer/orders`.
    - **Question:** Should these be (a) computed server-side in the same route (extending its response wrapper), (b) a separate endpoint, or (c) computed client-side from the fetched array?
    - **Note:** Whichever wins, `RetailerOrder[]` typing changes, and so do the `useRetailerOrdersQuery` return type and call sites.
+   - **Answer:** Server-side in same `GET /api/retailer/orders` route, wrapping response as `{ orders, summary: { count, lifetimeTotal } }`.
 
 5. **Mapping for stamps `OUT FOR DELIVERY` vs `AT MNP HUB`.**
    - **Observed in design:** Two distinct stamps drawn on different cards.
    - **Observed in code:** Only one underlying transit state (`handed_to_courier`).
    - **Question:** Per Q9 of design-inventory, stamps are display-only — so what discriminator separates "OUT FOR DELIVERY" from "AT MNP HUB" if both come from `handed_to_courier`?
    - **Plausible answers:** (a) Time-since-handed: <X hours = "AT MNP HUB", >X hours = "OUT FOR DELIVERY". (b) Presence of `courierTrackingId` (already in schema) flips the label. (c) These are semantic synonyms in the design and we pick one. (d) Add a sub-status discriminator (would contradict the "no schema change" answer in Q9).
+   - **Answer:** STUBBED — see 06-scope-cut.md feature: Status display-label mapping table. Implement with placeholder: constants file + 1 helper resolving sub_orders.status enum to Pencil display stamps; AT MNP HUB chosen as canonical for handed_to_courier. Add `// TODO(post-v1):` comment at every touch point. Semantic synonyms — pick `AT MNP HUB` as canonical for `handed_to_courier`. Drop `OUT FOR DELIVERY` from the mapping.
 
 6. **Stamps `PENDING` and `PACKED` on this screen.**
    - **Observed in design:** No stamp drawn on this screen for either state. The design system frame defines `PACKED` (ink/paper-2) but the 5 cards on Buyer·Orders don't use it.
    - **Observed in code:** Both states are first-class — `pending` is the most common state for a fresh order; `packed` shows on the existing tab row as "Packing".
    - **Question:** Which stamp should display for an order whose sub-orders are in `pending` or `packed`? Is `PACKED` valid here even though no card on this screen uses it?
    - **Plausible answers:** (a) Use `PACKED` from the design system. (b) Suppress the stamp entirely. (c) New label "Processing" not in the design system.
+   - **Answer:** Use design-system PACKED variant; PENDING uses `warning` intent (per status-mapping table).
 
 7. **`Quick reorder` top-right button.**
    - **Observed in design:** Ink-fill button with plus icon labelled "Quick reorder" in `oTH` right cluster.
    - **Observed in code:** No equivalent.
    - **Question:** What does it do?
    - **Plausible answers:** (a) Reorder the most recent delivered order in one click. (b) Open a picker/sheet. (c) Navigate to the Reorder screen with an empty seeded cart.
+   - **Answer:** Reorder the most recent delivered order in one click → navigates to `/profile/orders/{lastDeliveredId}` (the new Reorder screen).
 
 8. **`Export CSV` scope.**
    - **Observed in design:** Outline button "Export CSV" with download icon.
    - **Observed in code:** No CSV endpoint.
    - **Question:** Does Export apply to the *current filtered view* (tab + search + sort), or always *all* orders for the user? What columns are required?
+   - **Answer:** DEFERRED — see 06-scope-cut.md feature: Statement / CSV downloads (vendor ledger PDFs, admin exports). Do not implement this question's scope. UI placeholder: all "Download…" / "Export…" buttons hidden across screens.
 
 9. **Card click target and "View details" target.**
    - **Observed in design:** Card has multiple buttons; "View details" is a dedicated button.
    - **Observed in code:** Whole card is a `<Link>` to `/profile/orders/[id]` → `RetailerOrderDetail`.
    - **Question:** Per design-inventory Q1, "View details" opens the Reorder frame. (a) Does the whole-card click also open Reorder, or is it inert? (b) What happens to the existing `/profile/orders/[id]` route (`RetailerOrderDetail` + `ParcelBox` + `ReceiptCard` + `ReviewDrawer`) — kept, repurposed, or deleted?
+   - **Answer:** Per `02 Q1` user answer, "View details" opens Reorder. Whole card click also opens Reorder for parity. Existing `/profile/orders/[id]` route stays — repurposed as the Reorder screen (per scope-cut).
 
 10. **Card chevron-down behaviour.**
     - **Observed in design:** A `chevron-down` icon next to the stamp on each card header. No expanded variant drawn.
     - **Observed in code:** None.
     - **Question:** Does the chevron (a) expand/collapse the card body, (b) open a kebab/overflow menu, or (c) is it a placeholder for future behaviour?
+    - **Answer:** Placeholder for future behavior; render but inert (no expand, no menu) for now.
 
 11. **Tab labels: copy + emoji.**
     - **Observed in design:** English chip labels, no emoji, no Urdu.
     - **Observed in code:** Roman-Urdu + emoji + Naye/Raaste Mein/Mil Gaye copy.
     - **Question:** Confirm emoji and Roman-Urdu labels are removed intentionally for this English-only release. Is there any string we should retain (e.g. an Urdu subtitle) or is it a clean wipe?
+    - **Answer:** Clean wipe to English — drop emoji + Roman-Urdu strings (per `02 §7 Q16`).
 
 12. **Card meta: "Delivered 26 Apr · 2 days".**
     - **Observed in design:** Truck icon + "Delivered 26 Apr · 2 days" — implies a delivered timestamp and a duration.
     - **Observed in code:** No `delivered_at` on either `orders` or `sub_orders`. `sub_orders.handedAt` exists but is the courier-handover timestamp, not delivery.
     - **Question:** Where does the delivered date come from? Options: (a) Add a `deliveredAt` column on `sub_orders`. (b) Reuse `updatedAt` when status flips to `delivered`. (c) Do not show this meta line until the data exists. The "2 days" duration is derived once a delivered timestamp is available.
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Order tracking surface (buyer-side). Implement with placeholder: "Track order" CTAs route to `/profile/orders/[id]` rendering the existing detail (parcel boxes still work) as fallback; account drawer Track-order row hides when no active order; util-strip "Track order" link goes to `/profile/orders`. Add `// TODO(post-v1):` comment at every touch point. Add `sub_orders.deliveredAt timestamp`; "X days" derived from `deliveredAt − createdAt`.
 
 13. **Card meta: "Gujranwala 52250" (postal code).**
     - **Observed in design:** City + 5-digit postal code.
     - **Observed in code:** `orders.shippingCity` is a free-text string. No postal-code column on `orders` or `addresses`.
     - **Question:** (a) Add a postal-code field upstream (addresses + shipping snapshot). (b) Hardcode/lookup postal codes per city. (c) Drop the postal code from the display.
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Postal code + province on addresses. Implement with placeholder: address card composition includes postal/province; order meta line shows postal code. Add `// TODO(post-v1):` comment at every touch point. `addresses.postalCode` + mirrored on `orders` shipping snapshot.
 
 14. **Card thumbnails: design shows placeholder icons, code shows real product photos.**
     - **Observed in design:** Six 48×48 paper-2 squares with a centred lucide `package` icon (ink-4). No image fills.
     - **Observed in code:** `<Image src={item.product.imageUrl} … fill />` actual product photos in overlapping circles.
     - **Question:** Is the placeholder a stand-in for real images that will render at runtime, or is the design intentionally suppressing photos in favour of icons?
+    - **Answer:** User answer: for products, images will be used. for categories, vendor can choose b/w image or icon.
 
 15. **Card meta: "COD · paid on delivery" — payment method indicator.**
     - **Observed in design:** Banknote icon + "COD · paid on delivery".
     - **Observed in code:** No `paymentMethod` column; checkout always creates COD orders.
     - **Question:** (a) Static copy ("COD · paid on delivery") because it's the only payment method. (b) Add a `paymentMethod` enum on `orders` for future-proofing. (c) Different copy when other methods land.
+    - **Answer:** DEFERRED — see 06-scope-cut.md feature: Payment methods feature. Do not implement this question's scope. UI placeholder: checkout payment selector renders 3 disabled cards with "Coming soon" labels; account drawer "Payment methods" row hidden or static "Cash on delivery"; no payment_methods table. Static copy; no `paymentMethod` column.
 
 16. **Items caption format: "Sufi Cooking Oil 5 L · Lipton Yellow Label · Basmati Rice 25 kg · Dalda Ghee 16 kg · +24 more items".**
     - **Observed in design:** Desktop ends with "+24 more items"; mobile drops the word "items" → "+24 more".
     - **Observed in code:** No equivalent caption.
     - **Question:** (a) Confirm the desktop/mobile copy difference is intentional. (b) How many product names lead the list (4 desktop / 3 mobile)? (c) Separator " · " is right? (d) For one-product orders, do we append "+0 more items" or hide the suffix?
+    - **Answer:** Confirm desktop/mobile split as drawn; lead with 4 names desktop / 3 names mobile; separator ` · `; if N=0, hide the suffix.
 
 17. **Sort options.**
     - **Observed in design:** Single visible state "Newest first".
     - **Observed in code:** Fixed `orderBy(desc(createdAt))`.
     - **Question:** What other sort options should the dropdown expose (Oldest first / Total ↑↓ / Weight ↑↓ / Status)?
+    - **Answer:** Newest first (default), Oldest first. Two options; expand later.
 
 18. **Search scope.**
     - **Observed in design:** Placeholder "Search by order ID or product".
     - **Observed in code:** None.
     - **Question:** Search is over (a) `orders.displayId` only, (b) displayId + `products.name`, (c) displayId + product name + product slug + city. The placeholder mentions only the first two.
+    - **Answer:** `displayId` + `products.name` (matches the placeholder).
 
 19. **Loading / Empty / No-results / Error states.**
     - **Observed in design:** Not drawn for this screen.
     - **Observed in code:** All three exist with Roman-Urdu copy + emoji.
     - **Question:** (a) Keep current shapes but rewrite copy in English / retoken visually? (b) Adopt an explicit Pencil-driven style (skeleton with stamp shapes? empty illustration?)? (c) Specify per-tab empty messages, and a separate "no results" state for empty search?
+    - **Answer:** Keep current shapes (skeleton, empty, error) but rewrite copy to English and retoken visually.
 
 20. **Mobile app bar: chevron-left target.**
     - **Observed in design:** Back chevron at the top of `lOti7`.
     - **Observed in code:** Storefront header is global; no per-screen back.
     - **Question:** Where does back go? Options: (a) `/profile` (account drawer trigger surface per design-inventory Q3). (b) `router.back()`. (c) Storefront `/`.
+    - **Answer:** `/profile` (account drawer trigger surface per `02 §7 Q3`).
 
 21. **Mobile drops "View details" button.**
     - **Observed in design:** Mobile card has only "Reorder" + "Invoice"; desktop has all three.
     - **Observed in code:** No buttons at all; whole card is a Link.
     - **Question:** On mobile, what's the gesture for opening Reorder? (a) Tap anywhere on the card body (whole-card link returns). (b) Tap the order ID / stamp / chevron. (c) Long-press menu. (d) Drop the action entirely on mobile.
+    - **Answer:** Tap card body opens Reorder (matches Q9 desktop semantic).
 
 22. **Mobile filter chip "Cancelled" with no count.**
     - **Observed in design:** Mobile shows "All 24" / "In transit 3" / "Delivered 19" / "Cancelled" — the last has no number.
     - **Observed in code:** N/A.
     - **Question:** Is it intentional that "Cancelled" omits its count on mobile, or is it a Pencil draw oversight?
+    - **Answer:** Pencil oversight — add count.
 
 23. **Mobile language toggle in the app bar.**
     - **Observed in design:** Mobile app bar (`lOti7`) shows the EN/Urdu segmented control alongside the account avatar.
     - **Observed in code:** No language toggle anywhere.
     - **Question:** Per design-inventory Q16, the toggle is presentational. (a) Render the `LanguageToggle` atom inert (no-op). (b) Render disabled / read-only. (c) Defer mounting until i18n lands.
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: i18n / language toggle plumbing (presentational EN-only). Implement with placeholder: render LanguageToggle visible-but-inert (visual only) with no state plumbing; clicking does nothing. Add `// TODO(post-v1):` comment at every touch point.
 
 24. **`Quick reorder` vs per-card "Reorder" — copy collision.**
     - **Observed in design:** Two buttons say "Reorder" in different surfaces (top-right "Quick reorder" + per-card "Reorder").
     - **Observed in code:** N/A.
     - **Question:** Confirm both labels are correct, or harmonise (e.g. rename the top-right one to "Repeat last order" / "New order from past").
+    - **Answer:** Confirm both labels correct; differentiated by surface (header CTA = Quick reorder; card CTA = Reorder).
 
 25. **Stamp aggregation when an order has multiple sub-orders in different states.**
     - **Observed in design:** Each card shows exactly one stamp.
     - **Observed in code:** `getStatusSummary()` (`order-card/index.tsx:19`) does an existing reduce — but the design's stamp set is different.
     - **Question:** What is the precedence rule for the new label set (DELIVERED / OUT FOR DELIVERY / AT MNP HUB / CANCELLED) when sub-orders disagree? E.g. one delivered + one in transit → which stamp?
+    - **Answer:** Derived rollup: any cancelled→CANCELLED; all delivered→DELIVERED; any handed_to_courier→AT MNP HUB; any packed→PACKED; else PENDING.
 
 26. **Card border / surface palette specifics — visual confirmation.**
     - **Observed in design:** Card body is `white`; card header strip is `paper-2`; all hairlines `rule` / `rule-2`; whole card 1px `rule` outer border.
     - **Observed in code:** White card + neutral border, with dark-mode classes still present.
     - **Question:** Confirm we map this card to (a) `Card` primitive from `@repo/ui` — which after Phase 3 is `bg-white text-ink-2 rounded-md border border-rule` — composed with a header strip, OR (b) a new dedicated `OrderCard` shell that doesn't reuse the `Card` primitive. The implementation log §`card.tsx` notes "receipt-style and inverse Card variants may need to be added in Phase 4 if reuse is high enough."
+    - **Answer:** Use existing `Card` primitive (`packages/ui/src/components/card.tsx`) composed with a paper-2 header strip.
 
 27. **Pencil-system component coverage.**
     - **Observed in design:** This screen uses pill-tabs (radius 99), the `Stamp` atom, the `LanguageToggle` atom, lucide `chevron-down` / `arrow-down-up` / `refresh-cw` / `map-pin` / `file-text` / `banknote` / `truck` / `package` / `download` / `plus` / `search` / `chevron-left` / `chevron-right` icons, and a horizontally-scrolling chip row on mobile.
     - **Observed in implementation log:** `Stamp` and `LanguageToggle` are shipped. Underline tabs are flagged as "ask user to install shadcn `tabs`". **Pill tabs (radius 99) are NOT covered** by either the design-inventory `05 Components` row (which only documents underline tabs and chip filter rows separately) or the implementation log.
     - **Question:** Is the pill-tab + count chip a new primitive (e.g. `<TabPill count={…}>`), or a thin styling on top of buttons / underline tabs? This is the §02-design-inventory Q11-style "flag if a component wasn't covered" check.
+    - **Answer:** Thin styling on top of buttons (small inline `TabPill` component in the orders module). Defer making it a `@repo/ui` primitive.
 
 28. **Chip row on mobile with `clip:true` (horizontal scroll).**
     - **Observed in design:** `gVK0c` clips children — implies scrollable.
     - **Observed in implementation log:** No `ChipRow` / `Tabs` primitive yet (Tabs flagged as a future install).
     - **Question:** Is this its own primitive (`<ChipScroller>`) or just a Tailwind `flex overflow-x-auto` div? Given that the same chip pattern shows up on buyer/cart screens elsewhere (per `02-design-inventory.md` §3.11), a primitive may be warranted.
+    - **Answer:** Tailwind `flex overflow-x-auto` div; promote to primitive only if reused in 3+ screens.
 
 29. **Sticky tab bar + backdrop blur.**
     - **Observed in design:** No `position: sticky` is encoded by Pencil — the design has no scroll stickiness affordance for the filter card.
     - **Observed in code:** `sticky top-0 z-20 … bg-white/95 … backdrop-blur-md`.
     - **Question:** Drop the sticky / backdrop-blur entirely (purely flow), or preserve sticky behaviour at runtime even though Pencil doesn't show it?
+    - **Answer:** Drop sticky / backdrop-blur entirely (Pencil shows pure flow).
 
 30. **Token mapping for the DELIVERED stamp text colour.**
     - **Observed in design:** Stamp text uses `$green` (Pencil aliases `green = green-700 = #15803D` per §1.1 of design-inventory and §1.1 of token-migration).
     - **Observed in implementation log:** Both `green` and `green-700` survive as aliases.
     - **Question:** This is mostly a token sanity check rather than a behaviour Q — confirm we use `green` (which today resolves to `--green-700`) for the DELIVERED stamp's content colour rather than `green-2`/`green-600`. (Phase-3 OQ Q1 already preserved both names.)
+    - **Answer:** Confirmed — use `green-700` (Pencil aliases `green = green-700`).
 
 ---
 
@@ -466,3 +496,5 @@ do not pick an answer where I have hypotheses — I list them.
 
 (End of Buyer · Orders gap analysis. Read-only phase — stopping here per
 instructions.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

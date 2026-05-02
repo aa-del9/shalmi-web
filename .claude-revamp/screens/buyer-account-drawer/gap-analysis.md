@@ -349,6 +349,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (token):** Phase-3 `--bg-overlay = #0F141180` (50%).
 - **Question:** Should the drawer scrim use the existing `--bg-overlay` (50%) or a one-off 60% override? Are 50% and 60% intentionally different surfaces in the design system?
 - **Hypotheses:** (a) align scrim to `--bg-overlay`, drop the 60% as a Pencil-side rounding artefact; (b) introduce `--bg-overlay-strong = #0F141199` and use it for the drawer; (c) keep 50% on dialogs, use 60% only on the drawer because it has a wider shadow.
+**Answer:** Align scrim to existing `--bg-overlay` (50%); drop the 60% as a Pencil rounding artifact.
 
 ### 2. "Saved" stat formula
 
@@ -356,6 +357,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No "savings" concept in any schema or aggregation.
 - **Question:** What does "Saved" mean? Discount-vs-list-price savings on completed orders, savings vs single-unit price for pack purchases, or platform credits earned?
 - **Hypotheses:** (a) sum of `(originalPrice - paidPrice) × qty` across all order items (requires list price, see buyer-home Open Q11); (b) sum of pack-discount equivalents (requires pack-pricing model from design-inventory Q12); (c) sum of `wallet.balanceCents` historic credits (matches existing `wallet` table); (d) just a marketing string, computed approximately.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Buyer profile stats (`GET /api/user/profile-stats`). Implement with placeholder: Drawer stats render "—". Nav-row subtitles fall back to static copy ("View your orders" instead of "24 orders · 3 in transit"). Add `// TODO(post-v1):` comment at every touch point.
 
 ### 3. Trailing pill on "Orders" row — new primitive or ad-hoc?
 
@@ -363,6 +365,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No counter / pill primitive exists.
 - **Question:** Is this a new generic primitive (a `<Counter variant="warning|info|critical">` to use anywhere a count needs to render) or an ad-hoc inline frame for this drawer only?
 - **Hypotheses:** (a) new `<Counter>` primitive shipped now (used in nav rows here, possibly cart-icon badge in header, etc.); (b) inline frame here, generalize later; (c) reuse `Stamp` with a new rounded variant.
+**Answer:** Inline frame here, generalize later. Smallest delta — no new primitive.
 
 ### 4. Payment methods row — schema or static?
 
@@ -370,6 +373,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No `payment_methods` table; checkout is COD-only.
 - **Question:** Build the schema + page now, or render the row as static copy with no real destination?
 - **Hypotheses:** (a) full feature: `payment_methods` table + `/profile/payment-methods` page (for now only seedable as `cod`); (b) static row, link to a "Coming soon" placeholder; (c) hide the row until a non-COD method exists.
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Payment methods feature. Do not implement this question's scope. UI placeholder: Account drawer "Payment methods" row hidden or static "Cash on delivery". No table.
 
 ### 5. Lang toggle — global state plumbing
 
@@ -377,6 +381,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** Phase-3 `LanguageToggle` is presentational (`value` / `onValueChange`); no global i18n.
 - **Question:** Where does the language state live, and what does changing it do today (per design-inventory Q16, EN-only ships first)?
 - **Hypotheses:** (a) cookie `lang=en|ur` set by toggle, no UI changes today (no-op); (b) Zustand store + cookie + reload; (c) URL search param via nuqs; (d) the toggle is fully disabled and the UI is read-only until i18n lands.
+**Answer:** STUBBED — see 06-scope-cut.md feature: i18n / language toggle plumbing (presentational EN-only). Implement with placeholder: Toggle renders inert (visual only) with no state plumbing; clicking does nothing. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 6. Drawer width override on `<SheetContent>`
 
@@ -384,6 +389,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `<SheetContent side="right">` ships with Radix's defaults (~3/4 screen up to `sm:max-w-sm`).
 - **Question:** Extend the primitive (e.g. add a `size` variant) or pass `className` overrides per consumer?
 - **Hypotheses:** (a) extend primitive `size="sm"|"md"|"lg"`; (b) per-consumer className; (c) add a dedicated `<AccountDrawer>` molecule that internally configures width.
+**Answer:** Per-consumer `className="sm:!max-w-[480px]"` override. Smallest delta — no primitive change.
 
 ### 7. Trigger surface — `/profile` route + header button
 
@@ -391,6 +397,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** Header has avatar Dropdown today; `/profile` has no page; mobile responsive collapses Dropdown to the same trigger.
 - **Question:** Implementation choice for `/profile` deep-linking — auto-open via cookie, search param, route redirect, or render-then-open?
 - **Hypotheses:** (a) `/profile/page.tsx` mounts a client component that opens the drawer on mount and replaces history with `/`; (b) middleware redirect `/profile` → `/?account=open`; (c) `/profile/page.tsx` renders a static "Account" landing that includes the drawer rendered open by default.
+**Answer:** `/profile/page.tsx` mounts a client component that opens the drawer on mount and replaces history with `/`. Cleanest deep-link strategy.
 
 ### 8. Logout target after signOut
 
@@ -398,6 +405,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** Two patterns: dropdown logout (no redirect) vs `LogoutButton` (redirect to `/` + refresh).
 - **Question:** Drawer logout uses which pattern, and does it close the drawer first?
 - **Hypotheses:** (a) follow `LogoutButton` (close drawer → signOut → push `/` → refresh); (b) signOut only and let session listeners reset the page; (c) close drawer → signOut → keep current route (works for `/`, but `/profile/*` middleware will redirect to `/auth?redirect=...`).
+**Answer:** Follow `LogoutButton` pattern — close drawer first, then `signOut()` → `router.push('/')` → `router.refresh()`.
 
 ### 9. Version string source
 
@@ -405,6 +413,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No `APP_VERSION` env / config wired.
 - **Question:** Hard-code in component, read `package.json#version` at build, or expose via `NEXT_PUBLIC_APP_VERSION`?
 - **Hypotheses:** (a) `NEXT_PUBLIC_APP_VERSION` env, populated at build by Vercel from package.json; (b) import from `package.json` directly (Next.js allows server-side); (c) hard-code constant in `core/constants/app-info`.
+**Answer:** `NEXT_PUBLIC_APP_VERSION` env var, populated at build time from `package.json`. Mirrors existing `t3-env` setup (`modules/core/env/{client,server}`).
 
 ### 10. Track-order row — copy mapping when there's no active order
 
@@ -412,6 +421,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No "active order" concept.
 - **Question:** When the user has zero in-transit orders, does the row (a) hide, (b) show fallback "No active orders", (c) link to general orders list, (d) something else?
 - **Hypotheses:** (a) hide row; (b) "No active orders" — keep the row, no badge, no chevron; (c) route to `/profile/orders` regardless and subtitle becomes "View all your orders".
+**Answer:** Hide row entirely.
 
 ### 11. Stats freshness / cache strategy
 
@@ -419,6 +429,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No `/api/user/profile-stats` endpoint; existing similar fetchers use React Query.
 - **Question:** SWR-on-open with skeletons in the meantime, or server-render once on drawer mount?
 - **Hypotheses:** (a) React Query, prefetch on header trigger hover; (b) server-render on `/profile` route + revalidate via the live drawer; (c) skeleton-on-open, fetch each time.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Buyer profile stats (`GET /api/user/profile-stats`). Implement with placeholder: Drawer stats render "—". Nav-row subtitles fall back to static copy ("View your orders" instead of "24 orders · 3 in transit"). Add `// TODO(post-v1):` comment at every touch point.
 
 ### 12. Initials computation
 
@@ -426,6 +437,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** Header avatar shows only the first letter (`userName.charAt(0)`).
 - **Question:** Drawer-and-header use first+last initials, or only first letter (matching today)? Does single-name user show one initial?
 - **Hypotheses:** (a) split on whitespace, take first letter of first two parts (handles "Tariq Ahmed" → "TA", "Ali" → "A"); (b) keep first-letter-only; (c) different rules for drawer (TA) vs header (T).
+**Answer:** Split on whitespace, take first letter of first two parts ("Tariq Ahmed" → "TA", single name "Ali" → "A").
 
 ### 13. Stamp-row "Member since" date format
 
@@ -433,6 +445,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `dayjs` is in deps; date formatter not centralized for this case.
 - **Question:** Format `Mon YYYY` (`dayjs(...).format('MMM YYYY')`) or longer (`MMMM YYYY` → "March 2024")?
 - **Hypotheses:** (a) abbreviated `MMM YYYY` (matches drawn copy); (b) full `MMMM YYYY`; (c) localized format per current language.
+**Answer:** Abbreviated `dayjs(...).format('MMM YYYY')`.
 
 ### 14. "L" lakh notation (South-Asian) for currency
 
@@ -440,10 +453,12 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `formatPrice` (in `modules/cart/utils/resolve-price.ts`) — needs verification of grouping behavior.
 - **Question:** Stats use lakh-abbreviated form ("Rs. 18.4 L") while the rest of the UI uses full grouping ("Rs. 18,40,000"). Is the drawer the only place lakh-abbreviation is used, or is it system-wide for amounts above a threshold?
 - **Hypotheses:** (a) drawer-only abbreviation (formatter passes a `compact: true` flag); (b) system-wide abbreviation above 1,00,000; (c) raw grouping everywhere — abbreviation is design shorthand only.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Currency formatter (South-Asian grouping + lakh notation). Implement with placeholder: N/A — broken state (Western grouping) already in code. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 15. Saved items / wishlist scope
 
 - **Same dependency as buyer-home Open Q12.** If wishlist is out-of-scope for this revamp, the "Saved items" nav row needs a placeholder or removal.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Wishlist / Saved Items. Implement with placeholder: Heart icons render but are no-ops (or removed). Account drawer "Saved items" row hidden or shows "0 products bookmarked" linking to a "Coming soon" page. Header "Saved" button hidden. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 16. Unauthed drawer behavior
 
@@ -451,6 +466,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** Header shows "Sign In" Button when unauthed (no avatar/dropdown).
 - **Question:** When unauthed, does (a) the trigger button hide entirely, (b) the trigger opens a drawer with sign-in CTA + minimal Help/Terms links, (c) the trigger routes to `/auth`?
 - **Hypotheses:** (a) hide trigger, show "Sign In" Button as today; (b) drawer opens with reduced surface; (c) trigger redirects to `/auth?redirect=/`.
+**Answer:** Hide trigger; show "Sign In" Button as today. Matches existing `StorefrontHeader` conditional.
 
 ### 17. "default Shop" copy in Saved-addresses subtitle
 
@@ -458,6 +474,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `addresses.title` exists and is required (`createAddressSchema`).
 - **Question:** Should the subtitle render the literal title (so a user with default title "Office" would see "default Office") or always say "Shop / Home / Other" from a fixed enum?
 - **Hypotheses:** (a) literal title field; (b) enum mapped; (c) a new `addresses.kind` enum + the literal `title` for display.
+**Answer:** Render the literal `addresses.title` field (so default "Office" shows "default Office"). No new enum.
 
 ### 18. Drawer header close-button style
 
@@ -465,7 +482,10 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** Phase-3 `<SheetContent>` has its own absolute-positioned close (X icon, top-right, no border).
 - **Question:** Use the Phase-3 default close (override styling) or render a custom close button inside the drawer header?
 - **Hypotheses:** (a) hide default close, render custom `<SheetClose>` styled as a 36px outline button inside the title row; (b) restyle the default close to match; (c) accept the default close.
+**Answer:** Hide default `<SheetClose>`; render custom 36px outline button inside the title row.
 
 ---
 
 (End of Buyer · Account Drawer gap analysis. Stopping here per workflow rule — not starting implementation.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

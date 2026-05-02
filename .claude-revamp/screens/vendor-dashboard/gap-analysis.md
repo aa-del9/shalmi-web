@@ -413,42 +413,52 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
    - (a) Click opens a dropdown of preset windows (e.g. `Today / This week / This month / Last month / Last 3 months / This year`).
    - (b) It cycles through presets on each click.
    - (c) It's a static label and not interactive (filter scope is fixed).
+**Answer:** Click opens a dropdown of preset windows (Today / This week / This month / Last month / This year).
 
 2. **Filter scope** — *Observed:* the "This month" pill sits in the page header; Pencil doesn't show wiring lines. *Question:* which sections does the filter re-scope?
    - (a) Only the KPI row.
    - (b) KPI row + chart + recent orders + low stock + top sellers (everything).
    - (c) Only KPI row, with chart having its own `7D/30D/90D` segmented control.
+**Answer:** Re-scopes everything (KPI row + recent orders + low stock + top sellers); chart keeps its own segmented control.
 
 3. **Sidebar `Settings` entry** — *Observed:* a `Settings` row appears in the sidebar (lucide `settings`, "ACCOUNT" section). No Vendor · Settings screen exists in Pencil (`02-design-inventory.md` §4.4 lists only Dashboard / Products / Orders / Ledger). No `/vendor/settings` constant or route exists in code. *Question:* what does the row do?
    - (a) Routes to a new `/vendor/settings` screen that simply isn't in the Pencil pass yet.
    - (b) Opens an account drawer (mirroring buyer's `EYc0L`) — not drawn for vendor.
    - (c) Stub-route only for visual completeness; Phase 4 leaves it inert until designed.
+**Answer:** Routes to a placeholder `/vendor/settings` page; ships inert until designed.
 
 4. **Header eyebrow city — `GUJRANWALA`** — *Observed:* uppercased city in the header eyebrow. `vendors` has both `city` and `hub`. *Question:* which field drives the eyebrow?
    - (a) `vendors.city` (vendor's home city).
    - (b) `vendors.hub` (the MNP hub the vendor ships through).
    - (c) Something composed (e.g., shipping today's hub).
+**Answer:** `vendors.hub` (the MNP hub, matches the "Gujranwala" sample).
 
 5. **Sales chart segmented control labels & states** — *Observed:* three pills `seg1/seg2/seg3` drawn; only `seg1` has the active `paper-2` fill; the inner labels are children that the layout snapshot abbreviated to `…`. *Question:* (a) confirm the labels are `7D / 30D / 90D` (per `screens/vendor-portal.md`)? (b) Confirm the active state matches `7D` (the eyebrow says "LAST 7 DAYS")? (c) What are the inactive-pill visuals — no fill at all, or `paper-2`-on-hover?
+**Answer:** Confirm `7D / 30D / 90D` per `screens/vendor-portal.md`; `7D` is active by default; inactive pills have no fill.
 
 6. **Sales chart day order** — *Observed:* desktop bars run `TUE → MON` and "today" (MON) is highlighted ink. Mobile bars run `T W T F S S M`. *Question:* does the chart always render "last 7 days inclusive of today" (so the rightmost bar is today and shifts daily), or is it "the past calendar week"? Plausible answers:
    - (a) Trailing 7 days ending today.
    - (b) Mon–Sun of the current week.
    - (c) Sun–Sat of the current week.
+**Answer:** Trailing 7 days ending today (rightmost bar = today).
 
 7. **Mobile hero drops "This month" + "Add product"** — *Observed:* desktop header has both the filter pill and the green CTA; mobile hero has neither. *Question:* are these intentionally removed on mobile (density), or do they reappear elsewhere on mobile (e.g., in the app bar / a floating action / a sheet)?
    - (a) Intentionally removed; mobile dashboard is read-only with no quick add and no filter.
    - (b) "Add product" is expected to be a FAB or top-bar icon button on mobile (not drawn).
    - (c) The filter pill is folded into the chart's `7D/30D/90D` segmented control on mobile.
+**Answer:** Intentionally removed on mobile; mobile dashboard is read-only.
 
 8. **Mobile recent orders pill labels** — *Observed:* card snapshots show pill containers with abbreviated children (`…`). Two pills drawn as `amber-bg/amber stroke` and one as `white/rule-2 stroke`. *Question:* confirm pill text/values: are these `NEW`, `NEW`, `PACKED` (matching the desktop sample copy for the first three rows of the same data set)?
+**Answer:** Confirm — first two cards `NEW` (amber), third `PACKED` (neutral).
 
 9. **Mobile bottom-tab `Orders` badge** — *Observed:* desktop sidebar `Orders` row has the amber `8` badge; mobile bottom-tab `Orders` does not draw a badge. *Question:* is the badge intentionally omitted on mobile, or is its absence design churn (i.e., we should also display the badge on the mobile tab)?
+**Answer:** Design churn — add the badge on mobile too.
 
 10. **Top bar bell + user-pill behavior** — *Observed:* bell icon and user pill drawn but no menu/sheet drawn. The current sticky header has a standalone `LogoutButton`. *Question:*
     - (a) Bell is a placeholder for a future notifications surface (out of scope per `02-design-inventory.md` Q19) — should it be omitted from Phase 4, or rendered inert?
     - (b) User pill on click — does it open an account drawer (none drawn for vendor), a dropdown menu, or just navigates to `/vendor/settings`?
     - (c) Where does logout move? (Drawer / dropdown menu / Settings screen?)
+**Answer:** Bell: DEFERRED — see 06-scope-cut.md (Notifications / bell icon DROPPED in Out-of-scope clarifications). Do not implement this question's scope. UI placeholder: render the bell visually inert; no badge, no surface, no schema. User pill: Opens DropdownMenu; logout moves into it.
 
 ### Field semantics
 
@@ -457,31 +467,37 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
     - (b) Which statuses qualify (`delivered` only, all non-`cancelled`, etc.)?
     - (c) "vs last month" — calendar-month-prior or trailing-30-days-prior?
     - (d) Are returns deducted (per `features/vendor-payouts/surface-map.md` Q4 returns ≡ `cancelled`)?
+**Answer:** User answer: A11: lets keep the gross order value for now. might change later
 
 12. **Active vs draft products schema gap** — *Observed:* "Active Listings 47" implies a non-active set (drafts/archived). Pencil products screen draws `ACTIVE / LOW STOCK / DRAFT` stamps. `products` has no status column. *Question:*
     - (a) Add `products.status` (`active | draft | archived`)?
     - (b) Is "draft" out of scope for the dashboard count and we should treat all rows as active for now?
     - (c) Or is `active` a derived predicate (e.g. `stock > 0`)?
+**Answer:** STUBBED — see 06-scope-cut.md feature: Active vs Draft product status (light version). Implement with placeholder: `products.status enum('active','draft')`. Add `// TODO(post-v1):` comment at every touch point.
 
 13. **Low-stock threshold schema gap** — *Observed:* `3 LOW STOCK` count + `6 left` / `4 left` / `2 left` rows. No threshold column exists. *Question:*
     - (a) Per-product `lowStockThreshold integer` column.
     - (b) Tenant-/system-wide constant (e.g. `<= 10` defines low).
     - (c) Derived from sales velocity (e.g. `<= 7 days of stock at current rate`).
+**Answer:** STUBBED — see 06-scope-cut.md feature: Vendor product enrichment fields (SKU, brand, tagline, low-stock threshold, restock lead time, packaging unit, MRP). Implement with placeholder: per-product `lowStockThreshold` integer column. Add `// TODO(post-v1):` comment at every touch point.
 
 14. **Order display id format `SM-…` vs `ORD-…`** — *Observed:* Pencil renders `#SM-2841`. Existing `orders.displayId` uses `ORD-…` (per `01-codebase-map.md` §5). *Question:*
     - (a) Update display-id generator to `SM-…` going forward?
     - (b) Keep `ORD-` and just use a different prefix in the UI?
     - (c) Pencil prefix is decorative and the real id format keeps current.
+**Answer:** Keep `ORD-` prefix in DB; `SH-` is visual placeholder. Smallest delta — no migration.
 
 15. **Buyer "shop name" field for recent-orders rows** — *Observed:* row 1 reads `Tariq Kiryana Store · Gujranwala`. There is no `users.shopName` / `users.businessName` today. *Question:* where does this string come from?
     - (a) Add `users.businessName text` (user-supplied at sign-up).
     - (b) Use `addresses.title` (currently meant for "Home" / "Shop" labels — not a business name).
     - (c) Compose from existing `user.name` (drop the "Store" suffix).
+**Answer:** STUBBED — see 06-scope-cut.md feature: Buyer business / shop name (`user.businessName`). Implement with placeholder: `user.businessName` field. Add `// TODO(post-v1):` comment at every touch point.
 
 16. **Product SKU field** — *Observed:* low-stock rows show `SKU 8924`. `products` has no `sku` column. *Question:*
     - (a) Add `products.sku text` (unique, distinct from `slug`).
     - (b) Derive a numeric ID from `products.id` (UUID) — won't render as `8924`.
     - (c) `SKU 8924` in Pencil is decorative; show `slug` or sequence id instead.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Vendor product enrichment fields (SKU, brand, tagline, low-stock threshold, restock lead time, packaging unit, MRP). Implement with placeholder: `sku` text per product, unique per vendor. Add `// TODO(post-v1):` comment at every touch point.
 
 17. **Empty / loading / error states for the dashboard panels** — *Observed:* none drawn. *Question:* per panel (KPIs, chart, recent orders, low stock, top sellers, payouts callout) — what shape should each take when:
     - vendor has zero data in the relevant window?
@@ -492,30 +508,41 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
     - (b) Per-row skeletons (e.g. 5 ghost rows in Recent orders).
     - (c) Empty-state copy with an action (e.g. "No orders yet — share your shop link").
     - (d) Error toasts + a "Retry" button on the card.
+**Answer:** Whole-card `Skeleton` blocks; per-row skeletons in Recent orders; empty-state copy with action; error toast + Retry on the card.
 
 ### Copy
 
 18. **Header subtitle** — *Observed:* desktop `Your shop at a glance — orders, stock, payouts.` vs mobile `Your shop today — orders, stock, payouts.`. *Question:* is this an intentional desktop/mobile copy split, or should one canonical sentence ship?
+**Answer:** Pick desktop wording canonical ("Your shop at a glance — orders, stock, payouts.") on both breakpoints.
 
 19. **KPI eyebrow `PAYOUT · PENDING` vs `PAYOUT PENDING`** — *Observed:* desktop has the middle dot, mobile drops it. *Question:* canonicalize on which?
+**Answer:** Canonicalize on desktop format with the middle dot.
 
 20. **Chart eyebrow `REVENUE · LAST 7 DAYS` vs `7 DAYS · REVENUE`** — *Observed:* desktop and mobile use opposite word orders. *Question:* one canonical eyebrow per breakpoint, or make them consistent?
+**Answer:** Canonicalize — `REVENUE · LAST 7 DAYS` on both breakpoints.
 
 21. **Payouts callout body** — *Observed:* desktop says `Releases Friday, 2 May to your registered Allied Bank account ending 4291.`, mobile drops "registered" (`…to your Allied Bank account ending 4291.`). *Question:* canonical body string?
+**Answer:** Canonical desktop body ("Releases Friday, 2 May to your registered Allied Bank account ending 4291.").
 
 22. **Sidebar item label "Products" vs current "My Products"** — *Observed:* Pencil sidebar uses "Products"; existing code uses "My Products". *Question:* is "Products" the intended canonical label, or is "My Products" preferred (since the storefront also has a Products surface)?
+**Answer:** Adopt "Products" per Pencil.
 
 23. **Recent orders header — desktop `Last 5 orders today` vs mobile `Last 3 today`** — *Observed:* count differs (5 vs 3) and copy differs. *Question:* are these intentional density choices, or should both honor a single rule (e.g. "show up to N, with N derived from viewport")?
+**Answer:** Viewport-derived (5 desktop, 3 mobile) — keep the per-breakpoint count.
 
 ### Removed elements
 
 24. **`Add Product` sidebar entry removal** — *Observed:* Pencil sidebar has no Add Product entry; `Add product` becomes a header CTA on Dashboard (and a primary CTA on Products page). *Question:* confirm the existing `/vendor/products/new` route should be retired entirely (per `02-design-inventory.md` Q11), and the sidebar entry deleted.
+**Answer:** DEFERRED — see 06-scope-cut.md (vendor products route collapse confirmed in 02 §7 Q11). Do not implement this question's scope. UI placeholder: delete sidebar entry; retire `/vendor/products/new` route.
 
 25. **`LogoutButton` in the sticky header** — *Observed:* current vendor layout sticky header has a `LogoutButton`; Pencil top bar replaces the header but doesn't draw an explicit logout affordance. *Question:* where does logout live going forward?
     - (a) Inside the user-pill dropdown / drawer (drawer not drawn for vendor).
     - (b) On a future Vendor · Settings screen.
     - (c) Keep a logout entry in the sidebar (Pencil doesn't draw it).
+**Answer:** Moved into user-pill dropdown (matches admin chrome behavior).
 
 ---
 
 (End of vendor-dashboard gap analysis. Stopping here per instructions — no implementation.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

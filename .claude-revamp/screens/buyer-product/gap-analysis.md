@@ -493,6 +493,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       `from=category-slug`), falling back to (a).
   (c) Render a "primary category" via a new `isPrimary` flag on
       `product_categories`.
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Admin "Catalog" sidebar grouping + Breadcrumb component. Implement with placeholder: IN_SCOPE — install shadcn `breadcrumb` once, retoken, reuse across screens. Add `// TODO(post-v1):` comment at every touch point. Pick first category by `product_categories` insert order; render `Home › {Category} › {Product}`.
 
 ---
 
@@ -516,6 +517,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (c) `name` stays plain and the eyebrow renders as a separate text
       node above/inside the title block (so it gets its own type
       style).
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. Computed at render from `packSize` + `unitWeightGrams`.
 
 ---
 
@@ -534,6 +536,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       as "Net weight: 21g per unit".
   (c) Repurpose to show *pack* weight (unit weight × pack size) as a
       single line.
+- **Answer:** Drop — packaging info handled by title eyebrow + spec section.
 
 ---
 
@@ -552,6 +555,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       no bundle is selected (e.g., before initial render).
   (c) Show per-pack price (e.g., Rs. 2,510 / pack) instead of the
       total, with the total derived elsewhere.
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. Yes — current-bundle total only; remove "From" prefix.
 
 ---
 
@@ -571,6 +575,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       strikethrough is `unitMrpCents × packSize`.
   (c) Optional — if missing, hide the strikethrough and save pill
       entirely.
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. Optional `packMrpCents` — if missing, hide strikethrough + save pill. Vendor isn't forced to set MRP.
 
 ---
 
@@ -590,6 +595,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (b) Vendor types `discountPercent`; we display the typed percent
       and back-compute the rupees from MRP × percent.
   (c) Both — vendor can override the derived value.
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. Derived: `save = mrp − pricePerPack`, `percent = round((save/mrp)×100)`.
 
 ---
 
@@ -612,6 +618,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (c) Computed at render — `pricePerPackCents / packSize` rounded to
       2 decimals (despite Q3 answer saying "separate field", this is
       worth a final confirm).
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. Stored as integer `pricePerUnitCents` per product per `02 §7 Q12 / pack-pricing surface map`.
 
 ---
 
@@ -633,6 +640,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       shows decimals; per-unit caption rounds to 0 decimals
       (rejecting the ".42" example as design-side filler text).
   (c) Locale-aware via `next-intl` once i18n lands.
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Currency formatter (South-Asian grouping + lakh notation). Implement with placeholder: IN_SCOPE — replace `amount.toLocaleString()` callers with new `formatPrice` using `Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 })`. Add `// TODO(post-v1):` comment at every touch point. `Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 })` for all `Rs.` displays; decimals only on per-unit caption.
 
 ---
 
@@ -648,6 +656,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       etc. appear on prod1) but use Pencil copy.
   (c) "Bulk Offerings" stays — Pencil sample is just an example
       header.
+- **Answer:** Use Pencil copy verbatim ("CHOOSE BUNDLE SIZE"); drop Package icon.
 
 ---
 
@@ -671,6 +680,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       that case).
   (c) No stored badge flags — `BEST` = highest qty tier, `SAVE` =
       tier with biggest delta from MRP (auto-computed).
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. One badge flag per tier with enum `none | save | best`; selected-state `bg-ink text-white`.
 
 ---
 
@@ -693,6 +703,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       messier migration).
   (c) Keep the old table dormant for one release while writing to the
       new one (safer for staged rollout).
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. Drop `product_price_tiers` and add fresh `product_pack_tiers`. Cleanest.
 
 ---
 
@@ -707,6 +718,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (b) Auto-rule: the tier with the lowest per-unit price.
   (c) Auto-rule: the tier just below the median pack qty (so 12 in a
       6/12/24/48 set).
+- **Answer:** Vendor-pinned `isDefault` boolean on one tier row.
 
 ---
 
@@ -728,6 +740,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       (=24 units)).
   (c) Min = "starter pack qty" the vendor pins per tier (so the 12-pack
       tier might force min=2 = 24 units minimum).
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. Min = 1 pack, max = `stock` (interpreted as packs); changing the bundle resets quantity to 1.
 
 ---
 
@@ -747,6 +760,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       server-side wishlist on sign-in.
   (c) Not in scope yet — render the heart but make it a no-op (or
       drop the heart on PDP for this revamp).
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Wishlist / Saved Items. Implement with placeholder: heart icons render but are no-ops (or removed); account drawer "Saved items" row hidden; header "Saved" button hidden. Add `// TODO(post-v1):` comment at every touch point. Signed-in only — bounce guest clicks to `/auth?redirect=/products/[slug]`. (Defer guest local-storage merge until v2.)
 
 ---
 
@@ -766,6 +780,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (b) Move into the spec section as a key/value row.
   (c) Conditional — show only when stock low, with copy like "Only
       X cartons left".
+- **Answer:** Drop entirely from PDP — out-of-stock is communicated via Add-to-cart disabled state.
 
 ---
 
@@ -783,6 +798,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       a small input dialog (new feature; out of revamp scope).
   (c) Hide CTA, render an inline `red` stamp "OUT OF STOCK" and
       disable the qty stepper.
+- **Answer:** Keep disabled + "Out of Stock" copy (existing behavior).
 
 ---
 
@@ -801,6 +817,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       system Toaster which is already mounted).
   (b) Keep inline transition, retoken (uses `green-2` background).
   (c) Both — toast plus a brief check overlay.
+- **Answer:** Drop inline transition; show Sonner toast (matches existing `sonner` integration).
 
 ---
 
@@ -820,6 +837,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       current pack size × selected qty × `unitWeightGrams`.
   (c) Per-address ETA — requires the buyer to be signed-in and have
       a saved address.
+- **Answer:** STUBBED — see 06-scope-cut.md feature: PDP spec section + delivery card. Implement with placeholder: spec section as a fixed inline list (brand + vendor + weight + pack size from existing data once pack-pricing lands); delivery card as static copy. Add `// TODO(post-v1):` comment at every touch point. Static copy "MNP delivery · 1–3 days".
 
 ---
 
@@ -837,6 +855,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       with order, vendor-typed in the add-product form.
   (c) Markdown-style description field on `products` rendered
       verbatim (single rich-text column).
+- **Answer:** STUBBED — see 06-scope-cut.md feature: PDP spec section + delivery card. Implement with placeholder: spec section as a fixed inline list (brand + vendor + weight + pack size from existing data once pack-pricing lands); delivery card as static copy. Add `// TODO(post-v1):` comment at every touch point. Fixed inline list (brand + vendor + weight + pack size from existing fields).
 
 ---
 
@@ -856,6 +875,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (c) Inline shows the bundle selector + qty hint; sticky shows
       Add-to-cart and a compact stepper that mirrors the inline
       selection.
+- **Answer:** Sticky bar is the only qty + Add-to-cart surface on mobile (pure migration from inline to sticky).
 
 ---
 
@@ -873,6 +893,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (b) Same vendor, exclude self, take=8.
   (c) Mix — half category, half vendor; or popularity-based via a
       future query.
+- **Answer:** Same primary category, exclude self, ordered by stock-or-recency, fixed take=8. New endpoint `GET /api/products/[slug]/related`.
 
 ---
 
@@ -890,6 +911,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (b) Convert hero to a swipeable carousel with dot pagination.
   (c) Move thumbs into a horizontal scroll inside the hero frame
       (overlay).
+- **Answer:** Drop thumbs on mobile; show only the first image (matches Pencil mobile hero).
 
 ---
 
@@ -907,6 +929,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (c) Replace with an icon (Pencil's lucide guidance pairs icons
       with labels — but the qty stepper is in chrome territory where
       glyph-only is allowed per `02 §1.8`).
+- **Answer:** Keep visually-hidden as `sr-only` for a11y.
 
 ---
 
@@ -927,6 +950,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       per-unit duplicate.
   (c) Move both into the spec/delivery card as a "running total"
       row.
+- **Answer:** Drop entirely — the price block IS the total.
 
 ---
 
@@ -942,6 +966,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (b) Add a `not-found.tsx` under `app/(storefront)/products/[slug]/`
       with branded copy + suggestion to browse the parent category.
   (c) Inline error state inside the same PDP route (no `notFound()`).
+- **Answer:** Keep default Next.js 404.
 
 ---
 
@@ -958,6 +983,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       wishlist, but tapping does nothing on cards (only on PDP).
   (c) Decorative — keep it as a visual element until wishlist
       ships.
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Wishlist / Saved Items. Implement with placeholder: heart icons render but are no-ops (or removed); account drawer "Saved items" row hidden; header "Saved" button hidden. Add `// TODO(post-v1):` comment at every touch point. Interactive — same wishlist endpoint as Q14.
 
 ---
 
@@ -974,6 +1000,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
       `LanguageToggle` primitive shipped in 04).
   (b) Hide the toggle entirely until i18n is wired.
   (c) Render it disabled (greyed out) with a tooltip.
+- **Answer:** STUBBED — see 06-scope-cut.md feature: i18n / language toggle plumbing (presentational EN-only). Implement with placeholder: render LanguageToggle visible-but-inert (visual only) with no state plumbing; clicking does nothing. Add `// TODO(post-v1):` comment at every touch point. EN selected, no-op on click.
 
 ---
 
@@ -995,6 +1022,7 @@ to one numbered question here. Hypotheses are listed but not chosen.
   (c) Keep "From" only for catalog list cards (where
       "From Rs. X / pack" makes sense across tier ranges); never on
       PDP.
+- **Answer:** Default-selected bundle's price renders immediately; "From" copy removed from PDP.
 
 ---
 
@@ -1017,8 +1045,11 @@ to one numbered question here. Hypotheses are listed but not chosen.
       migration; mark non-null with default.
   (c) Drop `weightGrams` entirely; compute on the fly from
       `unitWeightGrams × packSize` everywhere.
+- **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. Rename to `packWeightGrams`; `unitWeightGrams` is the new per-unit column.
 
 ---
 
 (End of Phase — gap analysis. Stopping here per scope. No
 implementation proposed.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

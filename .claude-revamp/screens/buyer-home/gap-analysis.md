@@ -345,6 +345,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No lang toggle wired anywhere. Phase-3 shipped a **segmented** `LanguageToggle` primitive, but no mini-row variant.
 - **Question:** Are these two visual treatments of the same control (mini = compact summary, segmented = interactive control), or two different controls? Should the util-strip mini be implemented as a tiny variant of the same primitive, a separate `LanguageIndicator` text component, or simply ad-hoc inline text?
 - **Hypotheses:** (a) one component with `variant="mini" | "segmented"`; (b) the mini is decorative copy inside the util strip and the segmented in the header is the only interactive control; (c) util strip should be replaced with the segmented control to avoid two separate UIs.
+**Answer:** STUBBED — see 06-scope-cut.md feature: i18n / language toggle plumbing (presentational EN-only). Implement with placeholder: Toggle renders inert (visual only) with no state plumbing; clicking does nothing. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 2. "Deliver to {city/zip}" subnav cluster
 
@@ -352,6 +353,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No city/zip selector or delivery-zone state anywhere. `addresses` has `city`; `vendors` has `city`/`hub`.
 - **Question:** Is this a static link to the Account drawer's "Saved addresses" section (presentational only), or an interactive city selector (which affects cart shipping tiers, vendor availability, delivery cutoff times)?
 - **Hypotheses:** (a) presentational, derived from the user's default address; (b) interactive popover that switches a global "delivery zone" (cookie/state); (c) interactive but changes only display — pricing/availability stays the same.
+**Answer:** STUBBED — see 06-scope-cut.md feature: "Deliver to {city}" delivery zone selector. Implement with placeholder: Render as a static, non-interactive label (read from default address). Add `// TODO(post-v1):` comment at every touch point.
 
 ### 3. Hero data source — banner table extension or hard-coded editorial?
 
@@ -359,6 +361,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `promotional_banners` has only `imageUrl` / `targetUrl`. `HeroCarousel` renders raster banners.
 - **Question:** Three paths — extend `promotional_banners` with editorial fields and migrate the carousel; create a new `home_hero_slides` table; or hard-code the 4 hero slides in code and repurpose the banners table for other surfaces.
 - **Hypotheses:** (a) extend banners; (b) new table; (c) hard-code.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Editorial home hero (replace banner-image carousel). Implement with placeholder: Existing `HeroCarousel` retoken'd to use ink/paper colors but rendering banner images. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 4. "Hot products" / "TRENDING NOW" — what backs it?
 
@@ -366,6 +369,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `SuperSaversSection` exists but loads "biggest tier-spread" — different concept.
 - **Question:** Does "Hot" = admin-curated flag (`products.isTrending`), data-driven (top sellers last N days), or repurposed `SuperSaversSection`?
 - **Hypotheses:** (a) admin flag with an admin-products toggle; (b) aggregation query on `order_items`; (c) reuse `SuperSaversSection` and rename the eyebrow only.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Hot products / trending metric. Implement with placeholder: Home Hot Products section reuses `SuperSaversSection` with the eyebrow re-skinned to "TRENDING NOW". Add `// TODO(post-v1):` comment at every touch point.
 
 ### 5. Promo strip — marketing copy or enforced logic?
 
@@ -373,6 +377,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No order-value-threshold free-shipping logic. Cart shipping is weight-tier based.
 - **Question:** Is this marketing-only (Home decoration) or does cart need to honor the threshold?
 - **Hypotheses:** (a) marketing copy only — Home is a static block; (b) cart adds a "free shipping if order ≥ Rs. 50,000" override; (c) the threshold is a config value set by admin (new env / settings record).
+**Answer:** STUBBED — see 06-scope-cut.md feature: Free delivery threshold + same-day cutoff (business rule). Implement with placeholder: Render the strip as static marketing copy; cart delivery line continues to use weight tier regardless. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 6. Footer redesign — drop social links, add Help & Company columns, change to `ink` bg
 
@@ -380,6 +385,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `bg-primary` (now `green-2`), 3 columns including social icons, single-line ©.
 - **Question:** Drop social icons entirely or relocate (e.g. into Help column)? Confirm `ink` footer is intentional (vs reusing the `green-900` "Footer, hero" Pencil token, which is also a candidate per 02 §1 brand swatches).
 - **Hypotheses:** (a) drop social, use `ink` exactly as drawn; (b) keep social as a new "Follow us" column; (c) `green-900` instead of `ink` (matching original Pencil "Footer" usage label).
+**Answer:** Drop social icons; use `ink` background as drawn; bottom row has city list + © string.
 
 ### 7. Account button — drawer trigger replaces existing `DropdownMenu`
 
@@ -387,6 +393,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `StorefrontHeader` renders an inline `DropdownMenu` with "My Orders / Addresses / Logout".
 - **Question:** Confirm the dropdown is fully replaced by the drawer (not coexisting), and that the mobile account button is the same trigger. (This is also questioned in the buyer-account-drawer gap analysis — answered there per design-inventory Q3, but recording here for cross-screen consistency.)
 - **Hypotheses:** (a) replace dropdown entirely with drawer; (b) keep dropdown as a simpler desktop variant and use drawer only on mobile; (c) drawer for authed users, dropdown / `Sign In` button for unauthed.
+**Answer:** Replace dropdown entirely with drawer (matches account-drawer feature).
 
 ### 8. Cart action — pill button + label "Cart"
 
@@ -394,6 +401,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** Ghost icon-button with overlay-corner badge.
 - **Question:** Confirm the pill style is intentional and that the badge becomes an inline child (not corner overlay). Same Q for mobile (`HiWxX` is iconic 36px round, no label) — so mobile drops the label even though desktop adds it.
 - **Hypotheses:** (a) pill-with-label desktop, icon-only mobile (as drawn); (b) icon-only on both; (c) icon-only desktop (matching current code), full pill mobile.
+**Answer:** Pill-with-label desktop, icon-only mobile (as drawn).
 
 ### 9. Categories grid — 8 fixed tiles with icons (desktop) but no icons (per current schema)
 
@@ -401,6 +409,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `categories.imageUrl` (admin-uploaded) only.
 - **Question:** What renders inside the desktop swatch? (a) the existing `imageUrl` reduced to fit; (b) a lucide icon (which one? the mobile mapping?); (c) the swatch is intentionally empty as a token-tile only and the label is the whole identifier.
 - **Hypotheses:** (a)/(b)/(c) above. Mobile clearly uses lucide icons — needs `categories.icon` field (or hard-coded slug→icon map).
+**Answer:** STUBBED — see 06-scope-cut.md feature: Category icons (Lucide map). Implement with placeholder: Storefront mobile tiles use first-letter fallback or empty swatch. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 10. "Popular" section — what's the metric, what's the data source?
 
@@ -408,6 +417,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `getCachedCategories()` slices first 5 alphabetically.
 - **Question:** Is "Popular this week" a manual feature flag, an aggregation of orders, or just a different label on the existing list? If it's a real metric, what's the SKU count source — `count(products where category.id ...)` live query, or a denormalized `categories.skuCount`?
 - **Hypotheses:** (a) admin curation + denormalized count; (b) aggregation queries; (c) re-skin of existing first-5.
+**Answer:** Re-skin of existing first-N categories (no new aggregation). Drop "{N} SKUs" caption until aggregates land.
 
 ### 11. `prod1` price model — "list" vs "sale"
 
@@ -415,6 +425,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `productPriceTiers` is a single qty-band price, no list/sale split.
 - **Question:** Is the strikethrough a list price (separate field) or the next-higher-quantity tier? Per design-inventory Q12 the new model is **pack-based** — does each pack have a "compare-at" / list price, or is the discount derived from the smallest-pack-per-unit-equivalent?
 - **Hypotheses:** (a) `pack.listPriceCents` + `pack.priceCents`; (b) computed as per-unit equivalent vs single-unit price; (c) a separate `discountPercent` field, no list price actually shown — just the % stamp.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: N/A — already user-confirmed; not a candidate for deferral. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 12. Wishlist / saved items
 
@@ -422,6 +433,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** No `saved_items` / `wishlists` table; no API; no UI.
 - **Question:** Is wishlist in scope for the Home revamp, or stub-only (heart icon non-functional, header `Saved` link routes to a placeholder)?
 - **Hypotheses:** (a) ship full feature (table + API + UI); (b) stub-only — render the icon, no behavior, drawer counter shows 0; (c) drop wishlist from this revamp pass and remove the heart icon.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Wishlist / Saved Items. Implement with placeholder: Heart icons render but are no-ops (or removed). Account drawer "Saved items" row hidden or shows "0 products bookmarked" linking to a "Coming soon" page. Header "Saved" button hidden. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 13. `/search` route implementation
 
@@ -429,6 +441,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** `<form action="/search">` posts to a non-existent route (01-codebase-map Q6).
 - **Question:** Does the Home revamp include shipping `/search`, or do we leave the form action as-is and ship search separately?
 - **Hypotheses:** (a) ship search route in the same milestone; (b) defer; (c) replace the form with a client-side autocomplete that doesn't navigate.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Search route `/search`. Implement with placeholder: Storefront search form remains broken (`<form action="/search">` 404s). Admin top-bar search renders inert. Vendor list search filter hidden. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 14. Mobile chrome — separate component or responsive header?
 
@@ -436,6 +449,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** Single `StorefrontHeader` collapses responsively.
 - **Question:** Two components or one? Also: the mobile account/cart icons are 36px round on `paper-2` — the `mCartDot` badge on the account button (`Hi92Y` → `sZQvk`) is `enabled: false` in the design (placeholder for "show when N saved/notifications"). What state triggers it?
 - **Hypotheses:** (a) split into `<MobileStorefrontHeader>`/`<DesktopStorefrontHeader>`; (b) one header with a `useIsMobile` branch; (c) Tailwind responsive classes only.
+**Answer:** One header with a `useIsMobile`-style branch (matches existing single-`StorefrontHeader` pattern). `mCartDot` triggers when cart has unread/items count > 0 (re-uses cart-store).
 
 ### 15. Footer links — placeholder or scaffolded routes?
 
@@ -443,6 +457,7 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** None of these routes exist (no `/help`, `/about`, etc.).
 - **Question:** Do we ship the Home revamp with `<Link href="#">` placeholder hrefs, scaffold empty marketing routes, or wire to an external CMS?
 - **Hypotheses:** (a) `#` anchors; (b) skeleton page files in `app/(storefront)/help/...`; (c) external links / Contentful / similar.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Footer marketing pages (Help, About, Terms, Privacy, Returns, FAQ, Delivery hubs, Careers). Implement with placeholder: Links route to a single `/coming-soon` placeholder route (or `#` no-op). Add `// TODO(post-v1):` comment at every touch point.
 
 ### 16. Loading / empty / error states for Home sections
 
@@ -450,7 +465,10 @@ Numbered. Every NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTIO
 - **Observed (code):** Sections return `null` when data is empty; no skeleton on Home (`ProductGridSkeleton` exists but isn't used here); no error boundary.
 - **Question:** Do we ship explicit skeletons (sized to match the new `prod1` card grid) and empty/error states, or accept the existing "render nothing" behavior?
 - **Hypotheses:** (a) add skeletons matching the new geometry; (b) keep `null` and rely on cache always-warmed; (c) suspense boundary with the page-skeleton pattern.
+**Answer:** Add skeletons matching the new `prod1` card grid geometry; existing `null` empty states remain.
 
 ---
 
 (End of Buyer · Home gap analysis. Stopping here per workflow rule — not starting implementation.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

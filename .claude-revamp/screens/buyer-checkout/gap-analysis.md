@@ -246,6 +246,7 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
    - **Observed in code:** A `Back to Cart` ghost button (`page.tsx:184-190`).
    - **Question:** Should each step be clickable (acting as breadcrumb navigation), and what does the mobile chevron-left target — the previous step (`Cart`), browser back, or always `/cart`?
    - **Plausible answers:** (a) Display-only step row, mobile chevron always → `/cart`. (b) Each step is a `<Link>` (Cart → `/cart`, Confirmation → not yet a route). (c) Only `Cart` is navigable; chevron mirrors that link.
+**Answer:** Display-only step row; mobile chevron always navigates to `/cart`. Smallest delta.
 
 ### Address section
 
@@ -254,12 +255,14 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
    - **Observed in code:** Both selected and unselected cards always show the full field set.
    - **Question:** Is the unselected mobile card intentionally collapsed (state-driven), or is it a layout abbreviation in the static frame?
    - **Plausible answers:** (a) Collapse unselected cards to name + city; expand on select. (b) Always show all fields; the design omitted them for visual brevity. (c) Collapse only on small viewports.
+**Answer:** Always show all fields; design omitted for visual brevity.
 
 3. **Rider-instructions persistence target.**
    - **Observed in design:** A textarea labelled `02 RIDER INSTRUCTIONS` with placeholder "e.g. Call before arrival, leave with the shopkeeper next door…". h120 desktop, h90 mobile, no character counter drawn.
    - **Observed in code:** No field exists in `checkoutShippingFormSchema`, `checkoutCartPayloadSchema`, `orders` table, or `sub_orders` table.
    - **Question:** Where should the value be persisted, and does it need validation (max length, optional vs required)?
    - **Plausible answers:** (a) New `orders.riderNotes` text column (one note per parent order). (b) New `sub_orders.riderNotes` (per-vendor copy of the same note). (c) Optional `text` column on `orders` with a max length (e.g., 500 chars), nullable.
+**Answer:** Optional `text` column on `orders.riderNotes` with max 500 chars, nullable. Smallest additive — one column, parent-order-level.
 
 ### Payment
 
@@ -268,18 +271,21 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
    - **Observed in code:** `checkoutCartPayloadSchema` has no `paymentMethod`; `orders` and `sub_orders` have no payment-method column. The handler writes `subOrders.codAmount = itemsTotal` unconditionally.
    - **Question:** Should we add a `paymentMethod` enum/column now (with the disabled options enumerated for forward compatibility), or only when those methods become functional?
    - **Plausible answers:** (a) Add `orders.paymentMethod enum('cod', 'mobile_wallet', 'card_or_bank')` defaulting to `'cod'`; only `'cod'` is accepted by the schema until others ship. (b) Defer — keep COD-only behavior, render the radio purely as UI without sending it. (c) Add a free-form `paymentMethod text` and validate at the schema layer.
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Payment methods feature. Do not implement this question's scope. UI placeholder: Checkout payment selector renders 3 disabled cards with "Coming soon" labels (already drawn that way). Account drawer "Payment methods" row hidden or static "Cash on delivery". No table.
 
 5. **Delivery (shipping) tier source.**
    - **Observed in design:** `Delivery (10–25 kg) Rs. 180` row computed from basket weight, matching the four-tier scale documented in `02 §3.4` (0–10 / 10–25 / 25–50 / 50+ kg → Rs. 280 / 180 / 120 / 80).
    - **Observed in code:** `apps/web/src/app/api/checkout/route.ts:197` writes `totalShippingCost: 0` and `subOrders.shippingFeeCustomer: 0` (`route.ts:218`); no tier table or constant exists.
    - **Question:** Where should the tier rates live, and is the rate per-order (one rate per total basket weight) or per-vendor sub-order (each sub-order weighed separately)?
    - **Plausible answers:** (a) Hardcoded constant in `packages/constants` (or `apps/web/src/modules/checkout`), per-order based on summed basket weight. (b) Hardcoded constant, per sub-order (each vendor parcel charges its own delivery — matches existing `subOrders.shippingFeeCustomer` field shape). (c) New `delivery_tiers` Drizzle table seeded with the four ranges; admin-editable later.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Weight gauge + delivery tier table. Implement with placeholder: Weight gauge hidden on cart/reorder; checkout shipping line stays "Calculated at checkout" / `Rs. 0`. Add `// TODO(post-v1):` comment at every touch point.
 
 6. **GST 18% computation base.**
    - **Observed in design:** `GST 18% Rs. 12,168`. With `Subtotal Rs. 67,420` and `Delivery Rs. 180`, 18% × 67,420 = 12,135.60 (close to 12,168 — rounding off-by-a-few). 18% × (67,420 + 180) = 12,168.0 — **exact match.** So the design's tax base appears to be subtotal + delivery, but the row is still labelled `GST 18%`.
    - **Observed in code:** No tax field; no computation.
    - **Question:** Is GST 18% applied to (subtotal) or (subtotal + delivery), and where on the schema does it live?
    - **Plausible answers:** (a) `taxCents = round(0.18 × (subtotal + delivery))`, persisted on `orders.taxCents`. (b) `taxCents = round(0.18 × subtotal)`, persisted on `orders.taxCents`. (c) Per-vendor tax on `sub_orders.taxCents` (matches per-vendor financial breakdown that already exists for `coolieFeeReimbursement` / `platformCommission`).
+**Answer:** DEFERRED — see 06-scope-cut.md feature: GST 18% on orders. Do not implement this question's scope. UI placeholder: GST row hidden across receipts. Total = subtotal + delivery only.
 
 ### Order summary
 
@@ -288,12 +294,14 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
    - **Observed in code:** Items render as a separate full list on desktop; on mobile they stack below the summary.
    - **Question:** Does `+ N more items` expand inline on click, link to the cart, or stay non-interactive?
    - **Plausible answers:** (a) Non-interactive truncation; the user must navigate back to `/cart` to see all items. (b) Click expands to show all items inside the summary card. (c) Click scrolls to a separate detailed list elsewhere on the page.
+**Answer:** Non-interactive truncation; user navigates back to `/cart` to see all.
 
 8. **"+ Use a new address" target.**
    - **Observed in design:** A button with leading `+` icon. No inline form is drawn beneath it; the next visible section is `02 RIDER INSTRUCTIONS`.
    - **Observed in code:** Clicking `Use a different address` (`delivery-address-section/index.tsx:88-98`) reveals an inline 4-input manual form (Name, Phone, Address, City) under the address list.
    - **Question:** Should the button open an `AddressDialog` (matching `/profile/addresses` behavior), navigate to `/profile/addresses`, or keep the inline form?
    - **Plausible answers:** (a) Open the existing `AddressDialog`; on save, the new address is added to the saved list and auto-selected. (b) Navigate to `/profile/addresses`. (c) Preserve the inline manual form (status quo).
+**Answer:** Open existing `AddressDialog` (`apps/web/src/modules/user-addresses/components/address-dialog/`); on save, address is added + auto-selected.
 
 ### Removed elements
 
@@ -302,12 +310,14 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
    - **Observed in code:** `<Link>Manage addresses</Link>` in the top-right of `DeliveryAddressSection` (`delivery-address-section/index.tsx:45-50`).
    - **Question:** Is the omission intentional (address management lives entirely behind `+ Use a new address`), or accidental?
    - **Plausible answers:** (a) Intentional removal — `+ Use a new address` (Q8) covers the same need. (b) Accidental — re-add a small text link. (c) Move to a profile entry point only.
+**Answer:** Intentional removal — `+ Use a new address` (Q8) covers the same need.
 
 10. **Manual shipping form removal.**
     - **Observed in design:** No 4-input manual form (Name / Phone / Address / City) is drawn at any point in the checkout flow.
     - **Observed in code:** `apps/web/src/modules/checkout/schemas/index.ts checkoutShippingFormSchema` and the corresponding form fields (`delivery-address-section/index.tsx:119-176`) implement a manual entry path. This path is what the API consumes when `payloadShippingAddress` is provided (`api/checkout/route.ts:82-89`).
     - **Question:** Is the manual-form path being removed entirely (saved addresses only), or relocated (e.g., into the dialog from Q8)?
     - **Plausible answers:** (a) Remove the manual path; require a saved address. `checkoutCartPayloadSchema` becomes `addressId`-only. (b) Move the manual form into the new-address dialog; payload semantics unchanged. (c) Keep both paths but hide the manual form behind a dialog from the checkout screen.
+**Answer:** Move manual form into the new-address dialog (per Q8); checkout flow only takes `addressId`. Existing `checkoutShippingFormSchema` becomes part of the dialog's create flow.
 
 ### Copy changes
 
@@ -316,30 +326,35 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
     - **Observed in code:** `Default` text in a `bg-primary/10 text-primary` pill (`delivery-address-section/index.tsx:74-78`).
     - **Question:** Is this a global system change (every "Default" / status pill becomes mono uppercase) or only on this card?
     - **Plausible answers:** (a) Global — adopt the Pencil "stamp" / mono pill style for every "Default", "Active", "Featured" tag. (b) Local to address cards. (c) Reuse the existing primitive `Stamp` component built in `04-design-system-implementation-log.md` with a `success` variant.
+**Answer:** Reuse existing `Stamp` primitive (`packages/ui/src/components/stamp.tsx`) with a `success` intent variant. No new primitive.
 
 12. **Eyebrow style for the three sections.**
     - **Observed in design:** Numbered eyebrow (`01 DELIVERY ADDRESS`) in JetBrains Mono 13/700 with letter-spacing 1.4.
     - **Observed in code:** Sentence-case heading with leading icon (`<MapPin/> Delivery Address`).
     - **Question:** Is the numbered-mono eyebrow universal for all multi-section forms in the revamp, or only for checkout?
     - **Plausible answers:** (a) Checkout-only pattern. (b) Universal pattern for any "step-style" layout. (c) Reuse the new section-header element across forms but make numbering optional.
+**Answer:** Checkout-only pattern — keep numbered-mono eyebrow scoped to checkout for now.
 
 13. **CTA copy `Place order` vs `Place Order (COD)`.**
     - **Observed in design:** "Place order" (sentence case) with leading lock icon, no payment-method suffix.
     - **Observed in code:** `Place Order (COD)` (title case + suffix).
     - **Question:** Do we drop the `(COD)` suffix because the payment method now lives in its own section above, and is sentence-case the new convention for all CTAs?
     - **Plausible answers:** (a) Yes — drop the suffix; sentence-case is the new standard for CTA copy. (b) Keep title case for primary CTAs; only this one becomes "Place order". (c) Drop the suffix only when the payment selector is functional; keep "(COD)" while it's the only option.
+**Answer:** Drop suffix; sentence-case is the new standard.
 
 14. **`Subtotal` vs `Items (n)` row label.**
     - **Observed in design:** `Subtotal` (no item count beside it; mobile shows `· 12 items` only in the eyebrow `O73nrx`).
     - **Observed in code:** `Items (n)` (with count).
     - **Question:** Move count to the eyebrow (matching mobile design), or keep it inline?
     - **Plausible answers:** (a) Drop count; rename to "Subtotal". (b) Drop count from row; add `· N items` to the `ORDER SUMMARY` eyebrow on both desktop and mobile (matches mobile design). (c) Keep inline `Subtotal (N items)`.
+**Answer:** Drop count from row; add `· N items` to the `ORDER SUMMARY` eyebrow (matches mobile design).
 
 15. **`Use a new address` vs `Use a different address`.**
     - **Observed in design:** "Use a new address".
     - **Observed in code:** "Use a different address".
     - **Question:** Is this intentional copy refinement or incidental?
     - **Plausible answers:** (a) Adopt new copy verbatim. (b) Keep current copy. (c) Use a different phrasing entirely (e.g., "Add new address").
+**Answer:** Adopt new copy verbatim.
 
 ### New states / interactions
 
@@ -348,12 +363,14 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
     - **Observed in code:** No equivalent.
     - **Question:** Should the disabled cards be DOM-disabled (non-interactive, `aria-disabled`), or interactive-but-toast ("Coming soon — please choose another method")? Should hover/focus states still apply?
     - **Plausible answers:** (a) `aria-disabled` + non-interactive; hover/focus suppressed; cursor `not-allowed`. (b) Interactive with a toast on click. (c) Hidden entirely until those methods ship (defeats the design intent).
+**Answer:** `aria-disabled` + non-interactive; cursor `not-allowed`; hover/focus suppressed.
 
 17. **Order-summary item-list image source.**
     - **Observed in design:** A 40×40 white tile with a generic lucide `package` glyph and an `ink-4` stroke — clearly **not** the product image.
     - **Observed in code:** Real `next/image` thumbnails using `item.image.url` (`page.tsx:218-225`).
     - **Question:** Is the `package` glyph the intended consistent treatment in the summary list (independent of whether a product image exists), or is it a stand-in placeholder for the static frame and the actual product image should appear?
     - **Plausible answers:** (a) Always use the placeholder glyph — the summary is intentionally textual / receipt-like. (b) Use the product image when available; fall back to the glyph. (c) Use a smaller version of the product image with a `paper-2` background ring.
+**Answer:** Use product image when available; fall back to lucide `package` glyph.
 
 ### Ambiguous
 
@@ -362,21 +379,26 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
     - **Observed in code:** Centered `Loader2` spinner (`page.tsx:166-180`) before mount/session resolves.
     - **Question:** Use the new shadcn-derived `Spinner` primitive? Replace with a skeleton matching the layout? Inherit from Phase 3 primitive states?
     - **Plausible answers:** (a) Keep the centered spinner using `@repo/ui/components/spinner`. (b) Render a skeleton mirroring the section layout. (c) Defer — leave page-level loading unchanged this revamp.
+**Answer:** Keep centered `Spinner` from `@repo/ui/components/spinner`.
 
 19. **Submission loading state on the CTA.**
     - **Observed in design:** No frame for "submitting".
     - **Observed in code:** CTA swaps to `<Loader2/> Placing Order...`.
     - **Question:** Keep the in-button spinner + "Placing order…" copy, or use the new primitive's `disabled`-with-spinner pattern from §5.4 of `03-token-migration.md`?
     - **Plausible answers:** (a) Keep current behavior verbatim. (b) Disable the button + show inline spinner without copy change. (c) Show a sticky loading bar over the page.
+**Answer:** Keep current behavior verbatim (in-button spinner + "Placing order…").
 
 20. **Error feedback (selection / submission).**
     - **Observed in design:** No error frames.
     - **Observed in code:** Sonner `toast.error` (`page.tsx:107, 138, 147, 159`).
     - **Question:** Continue with toasts, or render inline `red`-tinted helper text under the relevant section per Pencil error-state derivation in §5.4 of `03-token-migration.md`?
     - **Plausible answers:** (a) Toasts only (current). (b) Inline section-level errors only. (c) Both — toast for network errors, inline for validation.
+**Answer:** Both — Sonner toast for network errors, inline section-level errors for validation.
 
 ---
 
 **File written to:** `D:\Moeed 8th Sem\Fyp\Code\shalmi-web\.claude-revamp\screens\buyer-checkout\gap-analysis.md`
 
 (End of Buyer · Checkout gap analysis. Stopping here per instructions — not starting implementation.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

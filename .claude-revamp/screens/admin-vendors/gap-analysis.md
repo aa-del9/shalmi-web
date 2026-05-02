@@ -301,6 +301,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
      b) URL search param via `nuqs` (shareable, refresh-stable, no new route file).
      c) Nested route segment (`/admin/vendors/[id]`, full-page nav).
 
+   **Answer:** URL search param via `nuqs` (already in stack — see `01 §1` deps). Shareable + refresh-stable + no new route file.
+
 2. **Mobile edit-sheet field subset.** Mobile sheet omits Email, Vendor ID, Categories, GST/NTN, Joined, Monthly limit, Audit meta, Avatar card, Bank details — desktop has them all.
    - *Question:* Is the mobile sheet intentionally a subset (fewer fields by design), or is the design just unfinished?
    - *Hypotheses:*
@@ -308,12 +310,16 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
      b) Mobile is incomplete; treat as "same fields as desktop, just stacked" when implementing.
      c) Some fields move to a separate "Settings" or "More" sheet on mobile.
 
+   **Answer:** Intentional minimum-viable mobile edit; full edit on desktop.
+
 3. **Edit-panel default state.** Pencil always draws a populated panel (Saleem Bhai #VND-0142).
    - *Question:* When the page loads with no vendor selected, what does the panel show?
    - *Hypotheses:*
      a) Empty placeholder ("Select a vendor to edit").
      b) Auto-select first row.
      c) Blank "Add vendor" form (the same surface used for create).
+
+   **Answer:** Empty placeholder ("Select a vendor to edit"); no auto-select.
 
 4. **Subtitle "64 active · 2 inactive · 12 pending review · 8 new this month" copy & data.**
    - *Observed:* Pencil header subtitle is a live derived string; current code has static `"Manage vendors and their catalog."`.
@@ -323,6 +329,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
      b) Live, but wording is sample copy and we should pick our own.
      c) Static placeholder; ignore.
 
+   **Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor third status (PENDING REVIEW). Do not implement this question's scope. UI placeholder: drop "12 pending review" segment from subtitle. Render "{N} active · {M} inactive · {K} new this month".
+
 5. **Breadcrumb `Admin › Catalog › Vendors`.**
    - *Observed:* No breadcrumb today; "Catalog" doesn't correspond to any current route segment.
    - *Question:* Should there be a global admin breadcrumb component, and does "Catalog" need to be a real grouping in the sidebar (it isn't currently)?
@@ -330,6 +338,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
      a) New global breadcrumb derived from a static admin nav tree (with "Catalog" as a logical group only).
      b) Page-local breadcrumb hardcoded for vendors.
      c) Breadcrumb is decorative — fixed text, no actual links.
+
+   **Answer:** STUBBED — see 06-scope-cut.md feature: Admin "Catalog" sidebar grouping + Breadcrumb component. Implement with placeholder: New global breadcrumb derived from a static admin nav tree. Add `// TODO(post-v1):` comment at every touch point.
 
 6. **Header actions — `Export CSV` and `Bulk import`.**
    - *Observed:* No endpoints exist. No design frames for the import flow are visible on this screen.
@@ -339,6 +349,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
      b) UI shells only (the buttons are present but route to TODO/disabled states).
      c) Out of scope; remove from the design.
 
+   **Answer:** design the feature and create a suitable csv column structure that caters to end to end product add. csv will then be provided according to that. (Export CSV: DEFERRED — see 06-scope-cut.md feature: Statement / CSV downloads (vendor ledger PDFs, admin exports). UI placeholder: button visible but inert.)
+
 7. **`PENDING REVIEW` as a third vendor status.**
    - *Observed:* Pencil KPI/filter/table-stamp all show Pending; current schema has `isActive: boolean` only.
    - *Question:* Is Pending a real new status, and how is it set?
@@ -347,11 +359,15 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
      b) Pending = `verifiedAt IS NULL` derived; keep `isActive` as-is.
      c) Pending = a flag in the new audit/admin workflow (e.g. invitation sent but not accepted). Status enum still binary.
 
+   **Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor third status (PENDING REVIEW). Do not implement this question's scope. UI placeholder: keep `isActive` boolean.
+
 8. **Per-row stamp in the table only shows three values (ACTIVE / PENDING / INACTIVE).** The brief & the `Stamp` atom support more variants.
    - *Question:* Confirm exactly these three vendor statuses (no "DELAYED", "AT MNP HUB" in vendor context).
    - *Hypotheses:*
      a) Yes, only 3.
      b) More variants exist (e.g. "SUSPENDED") that aren't drawn here.
+
+   **Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor third status (PENDING REVIEW). Do not implement this question's scope. UI placeholder: Only ACTIVE / INACTIVE stamps; PENDING DEFERRED.
 
 9. **Status toggle in the edit panel only shows Active/Inactive.**
    - *Observed:* The KPI/filter/list have Pending, but the panel's segmented control doesn't.
@@ -361,6 +377,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
      b) The toggle should be tri-state (3-way segmented) — design omission.
      c) Pending → Active is set by clicking a separate "Approve" CTA elsewhere (not drawn).
 
+   **Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor third status (PENDING REVIEW). Do not implement this question's scope. UI placeholder: Toggle stays 2-state Active/Inactive; PENDING is set via separate verification flow when designed.
+
 10. **GST / NTN field in the edit panel.**
     - *Observed:* The Pencil panel **draws** a `GST / NTN` input with sample value `"7842310-9"`. The user's answer to Q14 of `02-design-inventory.md` said **"no GST"**.
     - *Question:* Direct conflict between the Pencil design and the user's prior answer. Which wins?
@@ -368,6 +386,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       a) Honor the prior answer — drop the field even though it's drawn.
       b) Honor the design — re-introduce GST/NTN as a new column.
       c) Keep the visual slot but rename it to something else (e.g. "Trade license").
+
+    **Answer:** Honor prior answer (`02 §7 Q14` user said "no GST"); drop the field even though drawn.
 
 11. **Bank details (existing) — bankName / accountTitle / iban — are NOT drawn on the Pencil edit panel.**
     - *Observed:* Today they're editable in the dialog and required (`min(1)`) in `bankDetailsSchema`. The vendor dashboard's payout block (per `02-design-inventory.md` §4.4) needs them.
@@ -377,6 +397,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       b) Separate "Bank" tab inside the same edit panel (not drawn yet).
       c) Just an oversight — keep them in the admin edit panel as today.
 
+    **Answer:** Separate "Bank" tab/section inside the same edit panel (not drawn yet) — keep admin path; vendor self-service edit IN_SCOPE adds the second path.
+
 12. **`Remove vendor` action in the panel footer.**
     - *Observed:* Trash-2 icon + red destructive-outline button. No DELETE endpoint exists.
     - *Question:* Hard delete or soft delete? What happens to the vendor's `user` row, products, sub-orders, ledger entries?
@@ -384,6 +406,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       a) Soft delete (`deletedAt timestamp`, hidden from list, products/orders preserved).
       b) Hard delete cascading via FK (current `user.id ← vendors.userId` is `ON DELETE CASCADE`).
       c) Deactivate-only (set `status='inactive'`); button label is misleading and should be "Deactivate".
+
+    **Answer:** Soft delete via new `vendors.deletedAt timestamp` (matches scope-cut Q34 vendor deactivation column). Confirmation Dialog.
 
 13. **Search query target.**
     - *Observed:* Desktop placeholder `"Search by name or shop"`; mobile `"Search by name, shop or phone"`.
@@ -393,6 +417,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       b) Identical search on desktop and mobile (placeholders are illustrative).
       c) Fuzzy / full-text search (would need pg_trgm or similar).
 
+    **Answer:** Server-side ILIKE on `shopName` / `fullName` (and on mobile `phoneNumber`); debounced. Server-side via new `q=` param on `GET /api/admin/vendors`.
+
 14. **Bazaar (hub) dropdown — source of options.**
     - *Observed:* `Bazaar: All` chevron, but no list is drawn.
     - *Question:* Where does the option list come from?
@@ -400,6 +426,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       a) `SELECT DISTINCT hub FROM vendors`.
       b) A new `hubs` / `bazaars` table.
       c) Hardcoded enum.
+
+    **Answer:** `SELECT DISTINCT hub FROM vendors`. Cheapest; no new table.
 
 15. **Sort dropdown — supported keys.**
     - *Observed:* Default `"Sort: Newest first"`. No menu drawn.
@@ -409,6 +437,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       b) Above + Monthly sales high→low + Products high→low + A→Z.
       c) Single fixed sort; dropdown is decorative.
 
+    **Answer:** Newest first (default), Oldest first. Two options; expand later.
+
 16. **Bulk select / row checkboxes.**
     - *Observed:* Header + per-row checkboxes drawn. No bulk action bar in this frame.
     - *Question:* What bulk actions are supported once a selection is made?
@@ -417,16 +447,24 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       b) Bulk export of selected rows.
       c) Selection is decorative for now; revisit later.
 
+    **Answer:** Bulk activate/deactivate (single `isActive` toggle on selection).
+
 17. **Row kebab (`ellipsis-vertical`) menu items.**
     - *Question:* What's in the menu? (`View`, `Open sales report`, `Deactivate`, `Remove`, `Impersonate`?)
+
+    **Answer:** Minimal: View, Deactivate, Remove.
 
 18. **Mobile card "Sales report" button.**
     - *Observed:* Ink primary inverse `Sales report` per card. No sales-report screen exists.
     - *Question:* Is sales-report in scope? If yes, link to where?
 
+    **Answer:** Per Admin Sales Reports IN_SCOPE → routes to `/admin/vendors/[id]/sales` placeholder route.
+
 19. **Mobile card stats include `ORDERS`.**
     - *Observed:* The desktop table does not have an Orders column; the mobile card shows it.
     - *Question:* Should desktop also surface orders, or is mobile genuinely showing a different stat triplet?
+
+    **Answer:** Render mobile-only as drawn; desktop keeps Products/Monthly Sales triplet.
 
 20. **Avatar generation algorithm.**
     - *Observed:* Initials `SB` for `Saleem Bhai · Saleem Snacks Co.`.
@@ -436,6 +474,8 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       b) `initials(fullName)` (up to 2 letters).
       c) Server-provided.
 
+    **Answer:** `initials(fullName)` — first letter of first two whitespace-split words, up to 2 letters. Handles single-word names ("Ali" → "A").
+
 21. **`vendors.city` — currently in schema; `POST` hardcodes `'Lahore'`; design removes it in favor of `Address`.**
     - *Question:* Drop `city`, keep it as a derived/parsed value, or migrate it into the new `address` text?
     - *Hypotheses:*
@@ -443,8 +483,12 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       b) Keep both; `city` remains for filtering, `address` is free-form.
       c) Replace `city` with the new `address` and remove the existing column (with caution — see CLAUDE.md hard rule 3).
 
+    **Answer:** Keep both — `city` for filtering, `address` is free-form. Smallest non-destructive change.
+
 22. **Vendor display ID format `#VND-NNNN`.**
     - *Question:* Format generation rule (zero-padded sequential? per-year? auto-numbered like `orders.displayId` is `ORD-…`?).
+
+    **Answer:** STUBBED — see 06-scope-cut.md feature: Vendor enrichment (logo, display ID, full name, email, address, monthly limit, categories). Implement with placeholder: Auto-numbered sequential `VND-{NNNN}` zero-padded, mirroring `orders.displayId` (`ORD-…`) pattern in `apps/web/src/app/api/checkout/route.ts`. Add `// TODO(post-v1):` comment at every touch point.
 
 23. **Categories — multi-select source and constraint.**
     - *Observed:* 3 selected categories shown. No max drawn.
@@ -454,45 +498,69 @@ Numbered. Each row in §2 with a non-VISUAL_ONLY category is represented here.
       b) Same table, capped (e.g. 5).
       c) Separate vendor-only category taxonomy.
 
+    **Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor enrichment (logo, display ID, full name, email, address, monthly limit, categories). Do not implement this question's scope. UI placeholder: Categories block hidden in edit panel.
+
 24. **Monthly limit semantics.**
     - *Observed:* Field `Monthly limit (Rs.)` + helper `"Used Rs. 2,84,000 of Rs. 5,00,000 this month (57%)"`.
     - *Question:* Calendar-month or trailing-30? Used = orders placed, accepted, or delivered? What happens when limit is reached (block new orders, warn, soft-cap)?
+
+    **Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor enrichment (logo, display ID, full name, email, address, monthly limit, categories). Do not implement this question's scope. UI placeholder: Monthly limit field hidden in edit panel.
 
 25. **Audit "Onboarded by" / "Last edited by".**
     - *Observed:* Names + dates (`Zaid Ahmed · 12 Mar 2024`, `Zaid Ahmed · 28 Apr 2026`).
     - *Question:* These need to be persisted on every create/edit. Use `admin_audit_log`, or add explicit `createdById` / `lastEditedById` columns to `vendors`?
 
+    **Answer:** STUBBED — see 06-scope-cut.md feature: Admin audit log (writers + viewer feed). Implement with placeholder: Audit block hidden in this revamp; full audit deferred. Add `// TODO(post-v1):` comment at every touch point.
+
 26. **Lifetime sales — monthly limit aggregate window.**
     - *Question:* Sum across all `sub_orders` regardless of status, or only `delivered`?
+
+    **Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor enrichment (logo, display ID, full name, email, address, monthly limit, categories). Do not implement this question's scope. UI placeholder: Lifetime sales aggregate hidden.
 
 27. **Selected-row visual on the list.**
     - *Observed:* `paper-2` fill on the row whose vendor is open in the panel.
     - *Question:* Confirm that "selected" is the same concept as "currently being edited in the panel" (not a separate bulk-select highlight).
 
+    **Answer:** Confirmed — `paper-2` fill = same as currently-edited; not a separate bulk-select highlight.
+
 28. **First-page row count.**
     - *Observed:* Pencil shows 8 rows; current `PAGE_LIMIT = 10`.
     - *Question:* Is 8 the new page size, or just an illustrative count?
+
+    **Answer:** Keep `PAGE_LIMIT = 10`; "8 rows" in design is illustrative.
 
 29. **Empty / loading / error / form-error states.**
     - *Observed:* Pencil draws only the populated success state.
     - *Question:* Reuse current ad-hoc states (skeleton via `VendorsTableSkeleton`, inline error rows, sonner toasts), or design these explicitly?
 
+    **Answer:** Reuse current ad-hoc states (`VendorsTableSkeleton`, inline error row, sonner toasts) with retoken.
+
 30. **Header copy — `Add vendor` (lowercase v) vs current `Add Vendor`.**
     - *Question:* Is the lowercase the new convention, or just stylized in the mock?
 
+    **Answer:** Sentence case is the new convention.
+
 31. **Pagination footer copy — `"Showing 1–8 of 78 vendors"` vs `"Page X of Y (N total)"`.**
     - *Question:* Is the new "Showing m–n of total" wording locked, and should the trailing word `vendors` interpolate to whatever entity the table holds (so the same component can be reused)?
+
+    **Answer:** New "Showing m–n of total" wording adopted; trailing entity-noun is interpolatable so the same component can be reused.
 
 32. **`Save changes` button uses ink primary inverse, not the green primary.**
     - *Observed:* Pencil uses the inverse-ink CTA (blocked by `Q-BUTTON-1` from `04-design-system-implementation-log.md`).
     - *Question:* Confirm the inverse variant should be added to `Button` so the panel can use it. (User said in 02-design-inventory Q7 to re-derive from tokens; the variant exists in Pencil §3.1.)
 
+    **Answer:** Add `inverse` variant to `Button` (per `04 Q-BUTTON-1`); panel uses it.
+
 33. **Email field source.**
     - *Observed:* New `Email` field on the panel; `user.email` already exists on the auth user.
     - *Question:* Persist email on `user.email` (single source of truth), and make the form load/save through to `user`? Or store it on `vendors` separately?
+
+    **Answer:** STUBBED — see 06-scope-cut.md feature: Vendor enrichment (logo, display ID, full name, email, address, monthly limit, categories). Implement with placeholder: Persist on `user.email` (single source of truth); form loads/saves through to user. Add `// TODO(post-v1):` comment at every touch point.
 
 ---
 
 **Gap analysis written to:** `D:\Moeed 8th Sem\Fyp\Code\shalmi-web\.claude-revamp\screens\admin-vendors\gap-analysis.md`
 
 (End of Admin · Vendors gap analysis. Stopping here per instructions — not starting implementation.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

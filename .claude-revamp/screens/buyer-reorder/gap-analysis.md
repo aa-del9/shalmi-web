@@ -398,23 +398,28 @@ Numbered. Each NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTION
    - Observed: Pencil shows breadcrumb `Home / Orders / Reorder #SH-24891`. Existing code uses a circular `ArrowLeft` button linking to `/profile/orders`.
    - Question: Should the back button be removed entirely on desktop in favor of the breadcrumb, and on mobile (where Pencil also shows no back button — only an app-bar without one) navigation relies entirely on the OS back gesture / breadcrumb-equivalent?
    - Hypotheses: (a) Keep both — breadcrumb on desktop, ArrowLeft on mobile. (b) Replace fully — breadcrumb everywhere; mobile gets a smaller breadcrumb above the title. (c) Mobile uses a small back-arrow in the app-bar (inside `x5vQH`) that Pencil omitted but is implied.
+   - **Answer:** STUBBED — see 06-scope-cut.md feature: Admin "Catalog" sidebar grouping + Breadcrumb component. Implement with placeholder: IN_SCOPE — install shadcn `breadcrumb` once, retoken, reuse across screens. Add `// TODO(post-v1):` comment at every touch point. Replace fully — breadcrumb on desktop and a smaller breadcrumb above the title on mobile.
 
 2. **Page title `Replenish last week's cart` (NEW_FIELD + COPY_CHANGE).**
    - Observed: Pencil hard-codes this title regardless of how recent the original order is. The order in the design is dated `24 APR 2026` and the design was produced 2026-05-02 (so "last week" is plausible only for that mock).
    - Question: Is the title literally always "Replenish last week's cart", or does it adapt ("Replenish your N-week-old cart" / "Reorder this list" / etc.)?
    - Hypotheses: (a) Always literal `Replenish last week's cart` (placeholder per design). (b) Templated: `Replenish {your last week's / this 3-week-old / this} cart`. (c) Different title when serving the order-detail role vs. reorder role.
+   - **Answer:** Always literal "Replenish last week's cart" placeholder copy.
 
 3. **Page description copy (NEW_FIELD).**
    - Observed: `Edit quantities or remove items, then add the whole list to your cart. Your weight gauge updates as you go.` is hardcoded in Pencil.
    - Question: Confirm this copy is canonical and not lorem-style? Should it remain visible after a user has interacted (e.g. only show on first visit)?
+   - **Answer:** Adopt verbatim; visible on every visit (not first-visit-only).
 
 4. **Page eyebrow date format (COPY_CHANGE).**
    - Observed: Pencil shows `· 24 APR 2026` — uppercase short month, no leading zero, year. Existing code uses `toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })` which yields something like `24 Apr 2026` (sentence-case month).
    - Question: Use uppercase month per Pencil (`24 APR 2026`), and if so should this be a shared formatter for all date eyebrows across the design?
+   - **Answer:** Uppercase month (`24 APR 2026`); shared formatter for all date eyebrows across design.
 
 5. **Mobile eyebrow drops the order id (COPY_CHANGE).**
    - Observed: Desktop eyebrow `REORDER · ORDER #SH-24891 · 24 APR 2026`; mobile eyebrow `REORDER · 24 APR 2026`.
    - Question: Is the order id intentionally dropped on mobile for space, or is it an oversight? If intentional, where does the user see the id on mobile?
+   - **Answer:** Intentional — mobile shows order id elsewhere (page eyebrow + breadcrumb already have it).
 
 ### 5.B — Weight gauge and tier table
 
@@ -422,202 +427,247 @@ Numbered. Each NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERACTION
    - Observed: Pencil hardcodes `0–10 kg / Rs. 280`, `10–25 kg / Rs. 180`, `25–50 kg / Rs. 120`, `50+ kg / Rs. 80`. No corresponding constants or DB rows exist.
    - Question: Where does this table live?
    - Hypotheses: (a) Hardcoded constant (`packages/constants/src/delivery-tiers.ts`). (b) New DB table `delivery_tiers`. (c) Per-region table keyed by the user's hub city.
+   - **Answer:** STUBBED — see 06-scope-cut.md feature: Weight gauge + delivery tier table. Implement with placeholder: IN_SCOPE — define delivery tiers as constants module in `modules/cart/utils/delivery-tiers.ts`. Add `// TODO(post-v1):` comment at every touch point. Constant in `modules/cart/utils/delivery-tiers.ts`.
 
 7. **Help banner copy template (NEW_FIELD + NEW_STATE).**
    - Observed: `Add 6.5 kg more to cross into the 25–50 kg tier — save Rs. 60 on delivery.` (desktop) / `Add 6.5 kg more — save Rs. 60 on delivery.` (mobile).
    - Question: What is the exact template (need parameter slots), and how does it render at the top tier (no "next" tier) and when cart is empty?
    - Hypotheses: (a) Hide banner at top tier. (b) Show alternate copy "You're at the best delivery rate." (c) Show a non-amber "info" variant.
+   - **Answer:** Hide banner at top tier; otherwise compute delta + savings; mobile never shows it.
 
 8. **Compact mobile gauge legend (VISUAL_ONLY).**
    - Observed: Mobile legend shows `0–10 / 10–25 / 25–50 / 50+` only (no Rs. labels per cell).
    - Question: Confirm intentional, or should the Rs. amounts wrap to a second line on mobile?
+   - **Answer:** Confirm intentional — mobile drops Rs. labels per cell for space.
 
 ### 5.C — Items list
 
 9. **Items toolbar count "7 items · 3 quantity changes" (NEW_FIELD).**
    - Observed: The "3 quantity changes" segment implies the screen tracks how many rows have been edited vs. the original snapshot.
    - Question: Confirm "quantity changes" includes only quantity edits, or also: removals, deselections, both? When the count is 0, does the segment hide or render `0 quantity changes`?
+   - **Answer:** Includes quantity edits + removals + deselections; segment hides when count is 0.
 
 10. **Select-all behavior (NEW_INTERACTION).**
     - Observed: Pill toggle shows `square-check-big` icon + "Select all".
     - Question: Does it toggle (Select all → Deselect all)? Does it skip out-of-stock rows? Does it reset removed rows?
+    - **Answer:** Toggle (Select all → Deselect all); skips out-of-stock rows; resets removed rows to selected.
 
 11. **Items list grouping (CHANGED_INTERACTION + REMOVED_FIELD).**
     - Observed: Pencil renders one flat list; existing `ParcelBox` groups by sub-order with status pills.
     - Question: Confirm sub-order grouping is removed entirely from this screen. If yes, does the order-detail role lose the per-vendor breakdown forever, or does it migrate to a different screen / a collapsible disclosure?
     - Hypotheses: (a) Reorder screen is flat, parcel/status info disappears for buyers. (b) An expandable "View by vendor / parcel" toggle exists but isn't drawn. (c) Tracking moves to the storefront util-strip "Track order" link (separate screen).
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Order tracking surface (buyer-side). Implement with placeholder: "Track order" CTAs route to `/profile/orders/[id]` rendering the existing detail (parcel boxes still work) as fallback; account drawer Track-order row hides when no active order; util-strip "Track order" link goes to `/profile/orders`. Add `// TODO(post-v1):` comment at every touch point. Reorder is flat list.
 
 12. **Per-row thumbnail (REMOVED_FIELD + VISUAL_ONLY).**
     - Observed: Pencil thumbs are always 64×64 (desktop) / 56×56 (mobile) paper-2 frames with a generic `package` lucide icon, no product image. Existing renders `next/image` from `item.product.imageUrl`.
     - Question: Is the icon thumbnail intentional (uniform "warehouse pallet" aesthetic) or a placeholder for a real product image? If intentional, should `next/image` be removed and `imageUrl` no longer fetched?
+    - **Answer:** Pencil-deliberate placeholder icons (warehouse aesthetic). Drop `next/image` rendering on Reorder rows.
 
 13. **Title with "Pack of N / Carton of N / Box of N" suffix (NEW_FIELD).**
     - Observed: Titles like `Sufi Cooking Oil 5 L · Pack of 4`, `Lipton Yellow Label 950 g · Carton of 6`, `Knorr Chicken Cubes · Box of 24`.
     - Question: Is the pack/carton/box label appended to the product name in storage, or is it derived from the new pack-pricing schema (per `02 Q12` answer)? Which historical pack does an existing `order_item` map to (the GET endpoint currently has no concept of packs)?
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point.
 
 14. **Per-item weight eyebrow `21 KG · CARTON` (NEW_FIELD).**
     - Observed: `21 KG · CARTON` shown for `Sufi Oil 5 L · Pack of 4` (i.e. the *pack* weight, not the unit weight).
     - Question: Is this the **pack weight** (= `unitWeight × packSize` rounded) or the actual snapshot from a `weightPerPackGrams` field? Where does the unit-type noun (`CARTON / BAG / TIN / BOX`) come from — a new `products.unitType` enum?
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: IN_SCOPE — schema lands first then PDP/cart/vendor-form; no placeholder needed. Add `// TODO(post-v1):` comment at every touch point. Pack weight = `unitWeightGrams × packSize`.
 
 15. **Per-unit price phrasing variations (COPY_CHANGE + NEW_FIELD).**
     - Observed: `Rs. 1,205 per unit`, `Rs. 1,490 per carton`, `Rs. 6,200 per bag`, `Rs. 7,600 per tin`, `Rs. 280 per box`, `Rs. 1,033 per carton`.
     - Question: Is the noun (`unit / carton / bag / tin / box`) tied to the same `unitType` field referenced in Q14, or a separate field? Confirm exhaustive list.
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Vendor product enrichment fields (SKU, brand, tagline, low-stock threshold, restock lead time, packaging unit, MRP). Implement with placeholder: vendor list shows no SKU column (replace with slug) and a `LOW STOCK` pill driven by a constant threshold; PDP/cart eyebrows drop brand and pack-unit segments; add-product form omits the new fields. Add `// TODO(post-v1):` comment at every touch point. Derived from `packagingUnit` field.
 
 16. **Quantity stepper bounds (NEW_INTERACTION).**
     - Observed: Stepper has `−`, value, `+`. No min/max indicators drawn.
     - Question: Lower bound = 1 (with X to remove) or 0 (auto-removes at 0)? Upper bound = `products.stock`? Step size always 1?
+    - **Answer:** Lower=1, upper=`stock` (in packs), step=1; X removes the row.
 
 17. **Per-row total recompute (CHANGED_INTERACTION).**
     - Observed: Pencil row shows `Rs. 4,820` (= 4 packs × `Rs. 1,205`). Existing reads the historical snapshot.
     - Question: Confirm row total is recomputed live from the **current** per-pack price (which might differ from the historical `unitPrice`)? Or from the historical `unitPrice × current quantity`? This has user-visible price-drift consequences.
     - Hypotheses: (a) Always current price. (b) Always historical snapshot. (c) Show both ("was Rs. X, now Rs. Y").
+    - **Answer:** Always current pack price (live, not historical snapshot). Justified: original order is immutable; reorder draft uses today's prices.
 
 18. **Stock label states and threshold (NEW_FIELD + NEW_STATE).**
     - Observed: `in stock` (green-700), `low stock · 8 left` (amber), `out of stock` / `unavailable` (red).
     - Question: Where is the `low stock` threshold defined (the `8 left` is the actual remaining stock, but at what number does it switch from `in stock` to `low stock`)?
     - Hypotheses: (a) Hardcoded 10. (b) Per-product threshold field. (c) Percentage (e.g. "low stock when stock < daily-typical-velocity").
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Vendor product enrichment fields (SKU, brand, tagline, low-stock threshold, restock lead time, packaging unit, MRP). Implement with placeholder: vendor list shows no SKU column (replace with slug) and a `LOW STOCK` pill driven by a constant threshold; PDP/cart eyebrows drop brand and pack-unit segments; add-product form omits the new fields. Add `// TODO(post-v1):` comment at every touch point. Per-product `lowStockThreshold`.
 
 19. **Per-row remove X confirmation (NEW_INTERACTION).**
     - Observed: Bare X icon with no modal drawn.
     - Question: Confirm or not? Inline undo toast? Soft-delete (greyed but recoverable)?
+    - **Answer:** No confirmation; Sonner inline undo toast (matches existing `sonner` pattern).
 
 20. **Out-of-stock row state (NEW_STATE + REMOVED_FIELD).**
     - Observed: Unchecked checkbox, red `out of stock` per-unit-price line, total `Rs. 0` ink-3, `unavailable` red label.
     - Question: Is the checkbox **disabled** for out-of-stock rows (cannot be selected) or just **default-off** (user can override)? Is the X still active (can the user remove the row)?
+    - **Answer:** Checkbox disabled (not user-overridable); X still active for removal.
 
 ### 5.D — Receipt summary
 
 21. **Receipt eyebrow `ORDER SUMMARY` vs. existing `🧾 Payment Summary` + displayId (COPY_CHANGE).**
     - Observed: Pencil drops the displayId from the receipt body and changes the label.
     - Question: Confirm `ORDER SUMMARY` is canonical and the order id is not needed in the receipt (already in the page eyebrow + breadcrumb).
+    - **Answer:** Confirmed canonical; drop `displayId` from receipt body.
 
 22. **`6 items` row at top of receipt (NEW_FIELD, desktop only).**
     - Observed: Desktop receipt has a `6 items / Rs. 63,040` row; mobile receipt omits it.
     - Question: Is the count row truly desktop-only, or is the mobile omission a design oversight?
+    - **Answer:** Desktop only as drawn; mobile uses eyebrow `· N items`.
 
 23. **`Subtotal` vs `Items Total` (COPY_CHANGE).**
     - Observed: Pencil says `Subtotal`; existing says `Items Total`.
     - Question: Confirm rename.
+    - **Answer:** Confirmed rename to `Subtotal`.
 
 24. **`Delivery (10–25 kg)` label includes tier (COPY_CHANGE + NEW_FIELD).**
     - Observed: `Delivery (10–25 kg)` includes the active tier label inline.
     - Question: Is the tier label always shown, or hidden when not applicable (e.g. "Free delivery")?
+    - **Answer:** Always shown; for free-delivery (post-threshold) the row reads `Delivery (free)` but free delivery is STUBBED so this is decorative.
 
 25. **`GST 18%` row (NEW_FIELD).**
     - Observed: `GST 18% / Rs. 11,360` is a new line. No GST data exists.
     - Question: Is the rate always 18% (hardcoded constant), or per-region / per-vendor / configurable? Should historical orders also show GST (requires migration of past `orders` rows + a new `gstAmount` column)?
+    - **Answer:** DEFERRED — see 06-scope-cut.md feature: GST 18% on orders. Do not implement this question's scope. UI placeholder: GST row hidden across receipts; total = subtotal + delivery only.
 
 26. **Total label and removal of `COD Amount` framing (COPY_CHANGE + REMOVED_FIELD).**
     - Observed: Pencil says `Total / Rs. 74,580`; existing says `COD Amount to Collect`.
     - Question: Is COD framing removed because the reorder hasn't been placed yet (so "amount to collect" is premature)? Confirm the **new** order placed via the "Add to cart" → /checkout flow still records COD as the payment method (existing behavior).
+    - **Answer:** Drop COD framing; new label is `Total`.
 
 27. **Wallet refund row removed (REMOVED_FIELD).**
     - Observed: Existing receipt has `Wallet Refund (Items not available)` row when sub-orders are cancelled. Pencil has no equivalent.
     - Question: Is the wallet-refund concept removed from this screen entirely (still shown elsewhere, e.g. a Wallet screen — `02 §6 Q10` flagged Wallet UI as missing), or is it gone for good?
+    - **Answer:** Remove from this screen; wallet schema stays dormant (per scope-cut DROPPED on Wallet UI).
 
 ### 5.E — Comparison panel
 
 28. **Comparison panel desktop-only (REMOVED_FIELD on mobile).**
     - Observed: Desktop has `klOB3` "VS. ORIGINAL ORDER"; mobile has no equivalent.
     - Question: Confirm intentional desktop-only, or does mobile get a collapsed version above the receipt?
+    - **Answer:** Confirm intentional desktop-only.
 
 29. **Difference sign and color rule (NEW_FIELD + AMBIGUOUS).**
     - Observed: Difference shows `− Rs. 41,800` in green-700 (because reorder is cheaper than original).
     - Question: When the reorder is **more expensive** than the original (positive difference), what color and sign prefix is used?
     - Hypotheses: (a) Red text + `+ Rs. X` prefix. (b) Ink text + `+ Rs. X` (neutral). (c) Always green (the comparison is informative, not judgmental).
+    - **Answer:** Red text + `+ Rs. X` when more expensive; green-700 + `− Rs. X` when cheaper.
 
 30. **Currency formatting `Rs. 1,16,380` (COPY_CHANGE).**
     - Observed: Comparison panel uses South-Asian digit grouping; rest of the screen uses Western grouping (`Rs. 4,820`).
     - Question: Per `02 Q17` answer, all should be South-Asian. Confirm this means even smaller numbers like `Rs. 4,820` are written with a comma (no special handling needed for ≤5 digits — South-Asian groups are right-most 3 then 2-by-2). Verify intended `toLocaleString('en-IN')` or a custom formatter.
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Currency formatter (South-Asian grouping + lakh notation). Implement with placeholder: IN_SCOPE — replace `amount.toLocaleString()` callers with new `formatPrice` using `Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 })`. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 5.F — CTAs
 
 31. **Primary CTA label `Add 6 items to cart` (NEW_INTERACTION + COPY_CHANGE).**
     - Observed: Label includes a live count.
     - Question: Plural form when count is 1 (`Add 1 item to cart`)? Disabled state copy when 0 items selected (`Select items to continue`)?
+    - **Answer:** Plural form (`Add 1 item to cart` / `Add N items to cart`); when N=0, button reads `Select items` and is disabled.
 
 32. **"Save as new list" feature (NEW_INTERACTION + NEW_FIELD).**
     - Observed: Secondary CTA with no schema, no list-management UI, no list-listing screen.
     - Question: Is this feature in scope for this revamp at all, or stubbed/disabled until a "Saved Lists" screen design exists?
     - Hypotheses: (a) Out-of-scope for now — render the button but disable / route to "coming soon". (b) In scope — design the schema + listing screen separately. (c) Remove the button.
+    - **Answer:** DEFERRED — see 06-scope-cut.md feature: Saved shopping lists (Reorder secondary CTA). Do not implement this question's scope. UI placeholder: hide the Reorder secondary CTA; no further surfaces affected.
 
 33. **Delivery info pill content (NEW_FIELD).**
     - Observed: `MNP delivery to Gujranwala` + `Estimated 2–3 days · same MNP partner`.
     - Question: ETA range source? "same MNP partner" claim source? What is shown when the user has no default address or has changed cities since the original order?
     - Hypotheses: (a) Hardcoded "2–3 days". (b) Per-tier ETA. (c) Per-hub ETA. For "same MNP partner": (a) literal claim regardless. (b) Conditional on a stored `courierPartner` field (does not exist).
+    - **Answer:** Hardcoded "2–3 days" copy + city from buyer's default-address; "same MNP partner" claim hidden (no `courierPartner` field exists).
 
 ### 5.G — Mobile-only
 
 34. **Mobile sticky bar omits secondary CTA + delivery pill (NEW_INTERACTION + AMBIGUOUS).**
     - Observed: Mobile bar has only `Total · 6 items` + `Add to cart`. No "Save as new list", no delivery info pill.
     - Question: Are those two items dropped on mobile entirely, accessed via an overflow menu, or rendered above the sticky bar in the scroll?
+    - **Answer:** Confirm omissions — mobile is intentionally minimal; saved-list cut entirely (Q32).
 
 ### 5.H — Removed-from-design but present-in-code
 
 35. **Delivery address card removal (REMOVED_FIELD).**
     - Observed: Existing renders `shippingName / shippingAddress / shippingCity / shippingPhone`. Pencil omits.
     - Question: Is the historical shipping address truly not surfaced anywhere on this screen? If a user wants to verify which address the original order shipped to, where do they look?
+    - **Answer:** Confirm removal; admin retains historical shipping snapshot via `orders.shipping`* columns.
 
 36. **Per-parcel status pill + parcel grouping (REMOVED_FIELD).**
     - Observed: `📦 Parcel {n}` headers + `pending / packed / handed_to_courier / delivered / cancelled` colored pills are present in code, absent in Pencil.
     - Question: When the order is *in flight* (not yet delivered), where does the buyer see status? Storefront util-strip `Track order` link? A future shipping screen? Or are buyers no longer expected to track from here?
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Order tracking surface (buyer-side). Implement with placeholder: "Track order" CTAs route to `/profile/orders/[id]` rendering the existing detail (parcel boxes still work) as fallback; account drawer Track-order row hides when no active order; util-strip "Track order" link goes to `/profile/orders`. Add `// TODO(post-v1):` comment at every touch point. Status moves to tracking surface.
 
 37. **Per-item Rate button + ReviewDrawer flow (REMOVED_FIELD + AMBIGUOUS).**
     - Observed: Existing has a `🌟 Rate` button per delivered/unreviewed item that opens a 5-star drawer. Pencil has no equivalent.
     - Question: Is the review feature deprecated, or moved to a different surface? `product_reviews` table + `POST /api/retailer/reviews` endpoint stay or are removed?
     - Hypotheses: (a) Reviews moved to a "Past orders" screen not yet designed. (b) Reviews moved into the PDP (each delivered customer sees a "Review this product" prompt). (c) Reviews deprecated; the feature is dropped.
+    - **Answer:** DEFERRED — see 06-scope-cut.md feature: Reviews migration / deprecation. Do not implement this question's scope. UI placeholder: endpoint stays unwired from any UI; reviews silently stop.
 
 38. **Cancellation visualization (REMOVED_FIELD + NEW_STATE).**
     - Observed: Existing renders cancelled sub-orders with red border + 50% opacity + line-through. Pencil only models per-item out-of-stock (different concept).
     - Question: Can sub-orders still be cancelled (vendor side) while the buyer is on this screen, and if so how does the user see that on the reorder UI?
+    - **Answer:** Out of scope on this screen — cancellation surfacing belongs to the tracking screen.
 
 ### 5.I — Loading / error / empty / role pivot
 
 39. **Loading state (NEW_STATE).**
     - Observed: Pencil draws no loading state. Existing shows a centred spinner with Roman-Urdu copy.
     - Question: Per `01 §7 Q14` and per the per-screen-state question — what does the loading state look like? Skeleton rows in the items list? Spinner in the page header area?
+    - **Answer:** Skeleton rows in items list using existing `Skeleton` primitive.
 
 40. **Error state (NEW_STATE).**
     - Observed: Pencil draws no error state. Existing shows a red bordered card with Roman-Urdu copy.
     - Question: What does error look like? Per-section retry? Full-page retry?
+    - **Answer:** Full-page retry card (mirror admin patterns).
 
 41. **Empty state (NEW_STATE).**
     - Observed: Pencil draws no state for "this order has no items" (probably impossible) or "all items removed by the user".
     - Question: When the user removes the last item from the draft, what does the screen show — disabled CTA + a hint? An empty-state illustration?
+    - **Answer:** Disabled CTA + hint "Select items to continue"; no separate empty illustration.
 
 42. **Role pivot — reorder vs. order-detail (AMBIGUOUS).**
     - Observed: Per `02 Q1` this single Pencil frame doubles as the order-detail view. But the frame is heavily skewed toward "edit + add to cart"; it carries no parcel status, no delivery progress, no review affordance.
     - Question: When a buyer has just placed an order today and wants to see "where is my parcel right now", do they:
     - Hypotheses: (a) Land on this same `/profile/orders/[id]` route (this Pencil frame) and have no in-screen tracking UI — they must go to a separate "Track order" screen. (b) The route renders a different layout depending on whether the order is in-flight vs. delivered (two states of the same screen, not designed). (c) The route renders this Pencil frame always, and tracking is a separate `/profile/orders/[id]/track` screen not in design scope yet.
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Order tracking surface (buyer-side). Implement with placeholder: "Track order" CTAs route to `/profile/orders/[id]` rendering the existing detail (parcel boxes still work) as fallback; account drawer Track-order row hides when no active order; util-strip "Track order" link goes to `/profile/orders`. Add `// TODO(post-v1):` comment at every touch point. Tracking lives on a separate screen; `/profile/orders/[id]` is the Reorder screen always.
 
 ### 5.J — Components flagged in §0
 
 43. **Reorder line-item row is new (AMBIGUOUS).**
     - Observed: Cart has its own `cart-item-row`. Reorder needs a similar but distinct row (with checkbox, X, stock label, weight eyebrow, "in stock" / "low stock" / "out of stock" labels).
     - Question: Build a new `<ReorderLineItem>` component (screen-local), or extend `<CartLineItem>` with variants?
+    - **Answer:** Build a new `<ReorderLineItem>` component (screen-local in `modules/retailer/retailer-reorder/`); don't extend `<CartLineItem>`.
 
 44. **Stock label as primitive vs. inline text (AMBIGUOUS).**
     - Observed: Inline text labels with one of three colors and one of three copy strings.
     - Question: Worth a new `<StockLabel>` atom in `@repo/ui`, or just inline text styling per row?
+    - **Answer:** Inline text styling per row. No new atom.
 
 45. **Help / inline callout banner (AMBIGUOUS).**
     - Observed: Used here in amber. Same idiom probably needed in info / critical variants on Cart/Checkout.
     - Question: Build a generic `<Callout variant="info|warning|critical">` atom now or defer until needed elsewhere?
+    - **Answer:** Build generic `<Callout variant="info|warning|critical">` in `@repo/ui` since cart + reorder + checkout all use the idiom.
 
 46. **Mobile sticky bottom bar (AMBIGUOUS).**
     - Observed: Cart and Checkout mobile also use a similar sticky bar.
     - Question: Build a shared `<StickyBottomBar>` primitive now, or compose inline per screen?
+    - **Answer:** Build shared `<StickyBottomBar>` in `@repo/ui` (used on cart, checkout, reorder, PDP mobile).
 
 47. **Breadcrumb primitive (AMBIGUOUS).**
     - Observed: Used on Orders, Reorder, Settings, and admin/vendor surfaces per inventory.
     - Question: Add `<Breadcrumb>` to `@repo/ui` (shadcn has one — `npx shadcn@latest add breadcrumb` per the `04` log's component-add convention) before this revamp lands?
+    - **Answer:** STUBBED — see 06-scope-cut.md feature: Admin "Catalog" sidebar grouping + Breadcrumb component. Implement with placeholder: IN_SCOPE — install shadcn `breadcrumb` once, retoken, reuse across screens. Add `// TODO(post-v1):` comment at every touch point. Install shadcn `breadcrumb` once.
 
 48. **Page header primitive (AMBIGUOUS).**
     - Observed: Used across many screens — eyebrow + title + description + (optional) actions row.
     - Question: Add a shared `<PageHeader>` molecule now or compose inline?
+    - **Answer:** Build shared `<PageHeader>` molecule (eyebrow + title + description + actions row) since admin/buyer screens all use the pattern.
 
 ---
 
 **File location:** `D:\Moeed 8th Sem\Fyp\Code\shalmi-web\.claude-revamp\screens\buyer-reorder\gap-analysis.md`
 
 (End of Phase 4 gap analysis for Buyer · Reorder. Stopping per workflow — no implementation begins until §5 questions are resolved.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

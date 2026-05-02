@@ -254,6 +254,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (b) Feature wrapper in each sub-page (no layout file); mobile sub-pages each own their app bar.
 - (c) Layout file desktop-only (renders pass-through on mobile); each sub-page owns its mobile chrome.
 
+**Answer:** STUBBED — see 06-scope-cut.md feature: Settings shell + sub-page routing. Implement with placeholder: IN_SCOPE — `/profile/settings` route group with parent layout; un-implemented nav rows render disabled with `Coming soon` labels. Add `// TODO(post-v1):` comment at every touch point. Next.js layout file at `app/(storefront)/profile/settings/layout.tsx`; mobile = same layout, conditionally renders the index at `/profile/settings` and a back-bar at `/profile/settings/[sub]`.
+
 ### 2. Breadcrumb component
 
 **Observed.** Pencil draws a 3-segment breadcrumb (`Home › Account › Settings`) with chevron-right separators. No breadcrumb primitive exists in `@repo/ui` and 04 didn't add one. Multiple other Pencil screens (Reorder, Orders) also use breadcrumbs.
@@ -265,6 +267,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (b) Build a small ad-hoc Breadcrumb in `@repo/ui` from primitives.
 - (c) Inline in `modules/buyer-settings/` since only a handful of screens use it.
 
+**Answer:** STUBBED — see 06-scope-cut.md feature: Admin "Catalog" sidebar grouping + Breadcrumb component. Implement with placeholder: IN_SCOPE — install shadcn `breadcrumb` once, retoken, reuse across screens. Add `// TODO(post-v1):` comment at every touch point. Install shadcn `breadcrumb` and retoken.
+
 ### 3. Profile-active-by-default — what actually shows on the addresses sub-page right panel?
 
 **Observed.** Pencil's `R6YLrL` frame draws `sn1 Profile` as the active item AND draws all of User info / Stats / Recent orders / Saved addresses stacked in `sContent`. Per Q2 the right panel is in scope only for Saved addresses. So when the user navigates to `sn3 Saved addresses`, what fills `sContent`?
@@ -273,6 +277,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (a) Just the `Saved addresses` card (the only in-scope content).
 - (b) The full stack as drawn (User info + Stats + Recent orders + Saved addresses) — but this conflicts with Q2's "ignore profile" directive.
 - (c) The drawn frame is actually the Profile sub-page (because sn1 is active) and Saved addresses on the right is a *summary preview*, while the dedicated Saved addresses sub-page is something else not drawn.
+
+**Answer:** Right panel renders only the Saved addresses card (per `02 §7 Q2` only Saved Addresses is in scope).
 
 ### 4. Page title scope: shell title vs sub-page title
 
@@ -286,6 +292,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (a) Yes, both — H1 is shared across all settings sub-pages, H2 changes per sub-page.
 - (b) The H1 changes per sub-page (e.g. "Saved addresses" replaces "Account & settings" when navigating into addresses); the section H2 disappears.
 
+**Answer:** Shell H1 = "Account & settings"; sub-page section H2 = per sub-page.
+
 ### 5. Sidebar items that have no current sub-page (Profile, Payment methods, Notifications, Preferences)
 
 **Observed.** Pencil sidebar has 6 nav items + Log out. Per Q2 of 02-design-inventory, only Saved addresses is in scope. Profile / Payment methods / Notifications / Preferences are drawn but not implemented.
@@ -297,6 +305,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (b) Render them visible and clickable, leading to a "coming soon" placeholder page.
 - (c) Hide them entirely until the corresponding sub-page is built.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Settings shell + sub-page routing (Profile / Payment methods / Notifications / Preferences sub-pages deferred per 02 §7 Q2). Do not implement this question's scope. UI placeholder: Profile / Payment methods / Notifications / Preferences sidebar rows render visible but disabled (greyed, no hover). Render visible but disabled (greyed, no hover).
+
 ### 6. Orders nav row destination
 
 **Observed.** Pencil sidebar `sn2 Orders` is alongside Saved addresses, suggesting orders sits inside the same settings shell. Today `/profile/orders` is a separate top-level profile page.
@@ -306,6 +316,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 **Hypotheses.**
 - (a) Keep `/profile/orders` as is, just point this nav row to it (existing route is unaffected).
 - (b) Move it to `/profile/settings/orders` with the same redirect strategy as addresses.
+
+**Answer:** Keep `/profile/orders` as is; nav row links to it; no route move.
 
 ### 7. Logout in sidebar — coexist with header dropdown?
 
@@ -317,17 +329,23 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (a) Both available — settings sidebar logout is just one more entry point.
 - (b) Settings sidebar logout *only* on settings pages; header dropdown still shows logout elsewhere.
 
+**Answer:** Both available; sidebar logout is one more entry point.
+
 ### 8. Page title copy — "Account & settings" vs existing "Saved Addresses"
 
 **Observed.** Pencil shell title is "Account & settings"; existing page H1 is "Saved Addresses" with a MapPin icon prefix. Different scope (shell vs page) so technically different things, but the existing page header would disappear under the new design.
 
 **Question.** Confirm both: the new shell H1 is "Account & settings" verbatim (no "Settings" alone, no "My account"); and confirm the MapPin icon next to the existing page-title is intentionally dropped.
 
+**Answer:** Confirm verbatim; MapPin icon dropped from existing page-header.
+
 ### 9. Address-card section title copy & casing — "Saved Addresses" → "Saved addresses"
 
 **Observed.** Pencil section heading is "Saved addresses" (sentence case). Existing is "Saved Addresses" (title case).
 
 **Question.** Adopt sentence case verbatim?
+
+**Answer:** Adopt sentence case verbatim.
 
 ### 10. DEFAULT pill vs Stamp primitive
 
@@ -340,11 +358,15 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (b) Extend `Stamp` with an `inverse` variant and a `rotated={false}` prop.
 - (c) Inline div with Tailwind classes; no shared primitive.
 
+**Answer:** Extend `Stamp` with `inverse` variant + `rotated={false}` prop. Smallest delta over a new primitive.
+
 ### 11. DEFAULT pill copy/casing — "Default" → "DEFAULT"
 
 **Observed.** Pencil pill text is "DEFAULT" (mono uppercase). Existing badge text is "Default" (sans Title case).
 
 **Question.** Adopt the all-caps mono "DEFAULT" verbatim?
+
+**Answer:** Adopt all-caps mono "DEFAULT" verbatim.
 
 ### 12. Address text composition — what fields drive the displayed line?
 
@@ -355,6 +377,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (b) Composed from new structured fields (e.g. line1, area, city, postalCode, province)?
 - (c) Composed from existing fields + 2 new ones (postalCode, province)?
 
+**Answer:** STUBBED — see 06-scope-cut.md feature: Postal code + province on addresses. Implement with placeholder: address card composition includes postal/province; order meta line shows postal code. Add `// TODO(post-v1):` comment at every touch point. Composed from existing `address` + `city` + new `postalCode` + new `province` fields.
+
 ### 13. Postal code field
 
 **Observed.** "52250" appears in the address text. No `postalCode` in schema.
@@ -364,6 +388,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - required or optional?
 - validation regex (e.g. PK 5-digit) — and does it accept other markets?
 
+**Answer:** STUBBED — see 06-scope-cut.md feature: Postal code + province on addresses. Implement with placeholder: address card composition includes postal/province; order meta line shows postal code. Add `// TODO(post-v1):` comment at every touch point. `text` type, optional, no regex (handles non-PK formats).
+
 ### 14. Province / region field
 
 **Observed.** "Punjab" appears in the address text. No province in schema.
@@ -372,6 +398,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - enum (PK provinces only) or free-text?
 - column name (`province` vs `region` vs `state`)?
 - required or optional?
+
+**Answer:** STUBBED — see 06-scope-cut.md feature: Postal code + province on addresses. Implement with placeholder: address card composition includes postal/province; order meta line shows postal code. Add `// TODO(post-v1):` comment at every touch point. Free-text `province` column (not enum), optional.
 
 ### 15. Recipient name — display vs model
 
@@ -384,17 +412,23 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (b) Total removal; checkout form supplies recipient name separately at order time.
 - (c) Replace with a different concept (e.g. business / shop name field) — see Q12.
 
+**Answer:** Display-only removal — field stays in form + DB (still snapshotted to `orders.shippingName` at checkout).
+
 ### 16. Phone display change — sans 14 muted → mono 12 ink-3, name removed
 
 **Observed.** Phone moves to its own row, font shifts sans→mono, size 14→12, color muted→ink-3. Recipient name removed from this composite.
 
 **Question.** Confirm font/size/color and the absence of the recipient name on this row.
 
+**Answer:** Confirm font/size/color (mono 12 ink-3); recipient name removed from this row.
+
 ### 17. Add address button: primary green → outline ink
 
 **Observed.** Pencil "Add address" button is outline ink (white fill, 1.5px rule-2 stroke, ink text 13/600). Existing is primary green.
 
 **Question.** Confirm the variant change (primary → outline) and the smaller text (14→13).
+
+**Answer:** Confirm variant change to outline ink + 13/600.
 
 ### 18. Edit address — UI treatment
 
@@ -408,6 +442,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (c) Inline expansion (the card itself becomes editable).
 - (d) Separate route (`/profile/settings/addresses/[id]/edit`).
 
+**Answer:** Re-use existing `AddressDialog` modal with title swap "Add address" / "Edit address" and seeded values. Smallest delta.
+
 ### 19. Edit API — confirm shape
 
 **Observed.** No `PATCH /api/user/addresses/[id]` exists today. Edit pencil implies one is needed.
@@ -416,6 +452,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - Endpoint shape: `PATCH /api/user/addresses/[id]` accepting partial fields.
 - Auth: same session+ownership check as POST.
 - Should `isDefault: true` in PATCH cascade-unset other defaults like POST does?
+
+**Answer:** `PATCH /api/user/addresses/[id]` accepting partial fields; same session+ownership check as POST; `isDefault: true` cascade-unsets others (mirrors POST behavior at `apps/web/src/app/api/user/addresses/route.ts:68-73`).
 
 ### 20. Set-as-default UX
 
@@ -429,6 +467,8 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (c) Click on the card body to mark as default (gesture).
 - (d) Not changeable post-creation by design.
 
+**Answer:** Inside the edit dialog (existing `isDefault` checkbox carried into edit mode).
+
 ### 21. Delete address — supported?
 
 **Observed.** No delete affordance drawn anywhere; no DELETE endpoint exists today.
@@ -439,11 +479,15 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (a) Yes — add `DELETE /api/user/addresses/[id]` and a trash button or overflow menu (none drawn — would need a placement decision).
 - (b) No — addresses are immutable once created (only edit + set-default).
 
+**Answer:** Out of scope — addresses immutable post-creation. Avoid the cascade-effects question (`orders` references address by id).
+
 ### 22. Add/Edit dialog — design omission
 
 **Observed.** Pencil draws no add/edit form. Existing AddressDialog is a Dialog with the standard form layout.
 
 **Question.** Is the existing AddressDialog visual/UX retained as-is for this revamp (just retokened), or does the revamp call for a different surface (Sheet, full-page form)? See Q18.
+
+**Answer:** Retain existing `AddressDialog` visual; retoken.
 
 ### 23. Empty state visual
 
@@ -451,17 +495,23 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 
 **Question.** Empty state (zero addresses) — render the card section as: (a) the existing empty Card "You don't have any saved addresses yet." copy/visual retokened, (b) a different, design-system-derived empty card (paper-2 with "Add your first address" outline button), or (c) no state distinction (just an empty grid + the section header's Add button)?
 
+**Answer:** Keep current empty state retoken'd.
+
 ### 24. Loading state visual
 
 **Observed.** Pencil draws no loading state. Existing centered Spinner.
 
 **Question.** Keep centered Spinner; or use card-shaped Skeletons (3 placeholder cards mimicking the grid); or leave it to be re-derived during component implementation?
 
+**Answer:** Keep centered `Spinner` from `@repo/ui/components/spinner`.
+
 ### 25. Error state visual
 
 **Observed.** Pencil draws no error state. Existing surfaces errors via toast.
 
 **Question.** On addresses fetch failure, show: (a) retry-able error card in place of the grid, (b) toast-only and let the section render empty, (c) something else?
+
+**Answer:** Toast-only via `sonner` (matches existing pattern).
 
 ### 26. Mobile addresses sub-page — design omitted
 
@@ -474,17 +524,23 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (b) Different mobile-only treatment that mirrors the existing simpler list.
 - (c) Re-use the existing `UserAddresses` component on mobile and only apply the desktop redesign.
 
+**Answer:** Same desktop card translated to single column, paper-2 default + white non-default cards stacked, App bar with chevron-back.
+
 ### 27. Mobile App bar replacement on Settings pages
 
 **Observed.** Pencil mobile uses an "Account" App bar (chevron-left + title + EN/اردو toggle + avatar). Existing storefront header is different.
 
 **Question.** Does the Settings mobile App bar (a) replace the storefront header on all `/profile/settings/*` mobile screens, (b) co-exist (storefront header stays, app bar is added below), or (c) only show on the settings index?
 
+**Answer:** Replace storefront header on `/profile/settings/`* mobile screens with the Settings App bar.
+
 ### 28. EN / اردو toggle placement & behavior
 
 **Observed.** EN/اردو toggle appears in the mobile App bar of the Settings index. Per Q16 of 02-design-inventory EN-only ships first.
 
 **Question.** Visible-but-inert (renders, but selecting "اردو" does nothing yet), or omit until i18n ships? Also: does the toggle appear on desktop Settings chrome too (not drawn) or mobile only?
+
+**Answer:** STUBBED — see 06-scope-cut.md feature: i18n / language toggle plumbing (presentational EN-only). Implement with placeholder: render LanguageToggle visible-but-inert (visual only) with no state plumbing; clicking does nothing. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 29. Mobile Settings index `/profile/settings` route
 
@@ -497,11 +553,15 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 - (b) `/profile/settings` always redirects to `/profile/settings/addresses` (or another default) on both breakpoints.
 - (c) `/profile/settings` exists only on mobile (desktop never reaches this URL).
 
+**Answer:** `/profile/settings` is the index — renders 5-row list on mobile, redirects to `/profile/settings/addresses` on desktop (or shows a "select a setting" placeholder).
+
 ### 30. Version footer "Shalmi Mart · v1.0.0"
 
 **Observed.** Mobile shows a version string at the bottom of the Settings index. Desktop does not.
 
 **Question.** Source of the version — read from `package.json` at build-time, or hard-code? Show on every settings page on mobile, or only the index?
+
+**Answer:** Read from `NEXT_PUBLIC_APP_VERSION`; show only on the mobile index.
 
 ### 31. Address card padding 16 → 18
 
@@ -509,11 +569,15 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 
 **Question.** Confirm 18px (i.e. Tailwind `p-[18px]` or a custom token), or normalize to the closest Pencil-aligned step (16/24)?
 
+**Answer:** Use Tailwind `p-[18px]` to match Pencil exactly.
+
 ### 32. Address card title size/weight 14/600 → 15/700
 
 **Observed.** Pencil title is sans 15/700; existing is roughly 14/600 (`font-semibold text-base`).
 
 **Question.** Adopt 15/700 verbatim — or use the closest existing typography step (`text-sm font-bold` = 14/700, or `text-base font-semibold` = 16/600)?
+
+**Answer:** Adopt 15/700 verbatim.
 
 ### 33. Addresses grid column count on tablet / narrow desktop
 
@@ -521,8 +585,12 @@ Every COPY_CHANGE / NEW_FIELD / REMOVED_FIELD / NEW_INTERACTION / CHANGED_INTERA
 
 **Question.** What column count at intermediate breakpoints (tablet 768–1024)? Drop to 2 columns? 1 column?
 
+**Answer:** 2 columns at tablet (768–1024); 1 column on phone; 3 columns at ≥1024.
+
 ---
 
 **File written to:** `D:\Moeed 8th Sem\Fyp\Code\shalmi-web\.claude-revamp\screens\buyer-settings\gap-analysis.md`
 
 (End of Buyer · Settings gap analysis. Stopping here per instructions — not starting implementation.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

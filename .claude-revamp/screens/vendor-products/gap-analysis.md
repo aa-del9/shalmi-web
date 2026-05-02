@@ -497,6 +497,7 @@ every diff is captured below).
   highlight on `ALL PRODUCTS` would then represent "currently selected").
   (c) Tappable but visual highlight in the design is the *default*
   visual treatment of the leftmost cell, not a "selected" state.
+**Answer:** Tappable — clicking a cell sets the status filter; `paper-2` highlight = currently selected.
 
 **Q2 — Header subtitle copy/promise.**
 
@@ -515,6 +516,7 @@ every diff is captured below).
   `draft → pending_review → active`).
   (b) Both creation and edits go through review.
   (c) Subtitle is placeholder copy — confirm wording before adopting.
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor add-product approval workflow + autosave (draft → pending_review → active). Do not implement this question's scope. UI placeholder: edits go live immediately; "Submit for approval" copy adjusted to "Save product"; subtitle keeps "changes go live immediately".
 
 **Q3 — Mobile chip row vs desktop status dropdown.**
 
@@ -533,6 +535,7 @@ every diff is captured below).
   (b) Mobile chips are mutually exclusive single-select; desktop dropdown
   is single-select.
   (c) Chips are multi-select toggles.
+**Answer:** Desktop: dropdown only. Mobile: chips only. Both filter the same `status` field; "Low stock" is a derived status (active + stock ≤ threshold).
 
 ### 5.2 Stats cells / counts (NEW_FIELD on each cell)
 
@@ -549,6 +552,7 @@ every diff is captured below).
   (b) Implement a basic flow (modal with file picker, server-side CSV
   parse with a fixed column set).
   (c) Drop the button entirely from this revamp.
+**Answer:** User answer: A4: column surface should be decided based on vendor product form so that all needed fields are populated. add a modal for the upload surface, following design.
 
 ### 5.3 Schema (NEW_FIELD per row in §2 → questions)
 
@@ -570,6 +574,7 @@ every diff is captured below).
   discount cards on top.
   (c) Pack size is per-row metadata used only on the buyer PDP and is
   not enforced server-side.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: `packSize` is units inside one wholesale unit (descriptive); `BUY-N` cards are number of wholesale units. Add `// TODO(post-v1):` comment at every touch point.
 
 **Q6 — `Net weight` field unit + scale.**
 
@@ -585,6 +590,7 @@ every diff is captured below).
   (b) Switch DB column to `netWeightKg numeric(10,3)` (or grams unchanged
   but UI scales to kg).
   (c) Add a unit selector (kg/g/lbs/oz).
+**Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: display kg, store grams (multiply by 1000 on submit). DB column unchanged. Add `// TODO(post-v1):` comment at every touch point.
 
 **Q7 — Category model: multi vs single.**
 
@@ -603,6 +609,7 @@ every diff is captured below).
   list/PDP display; multi-select stays in some other surface (admin?).
   (c) Keep M2M but UI restricts to single-select; first selected
   category becomes the "displayed" one.
+**Answer:** Keep M2M; designate `products.primaryCategoryId` for list/PDP display; multi-select retained in admin or vendor form depending on UX. Smallest delta — no destructive migration.
 
 **Q8 — `SKU` autogeneration (`Auto` pill).**
 
@@ -618,6 +625,7 @@ every diff is captured below).
   server when the product draft was created; user has the option to
   edit.
   (c) The pill is purely decorative copy.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Vendor product enrichment fields (SKU, brand, tagline, low-stock threshold, restock lead time, packaging unit, MRP). Implement with placeholder: click `Auto` → server generates a unique SKU from brand/name/pack-size; user can override. Add `// TODO(post-v1):` comment at every touch point.
 
 **Q9 — Status taxonomy + approval workflow.**
 
@@ -640,6 +648,7 @@ every diff is captured below).
   faked client-side only — the toggle directly publishes.
   (c) Three statuses and an admin product moderation queue is in scope
   for this revamp (would change Phase plan significantly).
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor add-product approval workflow + autosave (draft → pending_review → active). Do not implement this question's scope. UI placeholder: two real statuses (`draft`, `active`); `pending_review` deferred; toggle directly publishes.
 
 **Q10 — Autosave + Save as draft + Cancel + Submit semantics.**
 
@@ -659,6 +668,7 @@ every diff is captured below).
   `Cancel` discards in-memory changes only.
   (c) **Hybrid**: `Save as draft` and `Submit for approval` are explicit;
   autosave runs only after the first explicit save.
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Vendor add-product approval workflow + autosave (draft → pending_review → active). Do not implement this question's scope. UI placeholder: explicit-save — nothing persists until `Save as draft` or `Save product`. `Cancel` discards in-memory changes only. Footer autosave copy hidden.
 
 **Q11 — Pack pricing card semantics.**
 
@@ -686,6 +696,7 @@ every diff is captured below).
   (c) `BUY N` is a separate `recommended_pack_id` on the product (the
   highlighted card is the recommended one); other cards are alternate
   pack sizes the buyer can pick.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Pack-based pricing schema migration (replaces tier-band model). Implement with placeholder: wholesale price is `BUY 1` implicit; cards are `units → price` rows; vendor adds N cards; no monotonicity validation server-side; ink-fill is visual hierarchy only. Add `// TODO(post-v1):` comment at every touch point.
 
 **Q12 — Mobile pagination / load behavior.**
 
@@ -698,6 +709,7 @@ every diff is captured below).
   (b) Server returns only the top-N most recent (no pagination, capped
   list).
   (c) Fixed first page; user reaches more via desktop only.
+**Answer:** Infinite scroll fetching pages of 8 under the hood.
 
 **Q13 — Edit-form transition / Edit-mode title.**
 
@@ -716,6 +728,7 @@ every diff is captured below).
   intent); edit mode is identifiable only by prefilled fields.
   (c) Title becomes `Edit product` and the eyebrow reflects the current
   status (`ACTIVE · LIVE` or `DRAFT · NOT LIVE`).
+**Answer:** Title swaps to `Edit · {product name}`; transition is a smooth scroll to the form section.
 
 **Q14 — `SKU` uniqueness scope.**
 
@@ -729,6 +742,7 @@ every diff is captured below).
   SKU). Likely the right call.
   (b) Globally unique.
   (c) Non-unique; cosmetic identifier only.
+**Answer:** Unique per vendor (a vendor can't have two products with the same SKU). Schema constraint: `UNIQUE (vendor_id, sku)`.
 
 ### 5.4 Image upload (NEW_FIELD / NEW_INTERACTION)
 
@@ -748,6 +762,7 @@ every diff is captured below).
   (b) No cap; the strip is just a 4-up preview of the first 4 in the
   order they were uploaded; first is implicitly primary.
   (c) 4 named slots (front, back, in-context, ingredient), no reordering.
+**Answer:** No cap; the strip is a 4-up preview of the first 4 in upload order; first is implicitly primary. Smallest delta — no schema change.
 
 **Q16 — Upload constraints.**
 
@@ -760,6 +775,7 @@ every diff is captured below).
   (a) Current endpoint is permissive; the revamp adds size + mime
   validation server-side and matches the copy.
   (b) Current endpoint already enforces; copy is documenting reality.
+**Answer:** Revamp adds size + mime validation server-side at `/api/vendor/upload`; matches the copy.
 
 ### 5.5 List columns (REMOVED_FIELD on `WEIGHT` and `IMAGES`)
 
@@ -774,6 +790,7 @@ every diff is captured below).
   surface; image count is replaced by the 48² thumbnail.
   (b) Hidden behind a "columns" picker we haven't seen drawn.
   (c) Just not drawn; should remain.
+**Answer:** Intentional — vendor doesn't need weight in the list; image count replaced by 48² thumbnail.
 
 **Q18 — Single-category list cell vs M2M.**
 
@@ -783,6 +800,7 @@ every diff is captured below).
 - *Question:* If the underlying model stays M2M (Q7 (b)), should the
   list show the primary category only? Or all categories joined? See Q7
   for the upstream decision.
+**Answer:** Show `primaryCategoryId` only on the list (per Q7).
 
 ### 5.6 Action affordances on each row
 
@@ -798,6 +816,7 @@ every diff is captured below).
   not exposed elsewhere.
   (c) The ellipsis is decorative — only the pencil icon is wired to
   open the edit form.
+**Answer:** Ellipsis decorative for now; only the pencil icon is wired to open the edit form. Smallest delta.
 
 **Q20 — Mobile ellipsis on each card.**
 
@@ -810,6 +829,7 @@ every diff is captured below).
   (a) Tap card → open edit; ellipsis → menu with Duplicate/Delete/etc.
   (b) Ellipsis-only — opens a sheet menu that has "Edit" as the first
   item.
+**Answer:** Tap card body → open edit; ellipsis → secondary menu (currently empty / decorative).
 
 ### 5.7 Mobile-only differences
 
@@ -827,6 +847,7 @@ every diff is captured below).
   only, mobile = label + count when applicable).
   (b) Two presentations for the same data, owned by per-surface code.
   (c) Reconcile to one wording (e.g. `LOW · 6 LEFT`) on both.
+**Answer:** Same status enum; presentation differs by surface (desktop = label only, mobile = label + count when applicable). Driven by helpers, not separate fields.
 
 **Q22 — `Drafts` chip on mobile lacks a count, `Low stock` chip color
 treatment.**
@@ -842,6 +863,7 @@ treatment.**
   (b) Just an oversight — the count should be there.
   (c) `Low stock` red treatment is conditional on count > 0; otherwise
   it falls back to the white treatment.
+**Answer:** `Drafts` count omitted when 0; numbered chips show only when > 0. Red treatment on `Low stock` is conditional on count > 0.
 
 ### 5.8 Footer / autosave / approval (NEW_INTERACTION + NEW_STATE)
 
@@ -857,6 +879,7 @@ treatment.**
   (b) Closes form and discards unsaved changes (including any autosave
   side-effects).
   (c) Closes form and prompts the user "Save changes? Discard?".
+**Answer:** Closes form and discards unsaved changes (matches Q10 explicit-save model).
 
 ### 5.9 Add-product title eyebrow
 
@@ -871,8 +894,11 @@ treatment.**
   (a) Dynamic, status-driven.
   (b) Static for new products only; edit mode hides the eyebrow.
   (c) Static "NEW PRODUCT · DRAFT" always — purely decorative copy.
+**Answer:** Dynamic, status-driven (`NEW PRODUCT · DRAFT` for fresh row → `EDIT PRODUCT · ACTIVE` once saved active).
 
 ---
 
 (End of gap analysis. Stopping here per instructions — no implementation
 follows from this artifact.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

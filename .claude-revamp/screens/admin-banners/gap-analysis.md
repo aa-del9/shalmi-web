@@ -539,6 +539,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (c) Mobile pushes editing into a full-screen route
       (`/admin/promo-banners/[id]`) instead of an inline panel.
 
+**Answer:** Mobile is read-only — footer hint reads "Edit banners from desktop"; per-card pencil/trash icons omitted on mobile. Smallest delta — no extra mobile route.
+
 ### Q2 — Image fills on banner cards in the design
 
 - **Observed (design):** Each banner card's image area is rendered as a
@@ -561,6 +563,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
       admin-chosen accent color, and the image only renders on the
       storefront.
 
+**Answer:** Placeholder only — the real card renders the uploaded `imageUrl`; eyebrow/title overlay sits on top.
+
 ### Q3 — Per-banner copy fields surface (eyebrow / title / internal name / cta label)
 
 - **Observed (design):** Each card shows three distinct copy strings:
@@ -580,6 +584,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (c) The body-header caption is purely derived: `${position} · ${title}`
       and only `eyebrow` + `ctaLabel` are new.
 
+**Answer:** Four new fields: `eyebrow`, `internalName`, `ctaLabel`, plus existing `title` repurposed as the public hero title. Cleanest schema; matches Pencil literally.
+
 ### Q4 — Position taxonomy and dimensions
 
 - **Observed (design):** Four positions referenced in card subtitles —
@@ -598,6 +604,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
       drawn for completeness.
   (c) Position is a free-text label and the storefront ignores it for now.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Admin Banners scheduling + status state machine. Do not implement this question's scope. UI placeholder: Add a `position` column with enum but ship only HERO storefront slot.
+
 ### Q5 — Reorder / display order
 
 - **Observed (design):** No drag handles, no order numbers, no "drag to
@@ -613,6 +621,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (c) The Sort dropdown ("Sort: Most clicks") is the *admin list* sort only
       — the *public* render order is something else (e.g. always honors a
       `displayOrder`, just not editable from this screen).
+
+**Answer:** Keep `displayOrder` per `position` but expose through a numeric "Sort order" input in the edit panel. Preserves existing storefront contract; drops only the dnd-kit UI.
 
 ### Q6 — Status model: LIVE / PAUSED / SCHEDULED / EXPIRED
 
@@ -640,6 +650,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   same logical state, or do they map to different sub-states (e.g.
   "scheduled-soon" vs "scheduled-far")?
 
+**Answer:** Manual flag `live | paused`; derived label is `live | scheduled | paused | expired` from `(status, startsAt, endsAt, now)`. Two SCHEDULED stamp colors collapse to one. Matches Pencil-confirmed feature in scope-cut.
+
 ### Q7 — Revenue attribution
 
 - **Observed (design):** KPI card "REVENUE ATTRIBUTED · Rs. 4.2 L · From
@@ -658,6 +670,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (c) Out of scope for v1 — KPI card shows a placeholder figure / zero and
       we wire revenue later.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Banner performance analytics & revenue attribution. Do not implement this question's scope. UI placeholder: KPI card "REVENUE ATTRIBUTED" hidden or shows "—".
+
 ### Q8 — Delete semantics (per-card trash + footer "Remove banner")
 
 - **Observed (design):** Two delete entry points — the small `trash-2` icon
@@ -673,6 +687,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (c) Card trash deletes immediately with a toast undo; "Remove banner"
       deletes only after the dirty-state on the panel is reset.
 
+**Answer:** Both call the same hard-delete `DELETE /api/admin/banners/[id]`. Card icon = quick action with confirm Dialog; panel button = same action with confirm.
+
 ### Q9 — Two save controls in edit panel: "Save" vs "Publish changes"
 
 - **Observed (design):** Edit panel header has "Cancel" + "Save" (ink fill).
@@ -687,6 +703,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
       changes" = save the consumer-facing content (title, CTA, image) and
       invalidates the storefront cache.
   (c) Visual redundancy — both are the same action and only one ships.
+
+**Answer:** Visual redundancy — only one Save action ships; drop the second button.
 
 ### Q10 — Link URL: internal path vs absolute URL
 
@@ -704,6 +722,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (c) Allow both, with separate handling (internal paths use Next router,
       absolute URLs do `<a target="_blank">`).
 
+**Answer:** Same as today — internal-only path. Hostname prefix in design is presentational only. Preserves existing `createBannerSchema.targetUrl` regex (`^/[a-zA-Z0-9/_-]*$`).
+
 ### Q11 — File metadata storage
 
 - **Observed (design):** Current-file row shows filename
@@ -719,6 +739,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (b) Derive on read by HEAD-requesting Supabase Storage.
   (c) Skip — show only filename (parsed from URL) and uploaded-at (from
       `createdAt`); drop the dimension and size strings.
+
+**Answer:** Skip — show filename parsed from URL and uploaded-at from `createdAt`; drop dimension/size strings. No schema change.
 
 ### Q12 — Create flow vs edit flow surface
 
@@ -738,6 +760,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (c) Two separate routes: `/admin/promo-banners/new` and
       `/admin/promo-banners/[id]/edit`.
 
+**Answer:** Edit panel doubles as create — clicking "New banner" focuses it, blanks fields, header reads "New banner".
+
 ### Q13 — Audience targeting: edit-able or display-only
 
 - **Observed (design):** Audience block shows three rows (Cities / Buyer
@@ -756,6 +780,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
       column on `user` today); Platforms = checkboxes for `web`/`mobile`.
   (c) Out of scope for the revamp — fields are aspirational, drop them.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Banner audience targeting. Do not implement this question's scope. UI placeholder: Hide the audience block entirely.
+
 ### Q14 — Preview and Duplicate actions
 
 - **Observed (design):** "Preview" eye icon + "Duplicate" copy icon in the
@@ -773,6 +799,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (e) All fields including dates.
   (f) Everything but counters and image URL (force re-upload).
 
+**Answer:** Preview = (b) open storefront homepage in new tab with `?previewBannerId=…`. Duplicate = (d) all fields except dates (status forced to `paused` on the clone).
+
 ### Q15 — Mobile KPI mini-row and filter chips count
 
 - **Observed (design):** Mobile shows a 3-cell mini-KPI row but desktop has
@@ -788,6 +816,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (c) Mobile chips are different filter axes (e.g. position chips), not the
       desktop status pills.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Banner performance analytics & revenue attribution. Do not implement this question's scope. UI placeholder: mini-row hidden on mobile; filter chips collapse to 3 status pills (Live / Scheduled / Expired).
+
 ### Q16 — "Performance report" CTA
 
 - **Observed (design):** Header outline button with chart-line icon labelled
@@ -800,6 +830,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
       banners, etc.).
   (b) A downloadable export (CSV / PDF) of current banner KPIs.
   (c) An external link to a third-party analytics dashboard.
+
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Banner performance analytics & revenue attribution. Do not implement this question's scope. UI placeholder: hide button.
 
 ### Q17 — Header subtitle counts vs KPI card counts
 
@@ -820,6 +852,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
       since the wording mixes legacy ("active") and new ("scheduled")
       taxonomy.
 
+**Answer:** Drop impressions count from subtitle (perf DEFERRED — see 06-scope-cut.md feature: Banner performance analytics & revenue attribution). Status counts: "active" is synonym for "live"; one count source. Subtitle becomes "8 live · 2 scheduled".
+
 ### Q18 — Card stats render for SCHEDULED banners ("—" placeholder)
 
 - **Observed (design):** Banner #4 (strip, SCHEDULED blue) and banner #5
@@ -835,6 +869,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
       impressions); show real numbers for live / paused / expired.
   (c) Show "—" when `now < startsAt`; otherwise render counters.
 
+**Answer:** DEFERRED — see 06-scope-cut.md feature: Banner performance analytics & revenue attribution. Do not implement this question's scope. UI placeholder: per-card stats hidden entirely under perf-DEFERRED placeholder.
+
 ### Q19 — Title typography and copy change ("Promo Banners" → "Banners")
 
 - **Observed (design):** Header reads "Banners" only.
@@ -847,6 +883,8 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   (b) Both — rename route to `/admin/banners` (and the module + DB-schema
       file). The DB table `promotional_banners` is independent.
   (c) Keep "Promo Banners" — design copy is shorthand.
+
+**Answer:** Title only; keep route at `/admin/promo-banners`. Smallest diff — avoids touching constants and DB table name.
 
 ### Q20 — "1.84 M" / "Rs. 4.2 L" Indian abbreviation format
 
@@ -870,9 +908,13 @@ Numbered. Every row in §2 with a non-VISUAL_ONLY category lifts here.
   digit-grouping (4,86,300) but not about the "K / L / M / Cr"
   abbreviation rule. So this needs a fresh answer.
 
+**Answer:** STUBBED — see 06-scope-cut.md feature: Currency formatter (South-Asian grouping + lakh notation). Implement with placeholder: `Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 })` for full grouping; lakh/crore notation only on KPI hero numbers (threshold ≥ 1,00,000). Add `// TODO(post-v1):` comment at every touch point.
+
 ---
 
 **Gap-analysis written to:** `D:\Moeed 8th Sem\Fyp\Code\shalmi-web\.claude-revamp\screens\admin-banners\gap-analysis.md`
 
 (End of admin-banners gap analysis. Stopping here per workflow — not starting
 implementation.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md

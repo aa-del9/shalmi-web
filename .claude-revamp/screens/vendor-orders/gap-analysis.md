@@ -280,6 +280,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
     simply not redrawn here.
   - (b) Yes; it should be added, the Pencil omission is a drawing oversight.
   - (c) No; this screen intentionally hides the tab bar.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Admin/Vendor chrome revamp (ink top bar, sectioned sidebar, mobile bottom tab bar). Implement with placeholder: bottom tab bar lives in vendor mobile layout, rendered on this screen (per user override making this IN_SCOPE all). Add `// TODO(post-v1):` comment at every touch point.
 
 ### 2. Pending-order badge on the sidebar — data source
 
@@ -296,6 +297,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
     counts (extensible to other badges later).
   - (c) Derived client-side from the current orders query (works only on
     pages that already fetch orders).
+**Answer:** STUBBED — see 06-scope-cut.md feature: Vendor sidebar Orders count badge. Implement with placeholder: embedded in existing `GET /api/vendor/orders` payload as a meta field. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 3. Status segments — interaction model and selection state
 
@@ -316,6 +318,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
     are seen elsewhere (e.g. in Ledger or in a separate screen).
   - (c) Read-only with an implicit filter (e.g. clicking a tile drills
     into a different screen).
+**Answer:** Interactive filters reproducing existing tab behavior; selected state styling re-derived from tokens.
 
 ### 4. Status segments — counts source (and what's in the third bucket)
 
@@ -338,6 +341,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
   - (a) `delivered` only — all-time count.
   - (b) `handed_to_courier` + `delivered` — a "shipped or done" rollup.
   - (c) `delivered` for today only.
+**Answer:** NEW=`pending`, PACKED=`packed`, third tile (COMPLETE/DISPATCHED) = `handed_to_courier + delivered` rollup over a current-week window. Pencil's "286 COMPLETE" is a long-window count; window is configurable later.
 
 ### 5. "Later zone" paper-2 callout — meaning and data backing
 
@@ -354,6 +358,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
   - (b) A new vendor-set field (`scheduledShipAt`, `deferredUntil`) that
     requires schema work.
   - (c) A static informational footer (no real count behind it).
+**Answer:** Static informational footer (no real count behind it). Smallest delta — defer the underlying scheduling concept.
 
 ### 6. Per-order detail page — tap-through behavior
 
@@ -369,6 +374,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
     (desktop) — no route change.
   - (c) Tap navigates to a new `/vendor/orders/[id]` route (which would
     need an API endpoint and components).
+**Answer:** No detail page; everything inline (current behavior preserved).
 
 ### 7. Giant "Packed ✓" CTA — full lifecycle workflow
 
@@ -391,6 +397,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
   - (c) The workflow collapses to a single transition (
     `pending → done`), which would change `ALLOWED_TRANSITIONS` and the
     semantics of the `handedAt` column.
+**Answer:** CTA contextual per card status — "Packed ✓" for pending → packed; "Handed off ✓" for packed → handed_to_courier; nothing for terminal states.
 
 ### 8. Order card line-item layout & per-row content
 
@@ -410,6 +417,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
     row.
   - (c) Keep both; treat the design as illustrative and accept that the
     code already fits the spirit of the row.
+**Answer:** Keep both image + unit price (existing code) — Pencil is illustrative; smallest delta from current row shape.
 
 ### 9. Empty / loading / error states
 
@@ -430,6 +438,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
     callouts.
   - (c) Remove empty / loading / error in favor of Suspense + error
     boundary.
+**Answer:** Re-derive from Pencil tokens (paper-2 cards, hairline rules, no emoji); rewrite copy to English; keep behavior identical.
 
 ### 10. Audio + haptic feedback on success
 
@@ -442,6 +451,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
   - (a) Keep as-is.
   - (b) Remove (Pencil is silent → assume removal).
   - (c) Keep haptic, drop audio.
+**Answer:** Keep as-is (`navigator.vibrate` + `/success-ding.wav`).
 
 ### 11. Polling cadence
 
@@ -453,6 +463,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
   - (a) Keep 5 s.
   - (b) Increase to 15–30 s and add `refetchOnWindowFocus`.
   - (c) Drop polling; rely on focus + manual refresh.
+**Answer:** Keep 5s `refetchInterval`.
 
 ### 12. Roman Urdu copy in existing UI
 
@@ -470,6 +481,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
   - (b) Keep Roman Urdu (matches the user's vendor-segment audience).
   - (c) Hybrid: tab labels and stamps go English; long-form empty/error
     messages stay Roman Urdu.
+**Answer:** STUBBED — see 06-scope-cut.md feature: i18n / language toggle plumbing (presentational EN-only). Implement with placeholder: replace all Roman Urdu with Pencil English copy; ship language toggle as placeholder. Add `// TODO(post-v1):` comment at every touch point.
 
 ### 13. Status display labels — full mapping table
 
@@ -489,6 +501,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
   - (c) Some other mapping (please supply).
 - And: which of those buckets feed the third segment tile
   (COMPLETE/DISPATCHED) — see Q4.
+**Answer:** STUBBED — see 06-scope-cut.md feature: Status display-label mapping table. Implement with placeholder: use the canonical map (admin-dashboard Q24). Add `// TODO(post-v1):` comment at every touch point.
 
 ### 14. Order card header secondary content — time vs status
 
@@ -503,6 +516,7 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
   - (a) Replace time with status stamp.
   - (b) Keep both (stamp left of order id, time on right).
   - (c) Drop both; surface only the order id + recipient.
+**Answer:** Keep both — stamp left of order id, time on right.
 
 ### 15. `voSubHd` content — "Packing list" eyebrow + meta + possible CTA
 
@@ -518,8 +532,11 @@ or AMBIGUOUS row in §2 maps to one of the questions below.
   - (c) Eyebrow + count + multiple actions (sort + filter + bulk action).
   - I would need a `pencil:batch_get` on the `voSubHd` node to confirm —
     requesting confirmation rather than guessing.
+**Answer:** User answer: A15: yes contains a "Print All Labels" button.
 
 ---
 
 (End of gap analysis. No code changes proposed; all decisions deferred to
 the user's answers above.)
+
+Answers propagated on 2026-05-02 from 06-scope-cut.md + 07-default-proposals.md
