@@ -14,11 +14,21 @@ export const shippingAddressSchema = z.object({
 
 export type ShippingAddress = z.infer<typeof shippingAddressSchema>;
 
+export const RIDER_NOTES_MAX_LENGTH = 500;
+
 export const checkoutCartPayloadSchema = z
   .object({
     items: z.array(lineItemSchema).min(1),
     addressId: z.string().uuid().optional(),
     shippingAddress: shippingAddressSchema.optional(),
+    riderNotes: z
+      .string()
+      .max(
+        RIDER_NOTES_MAX_LENGTH,
+        `Rider notes must be ${RIDER_NOTES_MAX_LENGTH} characters or fewer`
+      )
+      .optional()
+      .nullable(),
   })
   .refine(
     (data) => data.addressId != null || data.shippingAddress != null,

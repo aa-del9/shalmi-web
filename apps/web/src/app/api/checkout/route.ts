@@ -1,9 +1,9 @@
 import type { NextRequest } from 'next/server';
-import { eq, inArray, asc } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import {
   db,
   products,
-  productPriceTiers,
+  productPackTiers,
   orders,
   subOrders,
   orderItems,
@@ -19,22 +19,6 @@ function generateDisplayId(): string {
   const ts = Date.now().toString(36).toUpperCase();
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `ORD-${ts}-${rand}`;
-}
-
-function resolveTierPrice(
-  tiers: { minQty: number; maxQty: number | null; priceCents: number }[],
-  quantity: number
-): number {
-  const sorted = [...tiers].sort((a, b) => a.minQty - b.minQty);
-  for (let i = sorted.length - 1; i >= 0; i--) {
-    const tier = sorted[i]!;
-    if (quantity >= tier.minQty) {
-      if (tier.maxQty === null || quantity <= tier.maxQty) {
-        return tier.priceCents;
-      }
-    }
-  }
-  return sorted[0]?.priceCents ?? 0;
 }
 
 export async function POST(req: NextRequest) {
@@ -56,8 +40,12 @@ export async function POST(req: NextRequest) {
       return jsonError('Invalid cart payload', 400);
     }
 
-    const { items: cartItems, addressId: payloadAddressId, shippingAddress: payloadShippingAddress } =
-      parsed.data;
+    const {
+      items: cartItems,
+      addressId: payloadAddressId,
+      shippingAddress: payloadShippingAddress,
+      riderNotes: payloadRiderNotes,
+    } = parsed.data;
 
     let shippingName: string;
     let shippingPhone: string;
@@ -95,7 +83,9 @@ export async function POST(req: NextRequest) {
         id: products.id,
         vendorId: products.vendorId,
         name: products.name,
-        weightGrams: products.weightGrams,
+        packWeightGrams: products.packWeightGrams,
+        packSize: products.packSize,
+        pricePerUnitCents: products.pricePerUnitCents,
         stock: products.stock,
         version: products.version,
       })
@@ -111,7 +101,7 @@ export async function POST(req: NextRequest) {
       }
       if (product.stock < item.quantity) {
         return jsonError(
-          `Insufficient stock for "${product.name}". Available: ${product.stock}`,
+          `Insufficient stock for "${product.name}". Available: ${product.stock} packs`,
           400
         );
       }
@@ -119,48 +109,49 @@ export async function POST(req: NextRequest) {
 
     const allTiers = await db
       .select({
-        productId: productPriceTiers.productId,
-        minQty: productPriceTiers.minQty,
-        maxQty: productPriceTiers.maxQty,
-        priceCents: productPriceTiers.priceCents,
+        productId: productPackTiers.productId,
+        packQty: productPackTiers.packQty,
+        pricePerPackCents: productPackTiers.pricePerPackCents,
       })
-      .from(productPriceTiers)
-      .where(inArray(productPriceTiers.productId, productIds))
-      .orderBy(asc(productPriceTiers.minQty));
+      .from(productPackTiers)
+      .where(inArray(productPackTiers.productId, productIds));
 
-    const tiersByProduct = new Map<
-      string,
-      { minQty: number; maxQty: number | null; priceCents: number }[]
-    >();
+    const tierByProductAndQty = new Map<string, number>();
     for (const tier of allTiers) {
-      const list = tiersByProduct.get(tier.productId) ?? [];
-      list.push(tier);
-      tiersByProduct.set(tier.productId, list);
+      tierByProductAndQty.set(
+        `${tier.productId}:${tier.packQty}`,
+        tier.pricePerPackCents
+      );
     }
 
-    // Group items by vendor
-    const vendorGroups = new Map<
-      string,
-      {
-        productId: string;
-        quantity: number;
-        unitPrice: number;
-        totalPrice: number;
-        weightGrams: number;
-      }[]
-    >();
+    type GroupItem = {
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+      packWeightGrams: number;
+      packSizeAtPurchase: number;
+      pricePerUnitAtPurchase: number | null;
+      selectedPackQty: number;
+    };
+
+    const vendorGroups = new Map<string, GroupItem[]>();
 
     for (const item of cartItems) {
       const product = productMap.get(item.productId)!;
-      const tiers = tiersByProduct.get(item.productId) ?? [];
-      const unitPrice = resolveTierPrice(tiers, item.quantity);
-      if (unitPrice <= 0) {
+      const perPack = tierByProductAndQty.get(
+        `${item.productId}:${item.selectedPackQty}`
+      );
+      if (perPack === undefined || perPack <= 0) {
         return jsonError(
-          'Cannot checkout product without a valid price tier.',
+          'Cannot checkout product without a valid pack tier.',
           400
         );
       }
+      const unitPrice = perPack;
       const totalPrice = unitPrice * item.quantity;
+      const totalWeight =
+        product.packWeightGrams * item.selectedPackQty * item.quantity;
 
       const group = vendorGroups.get(product.vendorId) ?? [];
       group.push({
@@ -168,7 +159,10 @@ export async function POST(req: NextRequest) {
         quantity: item.quantity,
         unitPrice,
         totalPrice,
-        weightGrams: product.weightGrams * item.quantity,
+        packWeightGrams: totalWeight,
+        packSizeAtPurchase: item.selectedPackQty,
+        pricePerUnitAtPurchase: product.pricePerUnitCents ?? null,
+        selectedPackQty: item.selectedPackQty,
       });
       vendorGroups.set(product.vendorId, group);
     }
@@ -197,6 +191,7 @@ export async function POST(req: NextRequest) {
           totalShippingCost: 0,
           grandTotal: totalItemsCost,
           status: 'processing',
+          riderNotes: payloadRiderNotes ?? null,
         })
         .returning({ id: orders.id, displayId: orders.displayId });
 
@@ -204,7 +199,10 @@ export async function POST(req: NextRequest) {
 
       for (const [vendorId, groupItems] of vendorGroups.entries()) {
         const itemsTotal = groupItems.reduce((s, i) => s + i.totalPrice, 0);
-        const weightGrams = groupItems.reduce((s, i) => s + i.weightGrams, 0);
+        const weightGrams = groupItems.reduce(
+          (s, i) => s + i.packWeightGrams,
+          0
+        );
 
         const [subOrder] = await tx
           .insert(subOrders)
@@ -231,11 +229,13 @@ export async function POST(req: NextRequest) {
             quantity: gi.quantity,
             unitPrice: gi.unitPrice,
             totalPrice: gi.totalPrice,
+            packSizeAtPurchase: gi.packSizeAtPurchase,
+            pricePerUnitAtPurchase: gi.pricePerUnitAtPurchase,
           }))
         );
       }
 
-      // Decrement stock for each product
+      // Decrement stock (in packs).
       for (const item of cartItems) {
         const product = productMap.get(item.productId)!;
         await tx

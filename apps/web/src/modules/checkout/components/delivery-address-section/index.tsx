@@ -1,192 +1,117 @@
 'use client';
 
-import Link from 'next/link';
-import type { UseFormReturn } from 'react-hook-form';
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
+import { cn } from '@repo/ui/lib/utils';
 import { Button } from '@repo/ui/components/button';
-import { Input } from '@repo/ui/components/input';
-import { Label } from '@repo/ui/components/label';
-import { Card, CardContent } from '@repo/ui/components/card';
-import { MapPin } from 'lucide-react';
-import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
+import { Spinner } from '@repo/ui/components/spinner';
+import { Stamp } from '@repo/ui/components/stamp';
 import { useAddressesQuery } from '@/modules/user-addresses/hooks/use-addresses-query';
+import { AddressDialog } from '@/modules/user-addresses/components/address-dialog';
 import type { Address } from '@/modules/user-addresses/types';
-import type { CheckoutShippingFormData } from '../../schemas';
 
 type DeliveryAddressSectionProps = {
-  /** When using a saved address */
   selectedAddressId: string | null;
   onSelectAddress: (id: string | null) => void;
-  /** When true, show manual form instead of saved addresses */
-  useDifferentAddress: boolean;
-  onUseDifferentAddress: (value: boolean) => void;
-  /** React Hook Form instance for manual shipping (controlled by parent for submit) */
-  shippingForm: UseFormReturn<CheckoutShippingFormData>;
 };
 
+/**
+ * Pencil radio-led saved-address cards.
+ * Per buyer-checkout gap-analysis Q8: "+ Use a new address" opens the
+ * existing AddressDialog. Per Q9/Q10: no manual form, no "Manage addresses"
+ * link — saved addresses only.
+ */
 export function DeliveryAddressSection({
   selectedAddressId,
   onSelectAddress,
-  useDifferentAddress,
-  onUseDifferentAddress,
-  shippingForm,
 }: DeliveryAddressSectionProps) {
-  const { data: addressesList, isLoading: addressesLoading } =
-    useAddressesQuery();
-  const hasSavedAddresses = (addressesList?.length ?? 0) > 0;
+  const { data: addressesList, isLoading } = useAddressesQuery();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MapPin className="size-5" />
-            <h2 className="text-lg font-semibold">Delivery Address</h2>
-          </div>
-          <Link
-            href={ABSOLUTE_ROUTES.PROFILE_ADDRESSES}
-            className="text-muted-foreground hover:text-foreground text-sm underline"
-          >
-            Manage addresses
-          </Link>
-        </div>
+    <section className="space-y-4">
+      <h2 className="font-mono text-[13px] font-bold uppercase tracking-[0.14em] text-ink">
+        <span className="text-ink-3">01</span>{' '}
+        <span className="ml-2">DELIVERY ADDRESS</span>
+      </h2>
 
-        {addressesLoading ? (
-          <div className="flex items-center justify-center py-6">
-            <span className="text-muted-foreground text-sm">
-              Loading addresses…
-            </span>
-          </div>
-        ) : hasSavedAddresses && !useDifferentAddress ? (
-          <div className="space-y-3">
-            {addressesList?.map((addr: Address) => (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-10">
+          <Spinner className="size-6" />
+        </div>
+      ) : !addressesList || addressesList.length === 0 ? (
+        <div className="rounded-md border border-rule bg-white p-6 text-center">
+          <p className="text-sm text-ink-3">No saved addresses yet.</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-4"
+            onClick={() => setDialogOpen(true)}
+          >
+            <Plus className="mr-1.5 size-4" aria-hidden />
+            Use a new address
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {addressesList.map((addr: Address) => {
+            const selected = selectedAddressId === addr.id;
+            return (
               <button
                 key={addr.id}
                 type="button"
                 onClick={() => onSelectAddress(addr.id)}
-                className={`w-full rounded-lg border p-4 text-left transition-colors ${
-                  selectedAddressId === addr.id
-                    ? 'border-primary bg-primary/5 ring-primary ring-1'
-                    : 'border-border hover:bg-muted/50'
-                }`}
+                className={cn(
+                  'flex w-full items-start gap-3 rounded-md border-[1.5px] bg-white p-4 text-left transition-colors',
+                  selected
+                    ? 'border-ink'
+                    : 'border-rule-2 hover:border-ink-3'
+                )}
+                aria-pressed={selected}
               >
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{addr.title}</span>
-                  {addr.isDefault && (
-                    <span className="bg-primary/10 text-primary rounded px-2 py-0.5 text-xs font-medium">
-                      Default
-                    </span>
+                <span
+                  className={cn(
+                    'mt-1 flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px]',
+                    selected ? 'border-ink' : 'border-rule-2'
                   )}
-                </div>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  {addr.recipientName} · {addr.recipientPhone}
-                </p>
-                <p className="mt-1 text-sm">
-                  {addr.address}, {addr.city}
-                </p>
-              </button>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                onUseDifferentAddress(true);
-                onSelectAddress(null);
-              }}
-            >
-              Use a different address
-            </Button>
-          </div>
-        ) : (
-          <>
-            {hasSavedAddresses && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="mb-4"
-                onClick={() => {
-                  onUseDifferentAddress(false);
-                  const defaultAddr =
-                    addressesList?.find((a: Address) => a.isDefault) ??
-                    addressesList?.[0];
-                  if (defaultAddr) onSelectAddress(defaultAddr.id);
-                }}
-              >
-                ← Choose a saved address
-              </Button>
-            )}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="checkout-name">Full Name</Label>
-                <Input
-                  id="checkout-name"
-                  {...shippingForm.register('name')}
-                  placeholder="Enter your full name"
-                  aria-invalid={Boolean(shippingForm.formState.errors.name)}
-                />
-                {shippingForm.formState.errors.name && (
-                  <p className="text-destructive text-sm">
-                    {shippingForm.formState.errors.name.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="checkout-phone">Phone Number</Label>
-                <Input
-                  id="checkout-phone"
-                  {...shippingForm.register('phone')}
-                  placeholder="03XX-XXXXXXX"
-                  aria-invalid={Boolean(shippingForm.formState.errors.phone)}
-                />
-                {shippingForm.formState.errors.phone && (
-                  <p className="text-destructive text-sm">
-                    {shippingForm.formState.errors.phone.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="checkout-address">Street Address</Label>
-                <Input
-                  id="checkout-address"
-                  {...shippingForm.register('address')}
-                  placeholder="Enter your full address"
-                  aria-invalid={Boolean(shippingForm.formState.errors.address)}
-                />
-                {shippingForm.formState.errors.address && (
-                  <p className="text-destructive text-sm">
-                    {shippingForm.formState.errors.address.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="checkout-city">City</Label>
-                <Input
-                  id="checkout-city"
-                  {...shippingForm.register('city')}
-                  placeholder="City"
-                  aria-invalid={Boolean(shippingForm.formState.errors.city)}
-                />
-                {shippingForm.formState.errors.city && (
-                  <p className="text-destructive text-sm">
-                    {shippingForm.formState.errors.city.message}
-                  </p>
-                )}
-              </div>
-            </div>
-            {hasSavedAddresses && (
-              <p className="text-muted-foreground mt-2 text-sm">
-                <Link
-                  href={ABSOLUTE_ROUTES.PROFILE_ADDRESSES}
-                  className="underline"
+                  aria-hidden
                 >
-                  Save addresses for next time
-                </Link>
-              </p>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+                  {selected ? (
+                    <span className="block size-2 rounded-full bg-ink" />
+                  ) : null}
+                </span>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold text-ink">
+                      {addr.title}
+                    </span>
+                    {addr.isDefault ? (
+                      <Stamp variant="success">DEFAULT</Stamp>
+                    ) : null}
+                  </div>
+                  <p className="font-mono text-xs text-ink-3">
+                    {addr.recipientName} · {addr.recipientPhone}
+                  </p>
+                  <p className="text-sm text-ink-2">
+                    {addr.address}, {addr.city}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => setDialogOpen(true)}
+          >
+            <Plus className="mr-1.5 size-4" aria-hidden />
+            Use a new address
+          </Button>
+        </div>
+      )}
+
+      <AddressDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+    </section>
   );
 }
