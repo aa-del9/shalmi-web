@@ -44,7 +44,7 @@ export const AdminSidebar = () => {
             ) : null}
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map(({ label, href, Icon }) => {
+                {group.items.map(({ label, href, Icon, badge }) => {
                   const isActive =
                     href === pathname ||
                     (href !== ABSOLUTE_ROUTES.ADMIN_DASHBOARD &&
@@ -57,7 +57,12 @@ export const AdminSidebar = () => {
                           onClick={() => isMobile && setOpenMobile(false)}
                         >
                           {Icon && <Icon className="size-5 shrink-0" />}
-                          <span>{label}</span>
+                          <span className="flex-1">{label}</span>
+                          {typeof badge === 'number' && badge > 0 ? (
+                            <span className="bg-ink text-white inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[10px] font-bold">
+                              {badge}
+                            </span>
+                          ) : null}
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

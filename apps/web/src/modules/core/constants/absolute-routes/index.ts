@@ -21,6 +21,11 @@ export const ABSOLUTE_ROUTES = {
   ADMIN_VENDORS: `/admin/vendors`,
   ADMIN_CATEGORIES: `/admin/categories`,
   ADMIN_PROMO_BANNERS: '/admin/promo-banners',
+  ADMIN_ORDERS: '/admin/orders',
+  ADMIN_PRODUCTS: '/admin/products',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_SALES_REPORTS: '/admin/sales-reports',
+  ADMIN_AUDIT_LOG: '/admin/audit-log',
 } as const;
 
 export const AUTH_REQUIRED_PREFIXES = [

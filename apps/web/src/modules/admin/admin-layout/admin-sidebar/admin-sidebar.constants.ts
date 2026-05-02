@@ -1,9 +1,13 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  ChartLineIcon,
+  FolderTreeIcon,
   ImageIcon,
   LayoutDashboardIcon,
+  PackageIcon,
+  ShoppingBagIcon,
   StoreIcon,
-  TagIcon,
+  UsersIcon,
 } from 'lucide-react';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 
@@ -11,6 +15,8 @@ type AdminNavItem = {
   label: string;
   href: string;
   Icon: LucideIcon;
+  /** Optional badge count rendered as a stamp pill in the sidebar. */
+  badge?: number;
 };
 
 type AdminNavSection = {
@@ -19,9 +25,7 @@ type AdminNavSection = {
   items: ReadonlyArray<AdminNavItem>;
 };
 
-// Sections per Pencil A0BZZx sidebar (OVERVIEW / CATALOG / OPERATIONS).
-// OPERATIONS / Orders / Customers / Settings / Sales reports drawn but
-// DEFERRED per scope-cut — surfaced rows below are the implemented set.
+// Per Pencil A0BZZx + AcB4v sidebar (OVERVIEW / CATALOG / OPERATIONS).
 // TODO(post-v1): admin chrome revamp — see 06-scope-cut.md feature.
 export const ADMIN_NAV_SECTIONS: ReadonlyArray<AdminNavSection> = [
   {
@@ -31,6 +35,11 @@ export const ADMIN_NAV_SECTIONS: ReadonlyArray<AdminNavSection> = [
         label: 'Dashboard',
         href: ABSOLUTE_ROUTES.ADMIN_DASHBOARD,
         Icon: LayoutDashboardIcon,
+      },
+      {
+        label: 'Sales reports',
+        href: ABSOLUTE_ROUTES.ADMIN_SALES_REPORTS,
+        Icon: ChartLineIcon,
       },
     ],
   },
@@ -45,12 +54,34 @@ export const ADMIN_NAV_SECTIONS: ReadonlyArray<AdminNavSection> = [
       {
         label: 'Categories',
         href: ABSOLUTE_ROUTES.ADMIN_CATEGORIES,
-        Icon: TagIcon,
+        Icon: FolderTreeIcon,
       },
       {
         label: 'Banners',
         href: ABSOLUTE_ROUTES.ADMIN_PROMO_BANNERS,
         Icon: ImageIcon,
+      },
+      {
+        label: 'Products',
+        href: ABSOLUTE_ROUTES.ADMIN_PRODUCTS,
+        Icon: PackageIcon,
+      },
+    ],
+  },
+  {
+    section: 'Operations',
+    items: [
+      {
+        label: 'Orders',
+        href: ABSOLUTE_ROUTES.ADMIN_ORDERS,
+        Icon: ShoppingBagIcon,
+        // TODO(post-v1): polled badge count via a shared admin-layout hook
+        // (Q-SB-6 binding answer). Not landed in this batch — see deviation.
+      },
+      {
+        label: 'Customers',
+        href: ABSOLUTE_ROUTES.ADMIN_USERS,
+        Icon: UsersIcon,
       },
     ],
   },
