@@ -230,6 +230,8 @@ Numbered for easy reference.
    `handedAt`-vs-`outForDeliveryAt` split, or a derivation on time
    elapsed), or is one of them an inconsistency in the design?
 
+   answer: handed_to_courier is AT MNP HUB (blue), out_for_delivery is out of scope so remove it for now.
+
 2. **NEW label vs DB enum.** Vendor Orders cards (`vc1Stp` etc.) show
    an amber **NEW** stamp; the dashboard recent-orders uses the same
    amber NEW pill. The DB enum's first state is `pending`, not `new`.
@@ -238,6 +240,8 @@ Numbered for easy reference.
    surfaces. Buyer cards never show NEW — the earliest visible buyer
    stamp is AT MNP HUB. Is `pending` invisible to the buyer until it
    becomes `handed_to_courier`?
+
+   answer: pending is new for vendor, and for buyer it should be visible as pending.
 
 3. **Order card metadata fields not in current API.** Each buyer
    order card shows order weight ("42.8 kg"), an item-thumbnail strip
@@ -251,10 +255,14 @@ Numbered for easy reference.
    stamp-display feature, but the stamp lives inside this card so
    they're tied.
 
+   answer: yes, we can compute it from the existing `order_items` join.
+
 4. **Mobile filter-tab counts.** `gVK0c` shows tab labels with a
    trailing count badge ("Delivered · 19", "In transit · 3").
    Should counts come from a new aggregate endpoint, a client-side
    group on the existing list, or be omitted in v1?
+
+   answer: yes, we can compute it from the existing `order_items` join.
 
 5. **Vendor `Status segments` aggregate counts** (8 / 14 / 286).
    These appear on Vendor Orders Desktop *and* Mobile. Today
@@ -262,16 +270,22 @@ Numbered for easy reference.
    (e.g. `/api/vendor/orders/summary` returning grouped counts), or
    compute client-side from the full list?
 
+   answer: yes, we can compute it from the existing `order_items` join.
+
 6. **Vendor dashboard "Recent orders" data source.** `/api/vendor/orders`
    returns all sub-orders. Add a `?limit=5` / `?recent=N`, add a new
    `/api/vendor/dashboard` aggregate endpoint, or render via slicing
    the existing list?
+
+   answer: yes, we can compute it from the existing `order_items` join.
 
 7. **"VERIFIED" stamp meaning.** Account drawer (`H5poUJ` desktop,
    `KCP4E` mobile) shows a green **VERIFIED** stamp on the user card.
    What underlies it? Candidates I see in the schema: `user.phoneNumberVerified`,
    `user.emailVerified`, vendor's `vendors.isActive`, or a future KYC
    field. Picking one changes the surface's semantics — confirm.
+
+   answer: yes, it is verified phone number.
 
 8. **"Status pill" (radius 99, no rotation) is a separate visual
    pattern from `Stamp`.** Vendor Dashboard KPI tiles, Vendor
@@ -283,12 +297,16 @@ Numbered for easy reference.
    `<Stamp shape="flat" />` variant), or is the design intent that
    these pills be re-derived per-screen from raw tokens?
 
+   answer: yes, it is a separate visual pattern from `Stamp`.
+
 9. **Status segments band on Vendor Orders is *not* a stamp.** It
    uses the stamp palette (amber/ink/green) at 1.5px stroke radius 12,
    24-padding tile size, with the same 11/700 mono eyebrow. It's
    clearly derivative of the stamp system but is a much larger
    organism. Does this belong inside the status-stamps feature scope,
    or is it its own feature ("vendor order summary tiles")?
+
+   answer: yes, it is a separate visual pattern from `Stamp`.
 
 10. **Reorder header eyebrow is *not* a stamp** but uses the stamp
     palette (green-700 mono 11/700, letter-spacing 0.16, no rotation,
@@ -297,6 +315,8 @@ Numbered for easy reference.
     Mobile "MONDAY · 28 APRIL" eyebrow. Are these in scope for this
     feature, or are they a separate "colored eyebrow" pattern that
     just happens to share colors?
+
+    answer: yes, it is a separate visual pattern from `Stamp`.
 
 11. **Stamp rotation: showcase says `-1°`, screens use `+1°`.** The
     `05 Components → STAMPS` row defines rotation `-1°` for all five
@@ -307,6 +327,8 @@ Numbered for easy reference.
     (a "wobble" effect)? The current `Stamp` primitive doesn't expose
     rotation as a prop.
 
+    answer: yes it is intentionally per-occurrence (a "wobble" effect).
+
 12. **"DELAYED" variant has no in-screen usage in this read pass.**
     The showcase declares the amber DELAYED variant, but I did not
     encounter a card using it. (`oo2`/`moo2` use OUT FOR DELIVERY in
@@ -314,6 +336,8 @@ Numbered for easy reference.
     that should be wired up (mapped from some condition, e.g.
     "expected delivery passed without `delivered`"), or is it
     aspirational?
+
+    answer: delayed is not a state, ignore it.
 
 13. **Topbar VENDOR badge — is this actually part of *this* feature?**
     `f4FWd`/`xf7GX` use the rotated rubber-stamp visual (radius 3,
@@ -323,6 +347,8 @@ Numbered for easy reference.
     but it could equally belong to a "role badges" feature. Which
     feature owns it?
 
+    answer: do it as a separate feature.
+
 14. **Mobile "Orders" nav-row count badge (account sheet).** `m3n1B`
     is a flat amber pill containing the integer "3" — a count of
     in-transit orders, sharing the amber palette of the NEW/PACKED
@@ -330,12 +356,16 @@ Numbered for easy reference.
     Q8's status pill (just numeric content), or a separate
     "count badge" primitive?
 
+    answer: yes it is a separate visual pattern from `Stamp`.
+
 15. **`oo1Stp`/`vc1Stp` per-card stamp positioning.** All buyer order
     cards put the stamp **inside the card header next to a chevron**;
     all vendor order cards put it **inside the card header next to
     the order ID**. Treat as one shared `OrderCardHeader` molecule
     or as two separate compositions? Either approach works; want a
     preference before implementation.
+
+    answer: treat as one shared `OrderCardHeader` molecule.
 
 ---
 

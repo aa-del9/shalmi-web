@@ -217,6 +217,8 @@ Numbered for easy reference.
    or seasonally, this needs to be a DB table; if not, constants are
    fine. Design alone cannot answer.
 
+  answer: yes it will be a DB table.
+
 2. **Are tiers global, per-vendor, or per-hub?** The `vendors` schema
    has a `hub` field and `sub_orders` group items by vendor. The
    gauge shows a single whole-cart tier. Is shipping really
@@ -225,17 +227,23 @@ Numbered for easy reference.
    the existing `sub_orders` cost columns suggest per sub-order.
    These can be reconciled but only one way is right.
 
+  answer: shipping will be calculated once per cart.
+
 3. **Cart weight = `Σ(product.weightGrams × quantity)`?** Confirm.
    Variants/packs (per `02-design-inventory.md` Q12 — the new
    pack-based pricing) may carry their own weights distinct from the
    base product. If a "Pack of 6" multiplies the per-unit weight, who
    owns that math?
 
+   answer: yes it will be calculated as sum of all the products in the cart. when vendor will add the weight, it will be the unit weight of that product and must be calculated as (unit weight * quantity).
+
 4. **"Free delivery on orders over Rs. 50,000" copy in cart right
    column** (`eqqJe` → `yQFbU`) — does this override the tier-based
    delivery cost when the subtotal crosses Rs. 50,000? If so, the
    gauge should presumably reflect that (e.g. a "FREE" stamp on the
    bar). The static design does not show the override state.
+
+   answer: yes it will override the tier based delivery cost when the subtotal crosses Rs. 50,000. and the gauge will show "FREE" stamp on the bar.
 
 5. **Amber helper callout** ("Add 6.5 kg more to drop to next tier —
    save Rs. 60") — is it shown:
@@ -245,12 +253,16 @@ Numbered for easy reference.
    (d) some combination? Reorder desktop also shows this helper with
    identical copy `tX5NA`. Mobile cart frame has no helper at all.
 
+   answer: (a) always, with dynamic copy. we can change the logic later if needed.
+
 6. **Two visual variants** — desktop shows full legend with per-tier
    rupee values (`Rs. 280` etc.); mobile reorder uses a `Tier 2 · Rs.
    180 delivery` subtitle and drops rupee values from the legend
    row. Are these formal variants of one component, or two
    components? (Mirrors `02-design-inventory.md` Q10 for product
    cards.)
+
+   answer: Yes, it is a single component, in reorder mobile version it has a price values missing, only consider weight guage from cart (Desktop + Mobile).
 
 7. **Showcase vs. cart-desktop spec drift.** The design-system
    showcase (`LA21g`) draws a 22h bar with `cornerRadius: 3` and
@@ -259,6 +271,8 @@ Numbered for easy reference.
    (`B2ysb`) has bar `cornerRadius: 4`. Three rounding values for the
    "same" bar — is this intentional variation or design churn?
 
+   answer: design churn, consider from the cart version (Desktop + Mobile).
+
 8. **No gauge on checkout — intentional?** Checkout shows only the
    tier label embedded in the delivery summary row. Is the gauge
    genuinely meant to disappear once the user has committed to a
@@ -266,10 +280,14 @@ Numbered for easy reference.
    confirmation surface), or was it dropped from these frames in
    error?
 
+   answer: It is intentional, checkout is the confirmation surface, so it will not show the weight gauge.
+
 9. **Empty / error / loading states.** No frame shows: 0kg cart, tier
    table failed to load, weight unknown for a product (older record
    without `weightGrams`), or above the highest tier. Behavior not
    inferable from designs.
+
+   answer: proposed basic empty state, error state and loading state.
 
 10. **Cart vs. sub-order accounting in summary.** The cart receipt
     (`PetUj` → `sumTotal`) and checkout receipt (`SOEpL` /
@@ -278,17 +296,23 @@ Numbered for easy reference.
     columns are per-vendor. Source of truth for the displayed Rs.
     value at write-time?
 
+    answer: whole order.
+
 11. **Reorder right-column "VS. ORIGINAL ORDER"** card (`klOB3`) —
     out of scope for this feature, but it intersects: if the buyer
     drops items, weight changes, tier changes, and the comparison
     delta changes. Does this comparison's "delivery" row track the
     new tier or the original tier? (inferred relevance.)
 
+    answer: new tier.
+
 12. **Brief said "right column above receipt" for Reorder Desktop —
     actual placement is left column above items list.** Confirm the
     actual frame is correct (and the brief had a typo), or whether
     the design has been updated and we are looking at a stale
     placement.
+
+    answer: follow the design in pencil.  
 
 ---
 

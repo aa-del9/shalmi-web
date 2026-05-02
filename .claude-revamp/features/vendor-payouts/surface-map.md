@@ -316,6 +316,8 @@ Numbered for easy reference.
    ship but means historical numbers can drift if the underlying
    ledger lines are corrected. Design alone cannot answer.
 
+   answer: yes a new table.
+
 2. **Friday-anchored week window** — the eyebrow says "FRIDAY
    PAYOUTS · WEEKLY" and the breakdown header says "THIS WEEK ·
    22–26 APRIL" (Mon–Fri). Is a payout week defined as
@@ -325,6 +327,8 @@ Numbered for easy reference.
    `01–05 Apr`, `25–29 Mar`, `18–22 Mar`, `11–15 Mar` history rows
    are also Mon–Fri — so likely Mon–Fri close (inferred).
    Confirm.
+
+   answer: whole week.
 
 3. **Dashboard data inconsistency vs ledger data.** The
    dashboard's pending tile and callout show `₨ 1,12,500 ·
@@ -338,6 +342,8 @@ Numbered for easy reference.
    in-flight cycles (a paid-but-not-yet-cleared cycle vs. the
    currently-accruing one), or design churn between frames?
 
+   answer: design churn.
+
 4. **`Returns` semantics in the breakdown.** The breakdown
    subtracts "− Returns (3 orders) · − Rs. 12,400". The current
    `sub_orders.status` enum has no `returned` — only `cancelled`.
@@ -348,6 +354,8 @@ Numbered for easy reference.
    (c) something handled at order-level via a refund record
    that does not exist today?
 
+   answer: (a) 
+
 5. **Vendor self-edit of bank info.** The pencil icon on the bank
    card is drawn on both desktop and mobile but no edit flow
    (modal? inline form? dispatch to admin approval?) is drawn.
@@ -356,6 +364,8 @@ Numbered for easy reference.
    self-service edit endpoint for the vendor, or is the icon
    purely decorative and an admin-side change is required (per
    the existing `PATCH /api/admin/vendors/[id]` endpoint)?
+
+   answer: yes implement a self service edit endpoint for the vendor.
 
 6. **"Download statement" output.** The desktop hero and mobile
    hero both have a "Download statement" button. The history
@@ -366,12 +376,16 @@ Numbered for easy reference.
    download from the history table also available (no per-row
    download icon is drawn)?
 
+   answer: ignore it for now.
+
 7. **Dashboard KPI tile vs. callout — is one redundant?** The
    dashboard surfaces the pending payout in *two* places (KPI
    tile and full-width callout). Both repeat the amount and date
    and the callout has a `View ledger` CTA. Is this intentional
    double-surfacing, or should the callout replace the tile (or
    vice versa) in code?
+
+   answer: yes intentional double surfacing.
 
 8. **Bank info policy block — desktop only.** The desktop bank
    card has the 3-row info list ("Payouts every Friday",
@@ -382,12 +396,16 @@ Numbered for easy reference.
    mobile (a tooltip on the card? a separate mobile-only screen?
    nowhere)?
 
+   answer: a tooltip on the card.
+
 9. **Empty / loading / error states are not drawn.** No frame
    shows: a brand-new vendor with zero payouts, a week with zero
    completed orders, a payout that failed/held, a bank account
    that hasn't been configured yet, a network/server error on
    the ledger screen, or a stale payout (e.g., paid but not yet
    cleared by the bank). Behavior not inferable from designs.
+
+   answer: implement all the empty states.
 
 10. **History row click affordance.** The desktop history table's
     7 rows look tappable but no hover, focus, or click-state is
@@ -396,12 +414,16 @@ Numbered for easy reference.
     detail or modal), or read-only (with download driven by the
     "Export all" header button only)?
 
+    answer: rows are interactive and open a per-run detail modal.
+
 11. **Mobile breakdown drops `Items packed` and `Weight
     shipped`.** Desktop has 3 detail rows above gross sales
     (`Completed orders (no return)`, `Items packed`, `Weight
     shipped`) plus the financial rows. Mobile has only
     `Completed orders` plus the financial rows. Intentional
     information-density decision, or design churn?
+
+    answer: intentional information-density decision.
 
 12. **`mlHr1L` and other mobile history-card titles were
     abbreviated by the read pass.** Each mobile history card has
@@ -411,11 +433,15 @@ Numbered for easy reference.
     (likely "WW–WW MMM" mono per the desktop column, but
     inferred). Re-read with deeper readDepth if needed.
 
+    answer: implement the title format as "WW-WW MMM" mono per the desktop column.
+
 13. **`More` tab and bell icon** — out of scope per
     `02-design-inventory.md` Q19, but worth restating: the mobile
     bottom tab bar's `More` tab and the bell on the topbar are
     not wired anywhere in the payouts feature. Confirm we are
     not silently relying on either to access ledger.
+
+    answer: out of scope for now.
 
 14. **Sidebar item count discrepancy.** `02-design-inventory.md`
     §4.4 records "Sidebar (4 sections, 5 nav items)" for the
@@ -429,9 +455,13 @@ Numbered for easy reference.
     from a 4-row baseline) and that this matches the user's
     intent for this revamp.
 
+    answer: ledger is always in the sidebar.
+
 15. **`Pencil-Design/Shalmi` vs `Pencil-Design/Shalmi - Copy.pen`.**
     Same caveat as `02-design-inventory.md` Q20 — confirmed
     canonical, `Shalmi - Copy.pen` ignored.
+
+    answer: ignore the copy file.
 
 ---
 

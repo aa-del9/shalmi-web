@@ -259,11 +259,15 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
    (c) static / templated copy that should not exist as data?
    The current schema has nothing for it.
 
+   answer: a
+
 2. **"VERIFIED" stamp meaning** — what verification does it represent?
    Phone (existing `user.phoneNumberVerified`)? Email
    (`user.emailVerified`)? KYC of the retailer business? An admin
    approval flag? Pencil draws a single stamp only; no "unverified"
    counter-state is drawn.
+
+   answer: just phoneNumber verified
 
 3. **"SAVED · Rs. 2.3 L" stat** — savings against what baseline? There
    is no MSRP/list-price column on `products` and the
@@ -275,9 +279,13 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
    (c) Drop the SAVED stat,
    (d) Something else.
 
+   answer: (a)
+
 4. **"Spent" stat composition** — is "Rs. 18.4 L" gross
    (`SUM(orders.grandTotal)` — items + shipping + GST) or net (items
    only)? Pencil shows only the figure.
+
+   answer: (a)
 
 5. **"3 in transit" amber pill on the Orders row** — which sub-order
    statuses count as "in transit"? `pending`? `packed`?
@@ -285,6 +293,8 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
    `02-design-inventory.md` Q9 the answer was "display-only labels
    mapped from existing statuses" — same question reframed for a
    *count*: which underlying enum values feed it?
+
+   answer: handed_to_courier
 
 6. **"Saved items" / wishlist scope** — the drawer surfaces "12
    products bookmarked" with a chevron, but the only Pencil node here
@@ -294,11 +304,15 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
    login) or per-session (anonymous, persisted client-side)? Persisted
    across devices?
 
+   answer: out of scope
+
 7. **"Payment methods" scope** — drawer subtitle is "Cash on delivery
    default", which today is the only payment path (`/api/checkout`).
    Is this a placeholder pending real card/bank-transfer support, or
    is the payment-methods page in scope and we need a schema +
    endpoints for it?
+
+   answer: cash on delivery is the only payment method for now. 
 
 8. **"Track order" row data semantics** — subtitle is "#SH-24735 · out
    for delivery". This shows the **most recent active order** (single).
@@ -312,6 +326,8 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
    Which existing `sub_orders.status` enum value(s) map to "out for
    delivery"? Likely `handed_to_courier`, but this is not stated.
 
+   answer: (a) hide, (b) most recent, (c) handed_to_courier
+
 9. **"Quick reorder" target** — does this link to a NEW screen
    (`02-design-inventory.md` §6 #1, which is itself tied to a specific
    past order id via the breadcrumb), or does it open a generic
@@ -320,15 +336,21 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
    suggests the latter; the standalone Reorder screen suggests the
    former.
 
+   answer: yes, open reorder screen
+
 10. **"Settings" subtitle** — copy is "Profile · notifications ·
     privacy", but per `02-design-inventory.md` Q2 answer the Settings
     screen ignores Profile / notifications / payment for now. Should
     the drawer subtitle be revised to match the actual Settings scope
     (addresses-only?) or kept as drawn?
 
+    answer: kept as drawn
+
 11. **"Help center" / "Terms & privacy" rows** — are these in scope
     for this feature (i.e. ship NEW pages for them) or stub routes /
     external links? The current codebase has neither.
+
+    answer: out of scope
 
 ### Data / schema decisions
 
@@ -336,16 +358,22 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
     refresh stats on every open, or cache via React Query with a
     standard staleTime? Pencil can't answer this.
 
+    answer: caching for 5 minutes
+
 13. **Avatar precedence** — the drawer always draws initials (white
     "TA" on `ink`-fill 56px circle). The `user.image` column exists.
     When `user.image` is set, does the drawer show the image, or
     always initials (per the design system's avatar treatment shown
     only-as-initials)?
 
+    answer: always initials
+
 14. **Language toggle persistence** — the toggle is presentational
     today (per `04-design-system-implementation-log.md` Q-LANG-1).
     Is wiring it to a stored `user.locale` preference in scope for
     this feature, or still deferred until i18n proper?
+
+    answer: out of scope
 
 ### Touchpoint ambiguity
 
@@ -356,6 +384,8 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
     account page" state (the latter doesn't apply because the drawer
     is overlay-only, but worth confirming).
 
+    answer: active when drawer open
+
 16. **Logged-out state of the entry point** — on public Buyer pages
     (Home, PDP, Cart) a guest can see the Account button. What does
     tapping it do?
@@ -364,10 +394,14 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
     (c) Open the existing auth modal (`apps/web/src/modules/auth/components/auth-modal`)?
     Pencil only draws the logged-in state.
 
+    answer: (a) open the drawer in an empty/teaser state with login button
+
 17. **Other roles on Buyer screens** — if a `vendor` or `admin` user
     lands on a Buyer screen, does the same drawer surface for them?
     Pencil shows separate vendor/admin chrome elsewhere but does not
     address this overlap.
+
+    answer: yes
 
 18. **Mobile sheet — is it overlay or its own route?** — answered
     historically in `02-design-inventory.md` Q3 ("on mobile, the sheet
@@ -375,12 +409,18 @@ Numbered for easy reference. All inferences in §1–§6 trace back here.
     Re-confirming here only because the mobile frame `q732Y` is
     drawn as a full-screen artwork and could be misread as a route.
 
+    answer: its own route.
+
 19. **Drawer body scroll vs body lock** — the desktop drawer
     `clip: true` + height 1200 vs the mobile sheet's full-height
     layout — neither indicates whether the underlying page should be
     scroll-locked while the drawer is open. Inferred behavior; please
     confirm.
 
+    answer: scroll locked
+
 20. **"Shalmi Mart · v1.0.0" version string** — should this come from
     `package.json` (build-time injected) or be a static literal? Not
     drawn how.
+
+    answer: static literal

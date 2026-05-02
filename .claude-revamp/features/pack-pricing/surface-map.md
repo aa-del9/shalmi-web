@@ -303,6 +303,8 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
    `.claude-revamp/features/weight-gauge/` folder, so I assume **(a)**
    only — please confirm.
 
+   answer: (a) only.
+
 2. **Is the "−12% / SAVE Rs. 660 (12%)" red discount badge / green
    save pill on PDP and `dw7Oh` part of pack-pricing or a separate
    discounting feature?** The MRP-vs-wholesale diff is what generates
@@ -310,12 +312,16 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
    storefront discounting often lives in its own feature. Confirm
    whether to include the `pdpSave` / `mSaveB` / `B2CS7q` /
    "−12%" badge logic here.
+   
+  answer: yes, include it here.
 
 3. **Is "Per unit: Rs. 100.42" caption a derived display string or an
    independently stored field?** Same question for the YMAL eyebrow
    "22 G · CARTON × 36" — is the `× 36` literal a stored attribute or
    a render of `packSize`? My (inferred) read is "derived"; please
    confirm so I don't carry a second schema field for it.
+
+   answer: separate field.
 
 ### Data / schema decisions
 
@@ -327,12 +333,16 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
    "21 KG · CARTON" (Sufi 5L Pack of 4) — both look like *per-pack*
    weights, so my (inferred) read is per-pack in kg.
 
+   answer: per-unit weight in grams.
+
 5. **Bundle tier source-of-truth: per-pack price or discount percent?**
    The vendor form draws both `2,580` and `−2.3%` on each tier card
    together. Which is the input the vendor types and which is the
    computed display? Same question for cart total ("Rs. 2,280 / 2 =
    Rs. 1,140 per pack at the 12-pack tier" — derived from pack qty?
    from a stored `pricePerPackCents`?).
+
+   answer: per-pack price.  
 
 6. **Why does the PDP show four bundle options (6 / 12 / 24 / 48) but
    the vendor form draws only three tier slots (BUY 6 / BUY 12 /
@@ -343,17 +353,23 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
    vendor form is showing a partial view. I'm proceeding under (a)
    **(inferred)**, please confirm.
 
+   answer: (a)
+
 7. **Default-selected tier rule.** The PDP samples `12 pack` as
    selected (mid tier). What's the rule — vendor-pinned default,
    cheapest unit price, smallest qty, or smallest qty above a
    threshold? Affects both schema (do we store `isDefault` on a tier?)
    and PDP rendering.
 
+  answer: it could be of any type. vendor decides while adding a Product.
+
 8. **Cart line uniqueness.** If a buyer adds "Sufi Cooking Oil ×
    6 pack" and later adds "Sufi Cooking Oil × 12 pack" of the same
    product, are those two distinct cart lines or do they collapse to
    one "× 18 pack" line? The design doesn't show this state. Affects
    the cart-store key (`productId` vs `productId + selectedPackQty`).
+
+   answer: they should collapse into one line.
 
 9. **Reorder screen line items — how is the historical pack-size
    determined?** The reorder line "Sufi Cooking Oil 5 L · Pack of 4"
@@ -362,6 +378,8 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
    `order_items` needs to snapshot pack size at purchase time
    (per §3 point 5).
 
+   answer: bundle quantity is writen on the product title while the quantities of how many bundles are bought is written on the order quantity.
+
 10. **Vendor-edit policy on pack tiers for live products.** Does
     editing tiers on an already-approved product (a) auto-publish
     instantly, (b) require admin re-approval, or (c) only allow
@@ -369,12 +387,16 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
     ("Saved automatically as draft. Submit when ready for admin
     review.") implies (b) but is generic.
 
+    answer: (a)
+
 11. **`order_items` snapshot fields.** Existing schema snapshots
     `unitPrice` and `totalPrice` (per-line) but does not store pack
     size or per-unit price. Should the new model add
     `packSizeAtPurchase` / `pricePerUnitAtPurchase` so receipts and
     reorder remain stable when the vendor later edits the product, or
     is recomputing-from-current-product acceptable?
+
+    answer: yes it should store the pack size and price per unit at the time of purchase.
 
 ### Ambiguous touchpoints
 
@@ -387,6 +409,8 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
     in cart subtitles ("PACK" vs "CARTON") and `prod1`'s "5 L ·
     CARTON" caption.
 
+    answer: it is driven by a per-product `unitLabel` field (the vendor picks the noun).
+
 13. **`Pack size (units)` field on the form vs the buyer-visible
     bundle qty.** The form has a single `Pack size (units)` field
     ("30") describing the *unit pack* (a carton of 30 packs of chips,
@@ -397,10 +421,16 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
     "Per unit" caption math is right. **(inferred)** but worth a
     one-line confirm.
 
+    answer: one product can have single item or multiple items. for example one product can be sold as a single item or in a pack of 6 or 12 or 24 or 48, these bundles are called tiers. and these are set by the vendor while adding a product.
+
 14. **Stock unit.** The vendor form caption next to stock count says
     "cartons" (`VZxrR`). Confirm whether stock is in *packs/cartons*,
     not individual units. Affects ordering math (a buyer adding "6
     pack" decrements `stock` by 6, not 6 × packSize).
+
+    answer: items can be pack or carton (both are same things). pack and cartoon means that the item is sold in a pack of 6 or 12 or 24 or 48. decided by vendor.
+
+    tiers means if a buyer bought 6 packs ad one pack has 12 items then total items bought are 72. and if the vendor has set a discount tier then discount will be applied on the total price.  
 
 15. **Mobile checkout summary granularity.** Mobile checkout (`OqB5X`)
     shows a totals-only summary ("ORDER SUMMARY · 12 items") with no
@@ -408,6 +438,8 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
     checkout entirely, or is the design simply abbreviated and a list
     is implied? Desktop checkout shows the list — not having one on
     mobile would be a real UX call.
+
+    answer: we should have a list mobile too. 
 
 16. **Detailed product card `dw7Oh` — where does it appear in
     production?** The card lives in `05 Components` only. Per `02 §3.3`
@@ -417,12 +449,16 @@ data/schema decisions; Q12+ cover ambiguous touchpoints.
     which screens) or is reference-only — affects whether pack
     pricing has to render through this card at all.
 
+    answer: if it is not in V2 design than ignore it
+
 17. **Discount semantics on the PDP buyer-side green pills.** Two
     different green pills appear on PDP bundle cards — `b3Save` (mid)
     vs `b4Best` (last). Are these the same concept (vendor-marked
     "best deal") or different (auto-computed "save" vs vendor-pinned
     "best")? Affects whether tiers carry one boolean flag, two flags,
     or none.
+
+    answer: these are same thing. vendor decides while adding a product.
 
 ---
 
