@@ -136,7 +136,7 @@ export function AdminCategories() {
         totals={tabTotals}
       />
 
-      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(360px,440px)]">
+      <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(360px,440px)]">
         <div className="space-y-4">
           <CategoriesListCard
             isLoading={isLoading && categories.length === 0}

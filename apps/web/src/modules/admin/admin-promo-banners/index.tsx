@@ -132,7 +132,7 @@ export function AdminPromoBanners() {
         totals={totals}
       />
 
-      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(380px,460px)]">
+      <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(380px,460px)]">
         <BannersGrid
           isLoading={isLoading && banners.length === 0}
           hasError={Boolean(isError)}

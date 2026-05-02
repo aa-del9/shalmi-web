@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
     data.address && data.address !== '' ? data.address : undefined;
 
   try {
-    await db.transaction(async (tx) => {
+    const insertedId = await db.transaction(async (tx) => {
       await tx.insert(user).values({
         id: userId,
         name: data.fullName,
@@ -224,22 +224,26 @@ export async function POST(request: NextRequest) {
         role: USER_ROLES.VENDOR,
       });
 
-      await tx.insert(vendors).values({
-        userId,
-        displayId,
-        fullName: data.fullName,
-        shopName: data.shopName,
-        city: 'Lahore',
-        address: addressValue,
-        hub: data.marketHub,
-        logoUrl: logoUrlValue,
-        bankName: data.bankDetails.bankName,
-        accountTitle: data.bankDetails.accountTitle,
-        iban: data.bankDetails.iban,
-      });
+      const [row] = await tx
+        .insert(vendors)
+        .values({
+          userId,
+          displayId,
+          fullName: data.fullName,
+          shopName: data.shopName,
+          city: 'Lahore',
+          address: addressValue,
+          hub: data.marketHub,
+          logoUrl: logoUrlValue,
+          bankName: data.bankDetails.bankName,
+          accountTitle: data.bankDetails.accountTitle,
+          iban: data.bankDetails.iban,
+        })
+        .returning({ id: vendors.id });
+      return row?.id ?? null;
     });
 
-    return jsonSuccess({ displayId }, undefined, 201);
+    return jsonSuccess({ id: insertedId, displayId }, undefined, 201);
   } catch (err) {
     if (err instanceof Error) {
       if (

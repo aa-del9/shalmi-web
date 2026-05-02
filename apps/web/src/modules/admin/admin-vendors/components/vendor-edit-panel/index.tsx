@@ -135,13 +135,15 @@ export function VendorEditPanel({
           address: values.address,
           bankDetails: values.bankDetails,
         };
-        const result = await createMutation.mutateAsync(payload);
+        const result = (await createMutation.mutateAsync(payload)) as {
+          data?: { id?: string | null; displayId?: string | null };
+        };
+        const newId = result?.data?.id ?? null;
+        const newDisplayId = result?.data?.displayId ?? null;
         toast.success(
-          `Vendor created${
-            result?.data?.displayId ? ` · #${result.data.displayId}` : ''
-          }`
+          `Vendor created${newDisplayId ? ` · #${newDisplayId}` : ''}`
         );
-        onCreated(result?.data?.displayId ?? null);
+        onCreated(newId);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save vendor');

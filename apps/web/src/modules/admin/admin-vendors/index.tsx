@@ -249,7 +249,7 @@ export function AdminVendors() {
         </div>
       ) : null}
 
-      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(380px,460px)]">
+      <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(380px,460px)]">
         <div className="space-y-4">
           <VendorsListCard
             isLoading={isLoading && vendors.length === 0}
