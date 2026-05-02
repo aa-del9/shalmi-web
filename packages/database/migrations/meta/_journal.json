@@ -43,6 +43,13 @@
       "when": 1772479115221,
       "tag": "0005_pale_pepper_potts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777733730871,
+      "tag": "0006_slim_redwing",
+      "breakpoints": true
     }
   ]
 }
