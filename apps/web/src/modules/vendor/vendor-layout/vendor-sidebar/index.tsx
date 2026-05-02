@@ -60,8 +60,13 @@ export const VendorSidebar = () => {
                 return (
                   <SidebarMenuItem key={href}>
                     <SidebarMenuButton asChild isActive={isActive}>
+                      {/* `prefetch={false}` because some sidebar entries
+                          (e.g. `/vendor/ledger`) point at routes that
+                          haven't shipped yet — the prefetch RSC fetch
+                          would 404 in the network panel. */}
                       <Link
                         href={href}
+                        prefetch={false}
                         onClick={() => isMobile && setOpenMobile(false)}
                       >
                         {Icon && <Icon className="size-5 shrink-0" />}
