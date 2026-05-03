@@ -49,7 +49,7 @@ COPY packages/whatsapp-core/package.json packages/whatsapp-core/package.json
 COPY packages/mcp-server/package.json packages/mcp-server/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
 
-RUN pnpm install --frozen-lockfile --prod --filter=whatsapp-worker...
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter=whatsapp-worker...
 
 # ---------- Stage 4: runtime ----------
 FROM node:22-alpine AS runtime
