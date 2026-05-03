@@ -163,12 +163,14 @@ App-bar layout (`H8TsQb` 71h with logo + EN/اردو + cart) then card column `N
 
 1. **OTP-info card "4-digit" vs ship-time 6-digit.** Same as sign-in Q1 / OTP Q1.
    - **Plausible answers:** (a) Update to "6-digit". (b) Strip digit count: "You'll receive an OTP…". (c) Keep "4-digit" verbatim.
+**Answer:** (a) Update to "6-digit OTP". Mirrors sign-in Q1 / OTP Q1.
 
 2. **"For personal restocking. Takes 30 seconds." sub copy commitment.**
    - **Observed in design:** `gP6cD` sans 14 ink-2.
    - **Observed in code:** None.
    - **Question:** Is the "30 seconds" claim a literal commitment (so we should performance-budget the form to actually take 30s end-to-end), or marketing copy that survives even if the OTP step takes longer?
    - **Plausible answers:** (a) Marketing copy, ship verbatim. (b) Tighten copy to "Takes a minute." (c) Drop the timing claim.
+**Answer:** (a) Marketing copy, ship verbatim. Aspirational benchmark; no perf budget required.
 
 ### Behavior / states
 
@@ -177,54 +179,63 @@ App-bar layout (`H8TsQb` 71h with logo + EN/اردو + cart) then card column `N
    - **Observed in code:** None.
    - **Question:** Hide entirely, render as a static EN-only pill (no اردو cell drawn), render the full toggle but اردو click is a no-op, or render with a "Coming soon" toast on اردو click?
    - **Plausible answers:** (a) Render full toggle, اردو click is a no-op. (b) Render only the EN cell, hide the اردو half. (c) Render the full toggle, اردو click shows a Sonner "Urdu coming soon" toast.
+**Answer:** Hide the toggle entirely on auth screens for this batch — same resolution as sign-in Q3. Per OQ-I Urdu is deferred; rendering a no-op toggle is misleading.
 
 4. **Generic ↔ Shopkeeper switcher route shape.**
    - **Observed in design:** Two segmented cells; clicking the inactive one is implied to switch flows.
    - **Observed in code:** Neither route exists.
    - **Question:** One route with `?type=generic|shopkeeper` and an in-page form swap, two distinct routes (`/auth/sign-up/generic`, `/auth/sign-up/shopkeeper`), or a single component switching state without route change?
    - **Plausible answers:** (a) One route `/auth/sign-up?type=…` with in-page form swap (cheapest; no extra page file). (b) Two distinct routes; switcher is a `<Link>` between them. (c) Single client component with internal state; URL doesn't change.
+**Answer:** One route `/sign-up?type=generic|shopkeeper` (NOT `/auth/sign-up`) with in-page form swap. Fills the existing `(auth)/sign-up/page.tsx` stub; route group provides the centered shell. Switcher updates the `type` query so deep-links work. Default `?type=generic`.
 
 5. **"Full name" validation rule.**
    - **Observed in design:** Label sans 13/600 ink-2; placeholder copy not in batch_get.
    - **Observed in code:** None. `user.name` is `notNull text`.
    - **Question:** Min length, max length, allowed characters?
    - **Plausible answers:** (a) Min 2, max 80, `/^[\p{L}\s.'-]+$/u` (letters, spaces, dot, apostrophe, hyphen). (b) Min 1, max 120, no character restriction. (c) Min 3, max 60, ASCII-only.
+**Answer:** (a) Min 2, max 80, regex `/^[\p{L}\s.'-]+$/u`. Unicode-aware so non-Latin names are accepted; punctuation set covers Pakistani naming conventions ("Saleem Bhai", "Mian Saleem", "M.A. Khan").
 
 6. **Continue CTA loading state.**
    - **Observed in design:** No loading frame.
    - **Observed in code:** None for this screen.
    - **Question:** Loading copy + icon during sendOtp?
    - **Plausible answers:** (a) "Sending OTP…" + spinner replacing chevron. (b) "Continue" copy stays, spinner replaces chevron. (c) Disabled with no copy change.
+**Answer:** (b) "Continue" copy stays, spinner replaces the trailing chevron, button disabled. Mirrors OTP Q4.
 
 7. **Terms footer link wiring.**
    - **Observed in design:** `fohHr` "By continuing you agree to our Terms & Privacy."
    - **Observed in code:** No /terms or /privacy routes.
    - **Question:** Are "Terms" and "Privacy" two separate links to two separate routes, a single link to a combined `/legal` page, or static text without hrefs?
    - **Plausible answers:** (a) Two separate `<Link>`s to `/terms` and `/privacy` (routes don't exist yet — block on routes existing). (b) Single `<Link>` to `/legal`. (c) Static text, no links — defer link wiring to a follow-up batch.
+**Answer:** (c) Static text, no links — defer link wiring until `/terms` and `/privacy` routes exist. Don't ship dead anchors. Same resolution applies to sign-in Q14 and shopkeeper signup terms.
 
 8. **Architecture for carrying `name + retailerType` across the OTP boundary.**
    - **Observed in design:** None (purely backend concern).
    - **Observed in code:** Today `signUpOnVerification` synthesises `name = phoneNumber` at verify time; nothing to carry.
    - **Question:** Where do `name + retailerType` live between Continue click and OTP-verify success?
    - **Plausible answers:** (a) URL params on `/auth/otp?phone=…&name=…&retailerType=…` (simple but exposes data in the URL). (b) `sessionStorage.setItem('pendingSignup', { name, retailerType })`; OTP success reads + clears. (c) Server-side `pendingSignup` table keyed by phone, written on Continue, consumed by the verify handler.
+**Answer:** (b) `sessionStorage.setItem('pendingSignup', { name, retailerType, shopName?, shopAddress? })` on Continue; OTP success handler reads, upserts onto `user`, clears. No URL leakage of PII; no schema change. Cleared on tab close which is correct semantics — abandoned signups don't leave server state.
 
 9. **Phone-already-registered UX.**
    - **Observed in design:** No conflict state.
    - **Observed in code:** Better-auth surfaces unique-violation as an error string.
    - **Question:** UX on conflict?
    - **Plausible answers:** (a) Inline red helper text under the phone input: "This number is already registered. Sign in instead." with the "Sign in" word linked to `/auth?phone=…`. (b) Sonner toast + automatic redirect to `/auth?phone=…` after 2s. (c) Replace the form with a one-shot card "We already know this number — sign in" + a single CTA.
+**Answer:** (a) Inline red helper text under the phone input: "This number is already registered. **Sign in** instead." — with `Sign in` linked to `/auth?phone={current}`. Lets the user keep the typed phone, switch flows in one click.
 
 10. **Mobile back affordance.**
     - **Observed in design:** Mobile header `H8TsQb` shows logo + lang toggle + cart on the right. No back chevron.
     - **Observed in code:** None.
     - **Question:** No back button at all, browser-back-only, or add a chevron-left tile not in the design?
     - **Plausible answers:** (a) No back button — match design. (b) Browser-back-only via the app bar (no UI, just hardware/gesture). (c) Add a chevron-left even though the design omits it.
+**Answer:** (a) No back button on mobile signup — match the design. The app bar shows logo + cart only; users use platform back gesture / browser back. Sign-in is reachable via the inline "Already have an account? · Sign in" link.
 
 11. **Route address for the signup page.**
     - **Observed in design:** Frame name "Auth · Generic User Signup". No URL specified.
     - **Observed in code:** Empty stub at `/sign-up` (`app/(auth)/sign-up/page.tsx`); no other signup route.
     - **Question:** `/sign-up` (fill stub) or `/auth/sign-up` (new route)?
     - **Plausible answers:** (a) `/sign-up` — fill the existing stub; the `(auth)` route group provides the centered shell. (b) `/auth/sign-up` — sibling of `/auth/otp`; delete the `(auth)/sign-up` stub. (c) Both with one redirecting to the other.
+**Answer:** (a) `/sign-up` — fill `app/(auth)/sign-up/page.tsx`. The `(auth)` route group provides the centered shell. `ABSOLUTE_ROUTES` gains `AUTH_SIGN_UP = '/sign-up'`. The "Create an account" link on sign-in routes here; switcher toggles `?type=…`.
 
 ---
 

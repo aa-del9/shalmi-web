@@ -218,24 +218,28 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
    - **Observed in code:** `modules/auth/server/auth-client/index.ts:49` `otpLength: 6`. Per OQ-O resolved → keep 6-digit; render 6 OTP boxes; treat the design as illustrative.
    - **Question:** Does the hint card copy change to "6-digit" (because the actual OTP is 6 digits), or stay "4-digit" (matching the design verbatim, knowing it is wrong)?
    - **Plausible answers:** (a) Update hint copy to "You'll receive a 6-digit OTP on this number." (b) Keep "4-digit" verbatim per design. (c) Remove the digit count: "You'll receive an OTP on this number."
+**Answer:** (a) Update hint copy to "You'll receive a 6-digit OTP on this number." Source-of-truth wins over the illustrative design copy; OQ-O resolved 6-digit at the plan level.
 
 2. **"Welcome back" copy on a screen that auto-signs-up unknown phones.**
    - **Observed in design:** Headline `RNWAE` "Welcome back" 30/800.
    - **Observed in code:** `signUpOnVerification` is enabled — any unrecognised phone is silently registered on first OTP verify. So "Welcome back" is sometimes a lie.
    - **Question:** Is the headline a deliberate marketing skew toward returning users, or should it switch based on a phone-known check before sending the OTP (e.g. "Welcome back" vs "Sign in to Shalmi")?
    - **Plausible answers:** (a) Keep "Welcome back" verbatim, accept the inaccuracy for new users. (b) Pre-check phone existence before sending OTP and toggle the headline. (c) Use a neutral "Sign in to Shalmi" headline.
+**Answer:** (a) Keep "Welcome back" verbatim. Per OQ-V the unified `/auth` is the single entry for buyers/vendors/admins; better-auth's `signUpOnVerification` makes new-vs-returning invisible to the buyer, and the marketing skew is intentional. Smallest delta.
 
 3. **EN/Urdu language toggle on mobile (`oL2YN`).**
    - **Observed in design:** Mobile app-bar shows an "EN" toggle chip on the right (`oL2YN` → text `AI2NG` "EN"). Desktop has no toggle.
    - **Observed in code:** No i18n. Per OQ-I, Urdu is deferred for this batch.
    - **Question:** Is the EN toggle hidden, shown-but-disabled, or shown as a no-op pill on mobile auth screens?
    - **Plausible answers:** (a) Hide the toggle entirely on auth screens. (b) Render it as a static "EN" pill with no click handler. (c) Render it as an interactive toggle that shows a "Urdu coming soon" toast on click.
+**Answer:** (a) Hide the EN/اردو toggle entirely on auth screens for this batch. Per OQ-I Urdu is deferred; rendering the toggle creates a no-op affordance the user has explicitly asked us not to ship. Re-introduce when i18n lands.
 
 4. **Tertiary "Sign in as Vendor · Admin login" link target.**
    - **Observed in design:** Two subtle text links separated by a dot: `Wlc13` "Sign in as Vendor" and `f7xfb` "Admin login", both sans 12/600 ink-3.
    - **Observed in code:** No equivalent. Per OQ-V resolved → unified `/auth` with role auto-detection from phone.
    - **Question:** Given role auto-detection, what do these links do?
    - **Plausible answers:** (a) Decorative hint text only, no href — purely informational. (b) Href to the same `/auth` page with a query param like `?role=vendor` that re-titles the headline ("Sign in as Vendor") but otherwise behaves identically. (c) Remove the tertiary row entirely (design intent unclear once OQ-V is resolved).
+**Answer:** (a) Decorative hint text only, no href. Per OQ-V the unified `/auth` already auto-detects role from phone — vendors and admins use the same form. Render the row as static `ink-3` copy; no anchor tags.
 
 ### Guest flow
 
@@ -244,24 +248,28 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
    - **Observed in code:** None.
    - **Question:** Where does the guest path land — directly at `/checkout`, at `/cart` first, at `/`, or context-dependent?
    - **Plausible answers:** (a) Always `/checkout` (matches OQ-G premise that guest is for checkout). If cart is empty, the checkout page bounces to `/cart` via existing guard. (b) `/cart` when empty, `/checkout` when items exist. (c) Always `/` and let the buyer build their cart.
+**Answer:** (b) `/cart` when empty, `/checkout` when items exist. Matches the OQ-G(b) premise that a guest is mid-purchase, while keeping the empty-cart UX honest (no bounce loop). One client-side branch on `cartItems.length`.
 
 6. **Guest session id minting and persistence.**
    - **Observed in design:** None drawn — purely a backend/cart-store concern.
    - **Observed in code:** No `guestSessionId` exists today. Per OQ-G(b), `orders.guestSessionId text nullable` is added.
    - **Question:** When and where is `guestSessionId` minted, and where is it persisted client-side?
    - **Plausible answers:** (a) Mint on click in the sign-in screen, persist in `cart-store` Zustand state; cart-store sends it on the checkout payload. (b) Mint server-side on the first `/api/checkout` POST that arrives without a session, return it via `Set-Cookie` and store in a httpOnly cookie. (c) Mint client-side and persist in localStorage outside cart-store (so it survives cart clears).
+**Answer:** (a) Mint on Continue-as-Guest click via `crypto.randomUUID()`, persist in `cart-store` Zustand state alongside `items`. Cart-store already persists to localStorage via Zustand `persist`; bump `cart-store` `version` so the new field is migrated cleanly. Submission attaches `guestSessionId` to the `/api/checkout` payload.
 
 7. **Guest path interaction with existing AUTH redirect on `/checkout`.**
    - **Observed in design:** None.
    - **Observed in code:** `apps/web/src/app/(storefront)/checkout/page.tsx:90-96` redirects unauthenticated users to `/auth?redirect=/checkout`. With OQ-G(b), the guest path must bypass that redirect.
    - **Question:** What is the bypass mechanism — a `?guest=1` query, a presence-of-`guestSessionId`-in-cart-store check, a server-side cookie?
    - **Plausible answers:** (a) Cart-store `guestSessionId` truthy → page-level guard skips the auth redirect. (b) `?guest=1` query forces guest mode. (c) Add a server-side `guestSessionId` cookie checked in the page guard.
+**Answer:** (a) Cart-store `guestSessionId` truthy + non-empty `items` → checkout page guard skips the `/auth?redirect=/checkout` redirect. Pure client-side check, no extra server route, consistent with Q6's persistence choice.
 
 8. **Benefits card visibility across breakpoints + after Guest click.**
    - **Observed in design:** Always rendered on both desktop (`Y0l3s`, h122) and mobile (`wMM4W`, h115) below the Guest button.
    - **Observed in code:** None.
    - **Question:** Does the benefits card hide on smaller mobile screens, or after the user clicks Guest (to confirm awareness of the trade-off)?
    - **Plausible answers:** (a) Always render on both breakpoints, no conditional. (b) Hide below 360w mobile to save vertical space. (c) Hide after a Guest-confirm dialog warns the user once.
+**Answer:** (a) Always render on both breakpoints. Smallest delta; the card is part of the persuasion surface against guest checkout and matches the design literally.
 
 ### States & errors
 
@@ -270,24 +278,28 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
    - **Observed in code:** `<p className="text-destructive text-sm" role="alert">` under the field.
    - **Question:** Inline red helper text under the field, toast, or both?
    - **Plausible answers:** (a) Inline red helper text under the field (current pattern). (b) Sonner toast. (c) Both — inline for validation, toast for network/backend failures (matches `buyer-checkout` Q20 resolution).
+**Answer:** (c) Both — inline `red`-tinted helper text for validation (length, format, empty), Sonner `toast.error` for network/Twilio/better-auth failures. Mirrors `buyer-checkout` Q20 resolution so the convention is uniform across forms.
 
 10. **"Phone not registered" branching.**
     - **Observed in design:** "Welcome back" headline implies a returning user; no error state for unrecognised phone.
     - **Observed in code:** `signUpOnVerification` makes "phone not registered" a non-state — any phone gets auto-signed-up on first verify.
     - **Question:** Should an unrecognised phone be bounced to the signup flow (with a toast/inline error like "We don't recognise this number — create an account?"), or silently auto-sign-up as today?
     - **Plausible answers:** (a) Silent auto-signup, behaviour unchanged from today (matches OQ-V unified entry). (b) Pre-check existence, route unknown phones to `/auth/sign-up?phone=…`. (c) After OTP verify, if `user.createdAt === user.updatedAt`, redirect to a profile-completion screen.
+**Answer:** (a) Silent auto-signup — preserve the current `signUpOnVerification` behaviour. Per OQ-V the unified `/auth` is one entry for everyone, and adding a "phone not registered" branch contradicts the auto-detection model. Returning users will land on the right post-auth route via `getPostAuthRedirectUrl`.
 
 11. **Phone validation rule.**
     - **Observed in design:** 10-digit input next to a `+92` chip. No format hint beyond the chip.
     - **Observed in code:** `<Input type="tel">` accepts free-form text; no length or prefix validation.
     - **Question:** What's the exact validation rule — strictly 10 digits, first digit `3` (Pakistan mobile carriers), or just "non-empty after concatenating +92"?
     - **Plausible answers:** (a) Strictly `^3\d{9}$` (Pakistan mobile only). (b) Strictly `^\d{10}$` (any 10 digits, including landline). (c) Loose: any 7–13 digits, defer to better-auth/Twilio for definitive validation.
+**Answer:** (a) Strictly `^3\d{9}$` — Pakistan mobile only. The `+92` chip already commits to mobile; landlines can't receive SMS OTPs. Front-load the rule client-side so users get an inline validation error before paying for a Twilio round-trip.
 
 12. **Loading state during Send OTP.**
     - **Observed in design:** No loading frame.
     - **Observed in code:** Button copy → "Sending code…", input + button disabled.
     - **Question:** Keep "Sending code…" copy or use a spinner-only pattern, and what's the new loading copy if changed?
     - **Plausible answers:** (a) Keep "Sending code…" verbatim. (b) Inline `<Spinner>` + "Send OTP" copy stays, button disabled. (c) Sentence-cased "Sending OTP…" to match the design's copy convention.
+**Answer:** (a) Keep "Sending code…" verbatim. Match the existing `AuthModal` pattern; the design omits the loading state, so re-using the established copy is the smallest delta.
 
 ### Mobile chrome
 
@@ -296,12 +308,14 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
     - **Observed in code:** None.
     - **Question:** Does it call `router.back()` or always navigate to `/`?
     - **Plausible answers:** (a) `router.back()` (matches typical Android/iOS chevron). (b) Always `/`. (c) `/` if `history.length === 1`, else `router.back()`.
+**Answer:** (a) `router.back()` — standard Android/iOS chevron behaviour. If users land directly on `/auth` (no history), the browser's back stack will be empty and `router.back()` is a no-op; that's acceptable degradation for a rare edge.
 
 14. **Footer copy mobile vs desktop.**
     - **Observed in design:** Desktop footer `Zy60I` is a wider "© 2025 Shalmi · Privacy · Terms" mono line. Mobile `ac0uV` is shorter (the snapshot does not render content — see batch_get pending). Heights differ (15 vs 15 same) but desktop has 268w while mobile has full 380w.
     - **Observed in code:** None.
     - **Question:** Is mobile copy a strict subset (Terms only?), an identical line, or a separate Terms agreement variant?
     - **Plausible answers:** (a) Identical copy across breakpoints, just different widths. (b) Mobile shows only Terms link. (c) Mobile shows the same legal copy in a different layout.
+**Answer:** (a) Identical copy across breakpoints — "© 2025 Shalmi · Privacy · Terms" mono 11. Different widths are pure layout, not different content. Keep `Privacy` and `Terms` as static text per Q7 of generic-signup gap-analysis (no `/terms` or `/privacy` routes yet).
 
 ### Routing
 
@@ -310,12 +324,14 @@ Numbered. Every actionable category row in §2 maps to at least one entry below.
     - **Observed in code:** Two coexisting roots: (i) `app/(auth)/sign-in/page.tsx` (empty stub) at `/sign-in`, (ii) `app/auth/page.tsx` at `/auth` (mounts `<AuthModal>`). Per `ABSOLUTE_ROUTES`, `AUTH = '/auth'`.
     - **Question:** Where does the new sign-in page live?
     - **Plausible answers:** (a) `/auth` (replaces `AuthPageContent` + `AuthModal`); delete `(auth)/sign-in/page.tsx` empty stub. (b) `/sign-in` (fill the empty stub); redirect `/auth` → `/sign-in`; the `(auth)` route group provides the centered shell. (c) Both — `/auth` for the unified entry from links, `/sign-in` as an alias.
+**Answer:** (a) `/auth` is the unified sign-in route per OQ-V. Replace `AuthPageContent` with the new full-page sign-in, retire the empty `(auth)/sign-in/page.tsx` stub, and keep `ABSOLUTE_ROUTES.AUTH = '/auth'` unchanged. The `(auth)` route group can be deleted if no other surfaces use it after this batch.
 
 16. **Fate of the existing `AuthModal`.**
     - **Observed in design:** N/A.
     - **Observed in code:** `AuthModal` is currently mounted via `AuthPageContent` and *may* be triggered elsewhere (e.g. mid-flow sign-in prompts from `Header`/storefront). Need to grep before deletion (CLAUDE.md hard rule 3).
     - **Question:** Is `AuthModal` retired entirely, retained as an embedded modal trigger in some surfaces (e.g. clicking "Sign in" in a header dropdown opens the modal instead of routing), or repointed at the new full-page sign-in?
     - **Plausible answers:** (a) Retire `AuthModal` + `AuthPageContent` + `useModalStore.openAuthModal` if applicable; all sign-in entry points route to `/auth`. (b) Keep `AuthModal` as an embedded shortcut for high-friction surfaces (cart drawer, etc.); the standalone `/auth` page becomes the canonical destination. (c) Re-skin `AuthModal` to mirror the new design (less consistent, more code duplication).
+**Answer:** (a) Retire `AuthModal` + `AuthPageContent` once grep confirms no other consumers (per CLAUDE.md hard rule 3). Every sign-in entry point routes to `/auth`. If grep finds an embedded use (e.g., a header "Sign in" trigger), repoint it to `<Link href="/auth?redirect=…">` rather than re-skin the modal.
 
 ---
 

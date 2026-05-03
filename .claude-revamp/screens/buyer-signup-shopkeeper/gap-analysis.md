@@ -171,17 +171,20 @@ ALTER TABLE "user"
 
 1. **OTP-info card "4-digit OTP to verify your shop." vs ship-time 6-digit.**
    - **Plausible answers:** (a) "6-digit OTP". (b) "OTP". (c) Keep "4-digit" verbatim.
+**Answer:** (a) "6-digit OTP". Mirrors sign-in Q1 / OTP Q1 / generic-signup Q1.
 
 2. **"Tell us about your shop" headline placement.**
    - **Observed in design:** Desktop 30/800 (`GZS8N`), mobile 22/800 (`p3vMpB`).
    - **Observed in code:** None.
    - **Question:** The mobile typography is significantly smaller than desktop (22 vs 30). Is this intentional responsive scaling, or should mobile match desktop's 30/800?
    - **Plausible answers:** (a) Honor the responsive split: 30/800 desktop + 22/800 mobile. (b) Match desktop 30/800 across breakpoints. (c) Use a fluid-type token that lands somewhere between.
+**Answer:** (a) Honor the responsive split. The mobile reduction is intentional given the four-field form below; matching desktop on mobile would push fields below the fold.
 
 3. **Sub copy variation: "to verify your shop." (shopkeeper) vs "to verify." (generic).**
    - **Observed in design:** Shopkeeper sub `PBJX5` ends "to verify your shop." Generic sub `xC8OY` ends "to verify."
    - **Question:** Is the "your shop" specifier intentional copy refinement, or accidental drift?
    - **Plausible answers:** (a) Adopt verbatim — shopkeeper says "your shop", generic says nothing. (b) Standardise to "to verify." across both. (c) Standardise to a more specific shared variant ("to verify your number").
+**Answer:** (a) Adopt verbatim. The shopkeeper variant's "to verify your shop" deliberately contextualises the form's purpose; the generic variant stays terse.
 
 ### Behavior / molecule
 
@@ -189,6 +192,7 @@ ALTER TABLE "user"
    - **Observed in design:** 80h textarea on `nzjVW`/`uzkfn`. Buyer-checkout rider notes (Batch 3) also lands a textarea. Currently no textarea primitive in `@repo/ui`.
    - **Question:** Does this batch land the textarea primitive (consumed by checkout in Batch 3 — but Batch 3 already shipped) or has Batch 3 already provided it?
    - **Plausible answers:** (a) Batch 3 already shipped the textarea primitive when checkout rider notes landed; reuse from `@repo/ui/components/textarea`. Verify by grep before writing this screen. (b) Batch 3 inlined a textarea without making it a primitive; this batch promotes it. (c) Build a fresh textarea primitive only if neither (a) nor (b).
+**Answer:** (a) Reuse `@repo/ui/components/textarea` if Batch 3 promoted it; otherwise (b) promote whatever Batch 3 inlined. The runner must `grep` first per CLAUDE.md hard rule 3 before assuming a primitive exists. Do not build a new primitive without verifying.
 
 ### Validation
 
@@ -196,48 +200,57 @@ ALTER TABLE "user"
    - **Observed in design:** Label only.
    - **Question:** Identical rule to generic Q5, or shopkeeper-specific (e.g., honorifics like "Bhai" allowed)?
    - **Plausible answers:** (a) Identical to generic. (b) Looser — allow more punctuation common in colloquial Pakistani forms ("Saleem Bhai", "Mian Saleem"). (c) Stricter — require both first + last word.
+**Answer:** (a) Identical to generic Q5 (min 2 / max 80 / `/^[\p{L}\s.'-]+$/u`). The generic regex already covers honorifics like "Bhai" and "Mian" — no shopkeeper-specific loosening needed.
 
 6. **"Shop name" + "Shop address" validation rules.**
    - **Observed in design:** Labels + placeholders ("Saleem Snacks Co.", "Block 4, Satellite Town, Gujranwala 52250, Punjab"). Field shapes: 48h text + 80h textarea.
    - **Observed in code:** Columns don't exist yet (per OQ-S land in this batch).
    - **Question:** Min/max length, allowed characters, required vs optional?
    - **Plausible answers:** (a) Both required at signup; shop name min 2 / max 80; shop address min 10 / max 300. (b) Both required; loose validation (min 1 / max 200). (c) Make both optional at signup; capture later in profile (matches the column being nullable).
+**Answer:** (a) Both required client-side at signup; `shopName` min 2 / max 80; `shopAddress` min 10 / max 300. Columns stay `nullable` server-side per OQ-S so legacy users (pre-migration) get NULL, but the signup form enforces presence.
 
 7. **Continue CTA loading state.** Same as generic Q6.
+**Answer:** Same as generic Q6 — "Continue" copy stays, spinner replaces the trailing chevron, button disabled.
 
 ### Mobile chrome / hero
 
 8. **Mobile back affordance.**
    - **Observed in design:** Mobile header `O4e379` shows logo + lang toggle + cart on right. No back chevron.
    - **Question:** Same as generic Q10 — no back, browser-back-only, or add chevron-left?
+**Answer:** Same as generic Q10 — no back button, match the design.
 
 9. **Mobile mart-shelf hero strip presence.**
    - **Observed in design:** The user-description claims a 3×2 brand-grid hero strip with overlaid "Set up your shop" headline on the mobile EN screen. The `xazGe` snapshot I captured **does not show this strip** — the layout starts with the switcher at y=20.
    - **Question:** Is the strip in `xazGe` and I missed it (different node), in a separate frame I haven't located, or only on the Urdu mobile variant (which is out of scope per OQ-I)?
    - **Plausible answers:** (a) The strip is on `xazGe` somewhere I missed — re-snapshot at deeper depth. (b) The strip is only on the Urdu mobile frame `izPvi`; EN mobile has no strip. (c) The strip is in a separate revision of the mobile EN frame that the user has not committed.
+**Answer:** (a) Re-snapshot `xazGe` at deeper depth during implementation; the user-description asserts the strip is present on EN mobile. If the deeper snapshot still does not surface it, fall back to (b) — drop the strip from EN mobile and revisit when the Urdu variant lands.
 
 10. **Mart-shelf asset list, hosting, and arrangement (only relevant if Q9 confirms strip is in EN scope).**
     - **Observed in design:** Per user-description, 8 tiles arranged 3×2 (which is 6, not 8 — see Q10b). Per OQ-A → generic stylized silhouettes / illustrations.
     - **Question:** Asset count (3×2 = 6 vs the user's text says 8), arrangement (which goes where), and hosting location?
     - **Plausible answers:** (a) 8 tiles in a 4×2 grid (the user's text "3×2 grid" is a typo) hosted in `apps/web/public/auth/shopkeeper-mart-shelf/*.svg`. (b) 6 tiles in a 3×2 grid (literal) hosted in `packages/ui/src/assets/`. (c) Defer arrangement until Q9 resolves.
+**Answer:** (a) 8 tiles in a 4×2 grid hosted in `apps/web/public/auth/shopkeeper-mart-shelf/*.svg`. Per OQ-A use **generic stylized silhouettes** (not branded products) — `tile-1.svg` … `tile-8.svg` rendered as ink-on-paper line art. No legal sign-off needed. Resolve only after Q9 confirms the strip is in EN scope.
 
 ### Schema
 
 11. **Shared signup zod schema vs separate.**
     - **Question:** One `signupSchema` discriminated by `retailerType`, or two distinct `signupGenericSchema` + `signupShopkeeperSchema`?
     - **Plausible answers:** (a) Single discriminated union (`zod.discriminatedUnion('retailerType', [...])`). (b) Two distinct schemas — clearer per-screen surface. (c) Shared base schema + extension for shopkeeper-only fields.
+**Answer:** (a) Single `zod.discriminatedUnion('retailerType', [genericVariant, shopkeeperVariant])`. DRY; the server can `parse` once and TypeScript narrows on the discriminator. Lives in `packages/schemas/src/auth/signup.ts`.
 
 12. **`shopName` (this batch) vs `businessName` (Batch 5).**
     - **Observed in design:** "Shop name" field on this screen.
     - **Observed in code:** `auth.ts:23-25` notes that `business_name` lands in Batch 5 migration 0012 and is consumed by the account drawer (Batch 6).
     - **Question:** Are `shopName` and `businessName` intentionally distinct columns, or is one of them redundant?
     - **Plausible answers:** (a) Distinct: `shopName` is the retail signage name (e.g., "Saleem Snacks Co."), `businessName` is the legal/registered entity (filled later in profile). Keep both columns. (b) Redundant — drop the Batch 5 `businessName` migration plan and reuse `shopName` (would require revisiting `buyer-settings` and `buyer-account-drawer` gap-analyses). (c) Distinct, but the account drawer should display `shopName` if `businessName` is null.
+**Answer:** (c) Distinct columns, drawer prefers `businessName` and falls back to `shopName` when null. `shopName` = retail signage entered at signup; `businessName` = legal/registered entity entered later in `/profile/settings`. Drawer identity card: `businessName ?? shopName ?? user.name`.
 
 ### Routing
 
 13. **Shopkeeper signup route address.**
     - **Question:** `/sign-up/shopkeeper` (sibling of `/sign-up`), `/auth/sign-up?type=shopkeeper` (single route + query), or shared `/sign-up` with internal switcher state?
     - **Plausible answers:** Same set as generic Q4, applied to this screen.
+**Answer:** Same as generic Q4 — single route `/sign-up?type=shopkeeper` (NOT `/sign-up/shopkeeper`). One page file, in-page form swap via the segmented switcher.
 
 ---
 

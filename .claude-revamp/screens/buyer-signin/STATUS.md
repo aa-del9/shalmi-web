@@ -104,7 +104,60 @@ None — this is structural (the spec phase for Batch 7 has not been run).
 
 ## Resolution
 
-(none yet — operator will fill this in once unblocked)
+**Date resolved:** 2026-05-04.
+
+All five Batch 7 surfaces have binding spec files with every §5 question answered. The runner can pick the batch back up subject to the sequencing check in §3 below.
+
+### Per-screen specs delivered (with answer counts)
+
+| Slug | gap-analysis.md | §5 answers | Notes |
+|---|---|---|---|
+| `buyer-signin` | ✅ | 16/16 | This file's parent. |
+| `buyer-otp` | ✅ | 14/14 | OQ-O resolved 6-digit; design's 4-box grid is illustrative. |
+| `buyer-signup-generic` | ✅ | 11/11 | Single `/sign-up?type=generic\|shopkeeper` route. |
+| `buyer-signup-shopkeeper` | ✅ | 13/13 | EN-only per OQ-I; Urdu (`w2jcu`/`izPvi`) explicitly out of scope. |
+| `buyer-checkout` (one-time-addr augment) | ✅ as sibling `gap-analysis-one-time-addr.md` | 15/15 | Original 2026-05-02 `gap-analysis.md` remains binding for everything else. |
+
+### Plan-level OQ resolutions consumed by the specs
+
+Captured in `05-batch-plan.md` "Open ordering questions — Batch 7" and re-stated in §0 of each gap-analysis file:
+
+- **OQ-R** → `user.retailerType` enum (`generic | shopkeeper`), nullable.
+- **OQ-S** → `user.shopName` + `user.shopAddress` as nullable text columns on `user`.
+- **OQ-I** → Urdu screens deferred (EN-only this batch).
+- **OQ-G** → real guest checkout: `orders.guestSessionId` nullable, `/api/checkout` `requireSession()` relaxed, address as source of truth.
+- **OQ-V** → unified `/auth` with role auto-detection from phone.
+- **OQ-O** → keep 6-digit OTP (illustrative 4-box grid in design).
+- **OQ-A** → mart-shelf brand-grid uses generic stylized illustrations.
+
+### Schema migration plan
+
+Consolidated in `screens/_batch-7-schema-plan.md`. Owner-batch table:
+
+- **Batch 7-owned:** `user.retailerType`, `user.shopName`, `user.shopAddress`, `orders.guestSessionId`, `orders.shippingPostalCode`, `orders.shippingProvince`, `orders.shippingLandmark`.
+- **Batch 5 hard predecessor:** `addresses.postalCode`, `addresses.province`, `addresses.landmark` (the third was re-owned to Batch 5 per `gap-analysis-one-time-addr.md` Q6 — a one-line amendment to Batch 5's plan).
+
+All migrations are forward-only and additive (nullable). Rollback = code revert.
+
+### Sequencing check (runner Step A)
+
+The one-time-addr augment depends on Batch 5's `addresses` migrations being applied to dev/staging. **The runner MUST fail-stop at Step A** if `addresses.postalCode / province / landmark` columns are missing. See `_batch-7-schema-plan.md §3`.
+
+### Implementation prerequisites
+
+Beyond the sequencing check, Batch 7 implementation has three small verification steps before code is written:
+
+1. Per CLAUDE.md hard rule 3, runner greps for `AuthModal` consumers across the codebase before retiring it (`buyer-signin/gap-analysis.md` Q16). If grep finds an embedded use (e.g. a header "Sign in" trigger), repoint it to `<Link href="/auth?redirect=…">` rather than re-skin the modal.
+2. Per `buyer-signup-shopkeeper/gap-analysis.md` Q4, runner verifies whether Batch 3 promoted a `Textarea` primitive in `@repo/ui/components/textarea`. If yes — reuse. If no — promote whatever Batch 3 inlined. Do NOT build a new primitive without verifying.
+3. Per `buyer-signup-shopkeeper/gap-analysis.md` Q9, runner re-snapshots Pencil frame `xazGe` at deeper depth to confirm the mart-shelf hero strip presence on EN mobile. If the strip is absent in the deeper snapshot, fall back to dropping the strip from EN scope (Q9 plausible answer (b)).
+
+### Spot copy pulls during implementation
+
+Per `gap-analysis-one-time-addr.md` Q2, the sub-line copy under "One-time delivery" must be pulled verbatim from Pencil text nodes `D2olN` (desktop) and `jsi2I` (mobile) via `pencil:batch_get` — those reads were not done during the gap-analysis phase to keep token costs low.
+
+### Status
+
+**Unblocked.** No remaining plan-level or per-screen specs blocking the batch. Implementation may begin pending the three verification steps above and the Batch 5 sequencing check.
 
 ---
 
@@ -161,3 +214,72 @@ after this section contains real content."
    still pending and may need spot pulls during implementation.
 5. Update **this Resolution section** with real content once the above
    are addressed; only then will the runner pick the batch back up.
+
+---
+
+## 2026-05-04 retry attempt #2 — Batch 5 sequencing check FAILED
+
+The operator filled in the Resolution section above with a substantive
+unblock note. The runner picked the batch back up and immediately ran
+the schema sequencing check from `_batch-7-schema-plan.md §3.4`:
+
+> "Before any Batch 7 implementation begins, the runner must:
+> 1. Read `packages/database/src/schema/addresses.ts` (or equivalent)
+>    and confirm `postalCode`, `province`, `landmark` columns exist.
+> 2. **If missing → STOP, post a STATUS note 'Batch 5 not yet applied',
+>    do not improvise.**"
+
+State of the Drizzle schema at retry time:
+
+| Column | Migration file | Drizzle schema | Status |
+|---|---|---|---|
+| `addresses.postal_code` | ✅ `0012_buyer_settings.sql` | ❌ deferred | **Migration not applied to dev DB** (per `addresses.ts:20-25` comment + commit `67cb1a4`) |
+| `addresses.province` | ✅ `0012_buyer_settings.sql` | ❌ deferred | Same |
+| `addresses.landmark` | ❌ **MISSING from migration** | ❌ MISSING | Batch 5 plan amendment required (per `_batch-7-schema-plan.md §3.3`); column never added |
+| `user.business_name` | ✅ `0012_buyer_settings.sql` | ❌ deferred | Migration not applied (per `auth.ts:20-24` comment + commit `1cb6383`) |
+
+Two distinct blockers:
+
+1. **Migration 0012 has not been applied to dev/staging** — the
+   pattern is consistent with prior Batch 5 / Batch 6 ledger entries
+   ("smoke deferred pending dev-DB apply of migration 0012"). For
+   Batch 7 the schema plan upgrades this from "smoke deferred" to
+   "implementation must not begin." Strictly per the plan, this is a
+   STOP.
+
+2. **`addresses.landmark` was never added.** The schema plan §3.3
+   amends Batch 5 to add this column — but Batch 5 already shipped
+   (commit `5950add` per batch-progress ledger). The amendment is a
+   Batch 5 follow-up that must land BEFORE Batch 7 can run, since
+   Batch 7 is the first consumer.
+
+### What I need to unblock (3rd revision)
+
+a. Apply migration `0012_buyer_settings.sql` to dev/staging.
+b. Reinstate the deferred Drizzle field declarations:
+   - `addresses.ts`: `postalCode: text('postal_code')`,
+     `province: text('province')`.
+   - `auth.ts`: `businessName: text('business_name')` (required by
+     account drawer Batch 6 too, currently rendered as graceful no-op).
+c. Author + apply migration `0013_addresses_landmark.sql`:
+   `ALTER TABLE addresses ADD COLUMN landmark text;`. Add the matching
+   Drizzle field. This closes the §3.3 plan amendment.
+d. Confirm via `pnpm db:check` (or equivalent) that all three columns
+   exist on the dev DB.
+e. Update **this Resolution section** with the new state ("Batch 5
+   sequencing satisfied; columns confirmed on dev DB; Drizzle reflects
+   schema") so the runner retries. Per BATCH_RUNNER.md, the runner
+   only picks the batch back up after this section is updated.
+
+### What I did NOT do
+
+- Did NOT improvise around the missing migration (CLAUDE.md hard
+  rule 1 + the schema plan's explicit STOP).
+- Did NOT touch `addresses.ts` or `auth.ts` Drizzle declarations
+  (they're deferred for a documented reason — applying them without
+  the DB migration would break existing routes).
+- Did NOT author migration 0013 (Batch 5 amendment is owned by the
+  operator, not Batch 7's runner).
+- Did NOT begin reading per-screen §5 answers — even if those answers
+  are now in place, the schema layer must be settled before any
+  implementation step in BATCH_RUNNER.md Step B is meaningful.

@@ -170,24 +170,28 @@ Mobile app-bar layout (`fiKLU` 56h header same as sign-in), main column `N1ugF` 
    - **Observed in code:** Shipping with 6-digit (per OQ-O).
    - **Question:** Update sub copy to "6-digit code", strip the digit count entirely, or keep "4-digit" verbatim?
    - **Plausible answers:** (a) "We sent a 6-digit code to {phone}." (b) "We sent a code to {phone}." (c) Keep "4-digit" verbatim.
+**Answer:** (a) "We sent a 6-digit code to {phone}." Match implementation per OQ-O. Mirrors the sign-in Q1 resolution.
 
 2. **Resend countdown duration.**
    - **Observed in design:** Timer label `RiY4W` reads "Resend code in 0:42" — implies 42s static or current-state snapshot.
    - **Observed in code:** No resend.
    - **Question:** Initial countdown duration?
    - **Plausible answers:** (a) 42s — match the design literally. (b) 60s — common SMS cooldown. (c) 30s — minimum reasonable cooldown given Twilio rate limits.
+**Answer:** (a) 42s — match the design literally. Stored as a constant; easy to change later if Twilio costs spike.
 
 3. **Resend cooldown lockout behavior.**
    - **Observed in design:** Single timer; no "max resends" copy drawn.
    - **Observed in code:** None.
    - **Question:** Allow infinite resends with a fixed cooldown each time, cap at N total resends per session, or escalate cooldown after each resend (42s → 90s → 180s)?
    - **Plausible answers:** (a) Infinite, fixed cooldown. (b) Cap at 3 resends per session, then disable + show "Get help" prominently. (c) Escalating cooldown.
+**Answer:** (b) Cap at 3 resends per session, then disable Resend + foreground "Get help". Matches better-auth's `allowedAttempts: 3` semantics — a buyer who can't get the code in 3 sends has a Twilio/SIM problem, not a UX problem.
 
 4. **Verify CTA copy + trailing icon during loading.**
    - **Observed in design:** "Verify and continue" + chevron-right. No loading frame.
    - **Observed in code:** "Verifying…" replaces the label; no icon.
    - **Question:** During submit, what does the CTA look like?
    - **Plausible answers:** (a) Swap to inline Spinner + "Verifying…", drop the chevron. (b) Keep "Verify and continue" copy + spinner replaces chevron. (c) Disabled with no copy change, spinner overlay.
+**Answer:** (b) Keep "Verify and continue" copy; swap the trailing chevron-right for an inline spinner; button disabled. Cleanest visual; doesn't reflow the label.
 
 ### Navigation
 
@@ -196,12 +200,14 @@ Mobile app-bar layout (`fiKLU` 56h header same as sign-in), main column `N1ugF` 
    - **Observed in code:** None.
    - **Question:** Where does it route, and does it preserve the phone?
    - **Plausible answers:** (a) `/auth` with no query params (clears phone). (b) `/auth?phone={current}` (pre-fills the chip+input — but the user wants to *change* it, so pre-filling is counter-productive). (c) `router.back()` — bounces to whatever sent the user here.
+**Answer:** (a) `/auth` with no query params. The user clicked "Change number" because the current number is wrong; pre-filling defeats the purpose. They start a fresh sign-in.
 
 6. **"Get help" target.**
    - **Observed in design:** Sans 13/700 ink link `mNseP` "Get help".
    - **Observed in code:** None.
    - **Question:** Target?
    - **Plausible answers:** (a) `mailto:` to a support address. (b) Internal `/help` route (does not exist yet). (c) Open a help dialog with a static FAQ.
+**Answer:** (c) Open a help dialog with a static FAQ ("Didn't get the code? — wait 60s, check signal, try Change number, contact support"). No new route; bounded scope.
 
 ### States
 
@@ -210,18 +216,21 @@ Mobile app-bar layout (`fiKLU` 56h header same as sign-in), main column `N1ugF` 
    - **Observed in code:** Inline red `<p role="alert">` under the form.
    - **Question:** Inline red helper, toast, or shake-the-grid red border?
    - **Plausible answers:** (a) Inline red helper text under the OTP grid (current pattern). (b) Sonner toast + red border on the OTP boxes. (c) Both — inline red helper text *and* red border on each box.
+**Answer:** (a) Inline red helper text under the OTP grid. Match the existing pattern; no shake animation, no toast for a wrong-code (validation, not network). Network/Twilio errors still go to a Sonner toast (mirrors sign-in Q9 / `buyer-checkout` Q20).
 
 8. **Lockout after 3 wrong attempts.**
    - **Observed in design:** No lockout frame.
    - **Observed in code:** Server returns an error (better-auth `allowedAttempts: 3`). UI surfaces it verbatim.
    - **Question:** UX on lockout?
    - **Plausible answers:** (a) Disable the OTP grid + Verify button, show "Too many attempts. Resend code or try again later" with a prominent Resend button (timer reset). (b) Force-redirect to `/auth` with a toast ("Too many attempts. Please request a new code."). (c) Show a modal explaining the lockout with a "Get help" CTA.
+**Answer:** (a) Disable the grid + Verify; show "Too many attempts — resend the code or try again in a moment." Reset the resend timer to its initial duration. Keeps the user on the same page with a clear next step.
 
 9. **STEP 2 OF 2 eyebrow on a route accessible without a STEP 1.**
    - **Observed in design:** "STEP 2 OF 2" implies a 2-step flow. Sign-in does not show "STEP 1 OF 2" — only the signup screens do.
    - **Observed in code:** None.
    - **Question:** Is the eyebrow shown only when arriving from a signup flow (where step 1 is "details"), or always?
    - **Plausible answers:** (a) Always — the "step 1" was implicitly "phone entry" on `/auth`. (b) Conditional — show "STEP 2 OF 2" only when arriving from `/auth/sign-up` (need a query param or referrer hint), hide otherwise. (c) Drop the eyebrow on the OTP screen reached from sign-in; keep only on the signup → OTP transition.
+**Answer:** (a) Always render "STEP 2 OF 2". Sign-in's phone entry counts as step 1 implicitly; matches the design literally and avoids referrer plumbing. The minor copy inaccuracy is acceptable.
 
 ### Behavior
 
@@ -230,30 +239,35 @@ Mobile app-bar layout (`fiKLU` 56h header same as sign-in), main column `N1ugF` 
     - **Observed in code:** No auto-submit (single input + manual button click).
     - **Question:** Once all 6 boxes are filled, does verification fire automatically, or does the user click Verify?
     - **Plausible answers:** (a) Auto-submit on 6th digit (fewer clicks; matches platform conventions like iOS SMS auto-fill). (b) Always require explicit click. (c) Auto-submit only when the input came from a paste; require click otherwise.
+**Answer:** (a) Auto-submit on 6th digit. Matches platform convention; the Verify CTA stays in the layout for accessibility / fallback.
 
 11. **"Change number" placement on mobile.**
     - **Observed in design:** Desktop has it inline at the end of the sub. Mobile (`mUC03`/`DdI6O`) shows the sub on its own with `DdI6O` h40 — couldn't confirm in the snapshot whether "Change number" sits inline or on a separate line.
     - **Observed in code:** None.
     - **Question:** Inline vs separate line on mobile?
     - **Plausible answers:** (a) Inline at the end of the sub (matches desktop). (b) Separate line below the sub. (c) Trailing chevron icon-only button next to the phone.
+**Answer:** (b) Separate line below the sub on mobile (the layout `mUC03` already shows a 40h block consistent with two-line stacking); inline on desktop. Honors the responsive split implied by the frame heights.
 
 12. **Mobile app-bar back chevron target.**
     - **Observed in design:** Back chevron (`PiXHw` lucide chevron-left).
     - **Observed in code:** None.
     - **Question:** Target?
     - **Plausible answers:** (a) `router.back()` (likely → sign-in). (b) Always `/auth` (sign-in). (c) `router.back()` but if no history → `/auth`.
+**Answer:** (a) `router.back()`. Matches sign-in Q13. The OTP screen always has a non-empty history because `/auth` Send-OTP got the user here.
 
 13. **Phone preview format.**
     - **Observed in design:** Sub renders "+92 300 1234567" — i.e. spaces grouped `(+92) (XXX) (XXXXXXX)`.
     - **Observed in code:** Renders raw `phone` query value verbatim (`+923001234567`).
     - **Question:** Adopt the design's grouping format?
     - **Plausible answers:** (a) `+92 NNN NNNNNNN` exact format from design. (b) `+92-NNN-NNNNNNN` dashed. (c) Raw E.164 (current behaviour).
+**Answer:** (a) `+92 NNN NNNNNNN` — exactly the design's space-grouped format. Small client-side formatter; no schema impact.
 
 14. **Missing-phone fallback frame.**
     - **Observed in design:** None — design assumes phone is always present.
     - **Observed in code:** A "Missing phone number" panel with a link back to sign-in.
     - **Question:** Keep the existing fallback panel, or hard-redirect to `/auth` server-side?
     - **Plausible answers:** (a) Keep the existing inline fallback panel verbatim. (b) Server-side redirect to `/auth` if `phone` query is missing. (c) Render the OTP grid disabled with an inline error pointing back to sign-in.
+**Answer:** (a) Keep the existing inline fallback panel verbatim. Smallest delta; the design omits this state, so re-using the established copy is the safe default.
 
 ---
 

@@ -232,17 +232,20 @@ See Q9.
    - **Observed in design:** Desktop has a rotated amber `WON'T BE SAVED` stamp (per user-description). Mobile shows `rEIe4` lowercase "won't be saved" mono 10/normal ink-3, no rotation, no amber.
    - **Question:** Are the two variants intentional (desktop bold/amber stamp vs mobile subtle inline mono caption), or accidental drift?
    - **Plausible answers:** (a) Honor the responsive split: bold amber stamp desktop, inline subtle mono mobile. (b) Standardise to the bold amber stamp on both. (c) Standardise to the inline subtle treatment on both.
+**Answer:** (a) Honor the responsive split. Desktop has space for the rotated amber stamp; mobile collapses to inline mono caption. Treat both as different rendering of the same conceptual "won't be saved" affordance, not a copy fork.
 
 2. **Sub-line copy under "One-time delivery" title.**
    - **Observed in design:** Per user-description: "Use this for gift orders or a one-off shop — we won't add it to your saved addresses." The verbatim text node `D2olN` content not pulled in this analysis pass.
    - **Question:** Adopt the user-description copy verbatim, or re-pull from Pencil before binding?
    - **Plausible answers:** (a) Adopt user-description copy verbatim; spot-check via batch_get during implementation. (b) Pull verbatim text node `D2olN`/`jsi2I` content via `pencil:batch_get` and bind that. (c) Rewrite the copy for clarity ("Address used for this order only — not saved to your account.").
+**Answer:** (b) Pull verbatim from Pencil text nodes `D2olN` (desktop) and `jsi2I` (mobile) via `pencil:batch_get` during implementation. Pencil is source of truth per CLAUDE.md.
 
 3. **`Don't save` toggle default state.**
    - **Observed in design:** Per `05-batch-plan.md` Batch 7 description: "Don't save toggle on the right (green-2 ON state)" — implies ON by default.
    - **Observed in code:** None.
    - **Question:** Confirm default = ON (won't be saved) on initial render, both for logged-in users and guests?
    - **Plausible answers:** (a) Default ON for everyone. (b) Default ON for logged-in users; pinned ON (read-only) for guests. (c) Default OFF (so users save unless they opt out).
+**Answer:** (b) Default ON for logged-in users; **pinned ON (read-only/hidden)** for guests. Per Q10, guests have no account so the toggle is meaningless to them; matches OQ-G's "address as source of truth" model.
 
 ### Form fields
 
@@ -251,24 +254,28 @@ See Q9.
    - **Observed in code:** `addresses.province` doesn't exist yet (Batch 5 owner).
    - **Question:** Hardcoded list of Pakistani provinces, fetched from a server-side enum, or free-text?
    - **Plausible answers:** (a) Hardcoded constants module: ["Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan", "Gilgit-Baltistan", "Azad Kashmir", "Islamabad Capital Territory"]. (b) Free-text input (no dropdown). (c) Postgres enum `pakistan_province` with the same 7 values.
+**Answer:** (a) Hardcoded constants module in `packages/constants/src/geo/pakistan-provinces.ts` with the 7-value list. Stored as `text` on `addresses.province` + `orders.shippingProvince` (no Postgres enum — easier to mutate later if a new territory is added).
 
 5. **Postal code validation.**
    - **Observed in design:** 48h field, mono digits.
    - **Observed in code:** Column doesn't exist (Batch 5 owner).
    - **Question:** Strict 5-digit Pakistan postcode, optional, or free-text?
    - **Plausible answers:** (a) Strictly `^\d{5}$` (Pakistan's standard). (b) Optional `^\d{5}$` if provided. (c) Free-text up to 10 chars.
+**Answer:** (a) Strictly `^\d{5}$`. Pakistan's postal code is uniformly 5 digits; client-side regex + zod validator. Required field on the one-time card form.
 
 6. **Landmark column ownership and persistence.**
    - **Observed in design:** Optional landmark field on the one-time card.
    - **Observed in code:** No `landmark` column anywhere.
    - **Question:** Where does landmark live when toggle OFF saves the address?
    - **Plausible answers:** (a) New `addresses.landmark text nullable` (parallel to postalCode/province) — Batch 7 owns it. (b) Add to Batch 5's `addresses` migration (move ownership to `buyer-settings`). (c) Don't persist landmark to `addresses` — only snapshot it on `orders.shippingLandmark`. The user can re-enter on next checkout.
+**Answer:** (b) Add `addresses.landmark text nullable` to Batch 5's `buyer-settings` migration alongside `postalCode + province`. The settings/addresses page will need to display + edit landmark eventually anyway, so co-locating ownership is cheaper than a future Batch-7-to-Batch-5 column move. Toggle-OFF save copies inline `landmark` into `addresses.landmark`; checkout snapshot copies into `orders.shippingLandmark`.
 
 7. **Hint card copy mentioning "save to your account" while a guest has no account.**
    - **Observed in design:** Hint card copy "Toggle off the switch above if you'd like us to save this address to your account for next time."
    - **Observed in code:** None.
    - **Question:** Hide the hint card for guests, swap copy to a guest-specific variant, or keep the same copy regardless?
    - **Plausible answers:** (a) Hide the hint entirely for guests. (b) Swap to "Sign in next time to save addresses for one-tap reuse." (c) Keep the same copy — accept the irrelevance for guests (cheapest).
+**Answer:** (b) Swap to a guest-specific variant: "Sign in next time to save addresses for one-tap reuse." Couples the hint with a `<Link href="/auth?redirect=/checkout">` on the "Sign in" word so guests can convert without losing form state (form state lives in cart-store + sessionStorage).
 
 ### Behavior
 
@@ -277,24 +284,28 @@ See Q9.
    - **Observed in code:** None.
    - **Question:** What happens when (i) a saved address is selected and (ii) the user types into the one-time card?
    - **Plausible answers:** (a) Typing into the one-time card de-selects the saved-address radio. (b) Selecting a saved-address radio clears the one-time card form. (c) Both stay populated; submit prefers `addressId` (saved) over inline `shippingAddress` (one-time).
+**Answer:** (a) Typing into the one-time card de-selects the saved-address radio. The most recent intent wins; preserves the one-time card's typed values if the user is mid-edit and accidentally clicks a radio (radio click clears the form, per (b), would lose data).
 
 9. **Co-existence with the existing `+ Use a new address` button.**
    - **Observed in design:** Both the button (above OR divider) and the one-time card (below OR divider) coexist.
    - **Observed in code:** `+ Use a new address` opens `AddressDialog` (today the only "add" path).
    - **Question:** Both retained, button retired, or button repurposed?
    - **Plausible answers:** (a) Both retained — distinct intents (`+ Use a new address` = save and use; one-time card = use without saving). (b) Button retired; toggle-OFF on the one-time card replaces it. (c) Both retained but the button now also calls into the one-time-card path (unifies the dialog into the inline card).
+**Answer:** (a) Both retained. The dialog is for the "I want to add this address to my account permanently" intent; the one-time card is for "use this just once". The toggle on the one-time card lets the user opt INTO save-mid-checkout without leaving the page — a third path with distinct UX.
 
 10. **Card behavior for guests (per OQ-G).**
     - **Observed in design:** No guest-specific frame.
     - **Observed in code:** Guest path doesn't exist yet.
     - **Question:** For a guest reaching `/checkout`, what does the address section look like?
     - **Plausible answers:** (a) Saved-address list section is hidden entirely; only the one-time card shows, auto-focused, with toggle hidden (always ephemeral). (b) Saved-address section shows an empty state ("Sign in to use saved addresses") + the one-time card with toggle hidden. (c) Same UI as logged-in users; the saved-address section is empty (no addresses to show), the toggle is visible but pinned ON read-only.
+**Answer:** (a) For guests: hide the saved-addresses list and the OR divider entirely; show only the one-time-delivery card, auto-focused on the recipient-name field, with the `Don't save` toggle and the `+ Use a new address` button hidden (guests have no addresses to save into). The hint card swaps to the guest-specific copy from Q7.
 
 11. **Toggle-OFF persistence semantics.**
     - **Observed in design:** None drawn.
     - **Observed in code:** None.
     - **Question:** On submit with toggle OFF, is the address saved before order placement (separate `POST /api/addresses` then `POST /api/checkout`), atomically inside `/api/checkout` (single tx, address insert + order insert), or after order success?
     - **Plausible answers:** (a) Two-step: `POST /api/addresses` (await), then `POST /api/checkout` with the new `addressId`. (b) Single `/api/checkout` call with `saveAddress: true`; route handler does both writes in one tx. (c) Save after order success (post-checkout webhook style).
+**Answer:** (b) Single `/api/checkout` call with a `saveAddress: true` flag in the payload; route handler runs both writes in one transaction. Atomic — if order insert fails, the address insert rolls back. `checkoutCartPayloadSchema` gains `saveAddress?: boolean` (default `false`).
 
 ### Schema
 
@@ -303,24 +314,28 @@ See Q9.
     - **Observed in code:** `shippingAddressSchema` has 4 (name, phone, address, city); the dialog has its own form via `AddressDialog`.
     - **Question:** Extend the existing schema, fork to a separate `oneTimeShippingAddressSchema`, or make all new fields optional on the existing one?
     - **Plausible answers:** (a) Extend in place; `postalCode + province` required (consistent with Batch 5 columns being nullable for legacy data but new-write required); `landmark` optional/nullable. (b) Fork to `oneTimeShippingAddressSchema` (clearer per-path validation). (c) Make new fields optional on the existing schema (loosest — no breakage of existing snapshot consumers).
+**Answer:** (a) Extend `shippingAddressSchema` in place. Add `postalCode: string.regex(/^\d{5}$/)`, `province: pakistanProvinceEnum`, `landmark: string.max(200).nullable().optional()`. The legacy 4-field shape (used by saved-address snapshots before Batch 5) becomes incompatible — but Batch 5 ships the columns first, so by the time this batch lands, all saved addresses have nullable postal/province/landmark. Existing snapshot writers in `/api/checkout/route.ts` get updated in the same PR.
 
 13. **Sequencing dependency on Batch 5 `addresses.postalCode + province` migration.**
     - **Observed in design:** N/A.
     - **Observed in code:** Per `05-batch-plan.md` Cross-cutting deps, Batch 5 (`buyer-settings`) owns `addresses.postalCode + province`.
     - **Question:** Has Batch 5 shipped that migration? If not, what's the safe sequencing for this Batch 7 augment?
     - **Plausible answers:** (a) Confirm Batch 5 migration is in dev/staging before Batch 7 lands; postpone this card until Batch 5 confirms. (b) Skip postal/province on the one-time card for now (drop them from the design); add later when columns exist. (c) Land the columns under Batch 7 and update Batch 5 plan to consume them (re-own).
+**Answer:** (a) Confirm Batch 5 migration (`addresses.postalCode + province + landmark`) is applied to dev/staging before Batch 7 implementation begins. Batch 5 is a hard predecessor; if it slips, this augment slips with it. The runner should fail-stop at Step A if `addresses.postalCode` doesn't exist in the schema.
 
 14. **`orders.shipping*` snapshot extension.**
     - **Observed in design:** N/A.
     - **Observed in code:** `orders` table has `shippingName / shippingPhone / shippingAddress / shippingCity` (per `01-codebase-map.md §5`).
     - **Question:** Add `shippingPostalCode + shippingProvince + shippingLandmark` columns, or refactor the snapshot into a `jsonb` blob?
     - **Plausible answers:** (a) Three new flat columns on `orders` (additive, simplest). (b) Refactor the snapshot into a single `jsonb` column `shippingAddressSnapshot` (cleaner long-term but invasive). (c) Move the snapshot into a separate `order_addresses` table.
+**Answer:** (a) Three new flat nullable columns on `orders`: `shippingPostalCode text`, `shippingProvince text`, `shippingLandmark text`. Additive, matches the existing `shippingName / shippingPhone / shippingAddress / shippingCity` flat-column pattern. No refactor.
 
 15. **Server-side handling of `shippingAddress` payload that includes new fields.**
     - **Observed in design:** N/A.
     - **Observed in code:** `apps/web/src/app/api/checkout/route.ts` reads `payloadShippingAddress` (4-field shape) when no `addressId` is provided.
     - **Question:** With the schema extended (Q12), the route handler must accept the new fields and persist to the new snapshot columns (Q14). Confirm both extensions land in the same PR to avoid a partial state.
     - **Plausible answers:** (a) Single PR for schema + route handler + UI. (b) Two PRs: schema/migration first, then route + UI. (c) Schema + route in PR 1; UI in PR 2 (route accepts but ignores new fields until UI ships — risky).
+**Answer:** (a) Single PR for schema migration + zod schema extension + route handler + UI. The Batch-7 augment is small enough to land atomically; no partial states allowed. Migration is forward-only (additive nullable cols) so rollback is just a code revert.
 
 ---
 
