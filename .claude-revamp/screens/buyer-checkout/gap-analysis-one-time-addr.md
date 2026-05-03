@@ -16,6 +16,8 @@
 > **Inputs read:** the existing `screens/buyer-checkout/gap-analysis.md` (2026-05-02), `05-batch-plan.md` (Batch 7 OQs already resolved — see §0), `06-scope-cut.md`, `07-default-proposals.md`.
 >
 > Per CLAUDE.md hard rule 1, **no implementation is proposed**. Every actionable row in §2 maps to a numbered question in §5.
+>
+> **Amendment 2026-05-04:** the optional `Landmark / nearest reference` field is **dropped from Batch 7 scope**. References to it remain in §0a–4 below as an audit trail (the design still draws it), but Q6's answer supersedes — see Q6 for the binding decision. The `addresses.landmark`, `orders.shippingLandmark`, and `shippingAddressSchema.landmark` additions are removed from the implementation plan; the EN form variants render without the row.
 
 ---
 
@@ -90,7 +92,7 @@ Augment inserts:
 - **NEW one-time-addr card** — a third address-input path (alongside saved-address radio + AddressDialog).
 - **NEW `OR · ONE-TIME DELIVERY` divider** between saved addresses and the one-time card.
 - **NEW `Don't save` toggle** that controls whether the inline address is persisted.
-- **NEW form rows** beyond the existing `checkoutShippingFormSchema` (which has only name/phone/address/city): postal code, province, landmark.
+- **NEW form rows** beyond the existing `checkoutShippingFormSchema` (which has only name/phone/address/city): postal code, province. (Landmark dropped per 2026-05-04 amendment — see Q6.)
 - **NEW mutual-exclusion behavior** between selected saved address and the one-time card.
 - **NEW `WON'T BE SAVED` rotated stamp** treatment.
 
@@ -113,13 +115,13 @@ Augment inserts:
 | `QYGIC` City + 48h input | Exists in `AddressDialog` | Same as today. | NEW_FIELD |
 | `G3t6ID` Postal code + 48h input (mono) | None — `addresses` table has no `postalCode` column today | New field + new column. **`buyer-settings` (Batch 5) is owner of `addresses.postalCode + province`** per `05-batch-plan.md` Cross-cutting deps table. Confirm migration is in flight before this batch lands — see Q5. | NEW_FIELD |
 | `tX52F` Province dropdown | None — `addresses` has no `province` column today | Same Batch 5 ownership as Postal code. New select primitive at 44h. Province list undrawn — see Q4. | NEW_FIELD |
-| `b0luF` Landmark / nearest reference + 48h input + `yKyT5` "Optional" pill | None — no `landmark` column anywhere | New field. Optional. **No existing column.** New nullable text col on `addresses` (if guest persists nothing; saved-via-toggle-OFF persists landmark) — but per OQ-G + plan-level resolution this card NEVER persists to `addresses` (toggle ON default = ephemeral) — so where does landmark live? See Q6. | NEW_FIELD |
+| ~~`b0luF` Landmark / nearest reference + 48h input + `yKyT5` "Optional" pill~~ | ~~None — no `landmark` column anywhere~~ | **DROPPED 2026-05-04** per Q6 amendment. Field removed from implementation; design still draws it but EN variants ship without the row. | DROPPED |
 | Bottom hint card `hYNcq`/`bB4IO` ("Used only for this order. Toggle off the switch above if you'd like us to save this address to your account for next time.") | (none) | New copy — same hint molecule class as sign-in / OTP-info / shopkeeper-OTP-info. Note: the hint mentions "save to your account" but a guest has no account — see Q7. | NEW_FIELD |
 | Selecting a saved-address radio while one-time card has typed values | (existing radio toggles selection only — inline form values are not cleared on radio click) | New mutual-exclusion. Three plausible behaviors — see Q8. | CHANGED_INTERACTION |
 | Card auto-expand for guests (per OQ-G the guest path MUST come through this card) | (none) | New conditional behavior. See Q10. | NEW_INTERACTION |
 | `+ Use a new address` button (existing) above the OR divider | Existing — opens `AddressDialog` | Co-existence question: with the one-time card present, does the existing button stay (for "save and reuse" path) or get retired (one-time card covers everything)? See Q9. | CHANGED_INTERACTION |
 | Toggle OFF + submit → save the entered address to user's address book | (none — current `+ Use a new address` flow uses the dialog and saves before submit) | New "save during checkout" implicit behavior. Today the dialog calls `POST /api/addresses` separately; on the one-time card with toggle OFF, does the checkout call `POST /api/addresses` first then proceed, or does `/api/checkout` accept a `saveAddress: true` flag? See Q11. | NEW_INTERACTION |
-| Address validation on the one-time path | `shippingAddressSchema` validates name/phone/address/city only (`packages/schemas/src/orders/checkout.ts:8-13`) | Schema must extend to include postal/province/landmark + recipientName separation (today the dialog distinguishes `recipientName` vs `title`, but `shippingAddressSchema` flat-named fields are `name` (=recipient), `phone`, `address`, `city`). Field-by-field validation rules undrawn — see Q12. | NEW_FIELD |
+| Address validation on the one-time path | `shippingAddressSchema` validates name/phone/address/city only (`packages/schemas/src/orders/checkout.ts:8-13`) | Schema must extend to include postal/province + recipientName separation (today the dialog distinguishes `recipientName` vs `title`, but `shippingAddressSchema` flat-named fields are `name` (=recipient), `phone`, `address`, `city`). Field-by-field validation rules undrawn — see Q12. (Landmark omitted per Q6 amendment.) | NEW_FIELD |
 | Server-side persistence for guest orders (per OQ-G `orders.guestSessionId` + relax `requireSession()`) | `requireSession()` enforced at route handler entry (`apps/web/src/app/api/checkout/route.ts`); no `guestSessionId` column | Already-resolved at OQ-G. Cross-reference here for completeness; the schema migration is Batch 7-owned but the call sites span the checkout route. | NEW_FIELD |
 
 ---
@@ -140,9 +142,9 @@ shippingAddressSchema = z.object({
 
 The one-time card's data shape is broader. Three plausible extensions (see Q12):
 
-(a) Extend `shippingAddressSchema` with `postalCode`, `province`, `landmark` (all nullable except postalCode if required):
+(a) Extend `shippingAddressSchema` with `postalCode`, `province` (landmark dropped per Q6 amendment):
 ```ts
-{ name, phone, address, city, postalCode: string, province: string, landmark?: string | null }
+{ name, phone, address, city, postalCode: string, province: string }
 ```
 
 (b) Two separate schemas: `shippingAddressSchema` (legacy 4 fields, used by saved-addresses snapshot) and `oneTimeShippingAddressSchema` (full 7 fields).
@@ -156,7 +158,7 @@ The choice affects `checkoutCartPayloadSchema` and `/api/checkout/route.ts`'s sn
 Today the `orders` table holds the address snapshot via `shippingName / shippingPhone / shippingAddress / shippingCity` (per `01-codebase-map.md §5`). New fields imply new columns:
 - `orders.shippingPostalCode text` — required-or-nullable per Q5.
 - `orders.shippingProvince text` — required-or-nullable per Q4.
-- `orders.shippingLandmark text nullable`.
+- ~~`orders.shippingLandmark text nullable`~~ — **DROPPED 2026-05-04** per Q6.
 
 These are owned by Batch 5 per the cross-cutting deps table for `addresses.postalCode + province`. The orders-snapshot extension is **a parallel migration this batch needs** unless the `orders` snapshot is changed to JSON or to FK lookup.
 
@@ -172,9 +174,9 @@ Per `05-batch-plan.md` cross-cutting deps, Batch 5 (`buyer-settings`) owns the `
 
 The one-time card is the only address-entry path for guests because they have no saved addresses.
 
-### 3.5 `landmark` persistence on toggle-OFF save
+### 3.5 `landmark` persistence — **DROPPED 2026-05-04**
 
-If toggle is OFF and the user submits, the entered address (including landmark) is written to `addresses`. So `addresses.landmark text nullable` is also required — owner unclear (Batch 5 vs Batch 7). See Q6.
+The original §3.5 carried the landmark column from this card into the `addresses` table on toggle-OFF saves. Per the 2026-05-04 amendment (Q6 below), landmark is omitted from Batch 7 entirely; no column work is required. Toggle-OFF saves write only `name / phone / address / city / postalCode / province`.
 
 ---
 
@@ -267,8 +269,8 @@ See Q9.
    - **Observed in design:** Optional landmark field on the one-time card.
    - **Observed in code:** No `landmark` column anywhere.
    - **Question:** Where does landmark live when toggle OFF saves the address?
-   - **Plausible answers:** (a) New `addresses.landmark text nullable` (parallel to postalCode/province) — Batch 7 owns it. (b) Add to Batch 5's `addresses` migration (move ownership to `buyer-settings`). (c) Don't persist landmark to `addresses` — only snapshot it on `orders.shippingLandmark`. The user can re-enter on next checkout.
-**Answer:** (b) Add `addresses.landmark text nullable` to Batch 5's `buyer-settings` migration alongside `postalCode + province`. The settings/addresses page will need to display + edit landmark eventually anyway, so co-locating ownership is cheaper than a future Batch-7-to-Batch-5 column move. Toggle-OFF save copies inline `landmark` into `addresses.landmark`; checkout snapshot copies into `orders.shippingLandmark`.
+   - **Plausible answers:** (a) New `addresses.landmark text nullable` (parallel to postalCode/province) — Batch 7 owns it. (b) Add to Batch 5's `addresses` migration (move ownership to `buyer-settings`). (c) Don't persist landmark to `addresses` — only snapshot it on `orders.shippingLandmark`. The user can re-enter on next checkout. (d) **Drop the landmark field from Batch 7 entirely; revisit later.**
+**Answer (revised 2026-05-04):** (d) **Drop landmark from Batch 7.** The form row is removed from both EN variants; no `addresses.landmark`, no `orders.shippingLandmark`, no zod schema entry. The Pencil design still draws the row — it is intentionally not implemented this batch and will be revisited when its column ownership is decided. Supersedes the original answer (b). Rationale: landmark column was the sole blocker forcing a Batch 5 amendment + migration 0013; dropping it lets Batch 7 proceed against migration 0012 alone.
 
 7. **Hint card copy mentioning "save to your account" while a guest has no account.**
    - **Observed in design:** Hint card copy "Toggle off the switch above if you'd like us to save this address to your account for next time."
@@ -314,21 +316,21 @@ See Q9.
     - **Observed in code:** `shippingAddressSchema` has 4 (name, phone, address, city); the dialog has its own form via `AddressDialog`.
     - **Question:** Extend the existing schema, fork to a separate `oneTimeShippingAddressSchema`, or make all new fields optional on the existing one?
     - **Plausible answers:** (a) Extend in place; `postalCode + province` required (consistent with Batch 5 columns being nullable for legacy data but new-write required); `landmark` optional/nullable. (b) Fork to `oneTimeShippingAddressSchema` (clearer per-path validation). (c) Make new fields optional on the existing schema (loosest — no breakage of existing snapshot consumers).
-**Answer:** (a) Extend `shippingAddressSchema` in place. Add `postalCode: string.regex(/^\d{5}$/)`, `province: pakistanProvinceEnum`, `landmark: string.max(200).nullable().optional()`. The legacy 4-field shape (used by saved-address snapshots before Batch 5) becomes incompatible — but Batch 5 ships the columns first, so by the time this batch lands, all saved addresses have nullable postal/province/landmark. Existing snapshot writers in `/api/checkout/route.ts` get updated in the same PR.
+**Answer:** (a) Extend `shippingAddressSchema` in place. Add `postalCode: string.regex(/^\d{5}$/)`, `province: pakistanProvinceEnum`. (Landmark omitted per Q6 amendment 2026-05-04.) The legacy 4-field shape (used by saved-address snapshots before Batch 5) becomes incompatible — but Batch 5 ships the columns first, so by the time this batch lands, all saved addresses have nullable postal/province. Existing snapshot writers in `/api/checkout/route.ts` get updated in the same PR.
 
 13. **Sequencing dependency on Batch 5 `addresses.postalCode + province` migration.**
     - **Observed in design:** N/A.
     - **Observed in code:** Per `05-batch-plan.md` Cross-cutting deps, Batch 5 (`buyer-settings`) owns `addresses.postalCode + province`.
     - **Question:** Has Batch 5 shipped that migration? If not, what's the safe sequencing for this Batch 7 augment?
     - **Plausible answers:** (a) Confirm Batch 5 migration is in dev/staging before Batch 7 lands; postpone this card until Batch 5 confirms. (b) Skip postal/province on the one-time card for now (drop them from the design); add later when columns exist. (c) Land the columns under Batch 7 and update Batch 5 plan to consume them (re-own).
-**Answer:** (a) Confirm Batch 5 migration (`addresses.postalCode + province + landmark`) is applied to dev/staging before Batch 7 implementation begins. Batch 5 is a hard predecessor; if it slips, this augment slips with it. The runner should fail-stop at Step A if `addresses.postalCode` doesn't exist in the schema.
+**Answer:** (a) Confirm Batch 5 migration (`addresses.postalCode + province`) is applied to dev/staging before Batch 7 implementation begins. Batch 5 is a hard predecessor; if it slips, this augment slips with it. The runner should fail-stop at Step A if `addresses.postalCode` doesn't exist in the schema. (Landmark predecessor dropped per Q6 amendment.)
 
 14. **`orders.shipping*` snapshot extension.**
     - **Observed in design:** N/A.
     - **Observed in code:** `orders` table has `shippingName / shippingPhone / shippingAddress / shippingCity` (per `01-codebase-map.md §5`).
     - **Question:** Add `shippingPostalCode + shippingProvince + shippingLandmark` columns, or refactor the snapshot into a `jsonb` blob?
     - **Plausible answers:** (a) Three new flat columns on `orders` (additive, simplest). (b) Refactor the snapshot into a single `jsonb` column `shippingAddressSnapshot` (cleaner long-term but invasive). (c) Move the snapshot into a separate `order_addresses` table.
-**Answer:** (a) Three new flat nullable columns on `orders`: `shippingPostalCode text`, `shippingProvince text`, `shippingLandmark text`. Additive, matches the existing `shippingName / shippingPhone / shippingAddress / shippingCity` flat-column pattern. No refactor.
+**Answer (revised 2026-05-04):** (a) Two new flat nullable columns on `orders`: `shippingPostalCode text`, `shippingProvince text`. (`shippingLandmark` dropped per Q6 amendment.) Additive, matches the existing `shippingName / shippingPhone / shippingAddress / shippingCity` flat-column pattern. No refactor.
 
 15. **Server-side handling of `shippingAddress` payload that includes new fields.**
     - **Observed in design:** N/A.

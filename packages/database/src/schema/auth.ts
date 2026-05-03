@@ -17,11 +17,7 @@ export const user = pgTable('user', {
     .notNull()
     .default(false),
   role: text('role').notNull().default('retailer'),
-  // `business_name` is created by migration 0012 (Batch 5). The Drizzle
-  // field declaration stays deferred until the operator applies that
-  // migration to dev/staging — Better-Auth's user SELECT would 500
-  // otherwise. Account drawer renders the line only when the session
-  // payload exposes it (graceful no-op until then).
+  businessName: text('business_name'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

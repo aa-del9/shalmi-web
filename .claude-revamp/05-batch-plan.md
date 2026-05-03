@@ -7,10 +7,11 @@
 
 ## Summary
 
-- Total screens in scope: **16** (5A REVAMP: 12 · 5B NEW: 4)
-- Total batches: **6**
-- Estimated nights to complete: **6** (one batch per night)
+- Total screens in scope: **20** (5A REVAMP: 12 · 5B NEW: 8)
+- Total batches: **7**
+- Estimated nights to complete: **7** (one batch per night)
 - Cross-cutting foundations (chrome retoken, breadcrumb component, currency formatter, status-display map, weight gauge constants, GST constant) land **inside the first batch that needs them**, not as a separate "Batch 0". The rationale: per `04-design-system-implementation-log.md` the design system / atom layer is already shipped, so each screen's batch will pull in any small shared helper it needs (formatter, mapping table) on first touch.
+- **Batch 7 was added on 2026-05-04** to cover the auth flow + checkout one-time delivery address surfaced in a later Pencil revision (sign-in / generic signup / shopkeeper signup EN+Urdu / OTP / one-time-address card with `Don't save` toggle). It is appended at the end because every screen it lands is independent of earlier-batch schema, but the checkout augment must run after Batch 3.
 
 ## Excluded screens
 
@@ -176,6 +177,33 @@ Final ranked table (kept here so future batches can be re-scored without re-read
   - "Saved" stat in drawer renders "—" per scope-cut Buyer-profile-stats STUBBED. Don't wire `totalSaved` calculation — wait for wishlist feature in a later milestone.
   - This is the final 5B batch — no further batches consume any schema landed here. Verify `payout_runs` cycle-roll behaviour end-to-end before sign-off; this is the riskiest fund-flow path in the revamp.
 
+## Batch 7 — Buyer auth flow + checkout one-time delivery address
+
+- **Phase:** 5B
+- **Why this batch:** lands the buyer-facing auth surface (sign-in, generic-user signup, shopkeeper signup EN + Urdu/RTL, OTP verification) and a small additive card on checkout (one-time / unsaved delivery address with `Don't save` toggle). All five surfaces share the **`+92` phone-chip input** molecule and the **OTP grid** molecule, so they ship as one batch. Auth runs at the end because: (a) the existing better-auth + Twilio phone-OTP infrastructure already powers admin / vendor login, so buyers were unblocked through `AuthModal` while earlier batches ran; (b) the sub-role schema this batch introduces does not block any earlier batch; (c) the checkout one-time-address card is an additive overlay on the `buyer-checkout` screen shipped in Batch 3 and must run after that screen is stable.
+- **Screens (in order — risk ascending; checkout one-time-addr last because it consumes the phone-chip molecule landed by the auth screens):**
+  1. `buyer-signin` — risk: ~15, kind: NEW (replaces empty `(auth)/sign-in` page stub). Centered 480w desktop card / 420 mobile app-bar. Single `+92` phone input → "Send OTP" → routes to OTP verify. Includes `Continue as Guest` ghost button + benefits card (pending **OQ-G**) and `Sign in as Vendor · Admin login` tertiary links (pending **OQ-V**). Wires the existing `auth-client.signIn.phoneNumber()` from `modules/auth/server/auth-client/index.ts` (no new endpoint). **Lands the `+92` phone-chip input molecule** (consumed by every screen in this batch).
+  2. `buyer-otp` — risk: ~17, kind: NEW. Eyebrow `STEP 2 OF 2`, 4 OTP boxes per design (56×64 desktop / 48×56 mobile) — confirm vs current better-auth 6-digit config (pending **OQ-O**). Resend timer copy `Resend code in 0:42`, rotated `SECURE` stamp, `Never share your OTP` caution row. Reads from existing better-auth verify endpoint. **Lands the `OTPInput` grid molecule.**
+  3. `buyer-signup-generic` — risk: ~18, kind: NEW (replaces empty `(auth)/sign-up` page stub). 520w desktop / 420 mobile. `Generic ↔ Shopkeeper` segmented switcher (Generic active, `user-round` icon). Two fields: Full name + `+92` Phone. `Continue` routes to OTP verify. **Lands the `user.accountType` enum schema** (pending **OQ-R** for column shape) — generic flow inserts with `accountType='generic'`. No Guest button on signup (per design — Guest is sign-in-only).
+  4. `buyer-signup-shopkeeper` — risk: ~30 (highest in batch), kind: NEW. EN + Urdu/RTL variants. Eyebrow `STEP 1 OF 2 · DETAILS`, language toggle `EN ↔ اردو`, 4 fields: Shopkeeper name, Shop name, Shop address (textarea), `+92` Phone. **Lands shop fields** (pending **OQ-S**: columns on `user` vs new `shop_profiles` table; possible reuse of `user.businessName` from Batch 5). **Urdu/RTL is the dominant risk** — i18n is greenfield (`--font-ar` declared but Noto Nastaliq Urdu not loaded; no `next-intl`); pending **OQ-I** for scope. Mobile EN + Urdu screens include the brand-grid hero strip (Lays / Tapal / Knorr / Olper's / Sufi / Surf / Philips / Lifebuoy on ink bg) — asset source pending **OQ-A**.
+  5. `buyer-checkout` (one-time delivery address card, augment to the screen shipped in Batch 3) — risk: ~12, kind: REVAMP-augment. Inserted **after** the saved-address radio cards and the existing `Use a new address` outline button. `OR · ONE-TIME DELIVERY` divider chip → paper-2 dashed card with green send-icon tile + rotated `WON'T BE SAVED` amber stamp + `Don't save` switch (default ON). Form: recipient name, `+92` phone, street, city + postal + province (3-up desktop / stacked mobile). (Landmark field dropped from Batch 7 scope on 2026-05-04 per operator — see `screens/buyer-checkout/gap-analysis-one-time-addr.md` Q6 and `_batch-7-schema-plan.md §3.3`.) Hint card under form: *"Used only for this order. Toggle off the switch above if you'd like us to save this address to your account for next time."* When toggle is ON, submit attaches inline `shippingAddress*` snapshot to the checkout payload and **does not** call `POST /api/addresses`. **No schema change** — `orders.addressId` is already nullable, snapshot columns already exist, and `checkoutSchema` already validates `addressId XOR shippingAddress` per `/packages/schemas/src/orders/checkout.ts`.
+- **Predecessors required:**
+  - **Batch 3** (`buyer-checkout`) — Batch 7 augments that screen, doesn't replace it.
+  - **Batch 5** (`user.businessName`) — affects **OQ-S** resolution; if shop fields reuse `businessName`, that column must already exist.
+  - Currency formatter (Batch 1) — checkout receipt totals on the one-time-addr path use the same formatter; included for completeness.
+  - None of the four auth screens themselves block on earlier batches; placement at Batch 7 reflects scope-discovery timing, not a technical dependency.
+- **Watch-outs:**
+  - **Seven open questions (OQ-R / OQ-S / OQ-I / OQ-G / OQ-V / OQ-O / OQ-A) gate this batch.** Per `BATCH_RUNNER.md` and CLAUDE.md hard rule 1, the runner must NOT improvise on any of them. If any OQ is unresolved at batch start, stop and request resolution.
+  - The existing better-auth phone-OTP flow uses **6-digit** codes (per `auth-client/index.ts`); design shows **4 boxes**. Either reduce code length in better-auth config (one-line, no migration; lower entropy) or treat the 4-box design as approximate and ship 6 — pending **OQ-O**.
+  - Guest checkout: design shows `Continue as Guest` on sign-in; current `/api/checkout` enforces `requireSession()`. Three implementation paths (pending **OQ-G**); the cheapest is UI-only (button sets a `guest=1` flag; checkout still prompts sign-in/create when reached) — defers real guest-order schema.
+  - Urdu / RTL is **i18n greenfield** — no `next-intl` / `next-i18next`; `--font-ar` is declared in `packages/ui/src/styles/globals.css` but the font file is not loaded; `LanguageToggle` is presentational only. Three paths (pending **OQ-I**): static Urdu placeholder route with hard-coded copy + `dir="rtl"` wrapper (cheapest); land full i18n now (largest scope creep — likely deserves its own batch); drop the Urdu screen entirely.
+  - One-time address card: the `addressId XOR shippingAddress` branching already exists server-side. Frontend must (i) clear `addressId` from form state when the user types into the one-time card, (ii) NOT call the existing `POST /api/addresses` mutation in this path, (iii) attach the snapshot directly to the checkout payload. Verify no double-write to the `addresses` table on submit.
+  - The four auth screens replace empty `(auth)/sign-in` and `(auth)/sign-up` page stubs; the existing `/auth` route hosting `AuthModal` should either be retired or kept as a redirect — pending **OQ-V** resolution. Don't accidentally retoken the admin / vendor `AuthModal` while building the buyer flow.
+  - Generic and shopkeeper signups share **one** `/sign-up` route with the segmented switcher controlling form state — confirm before splitting into two routes. The Urdu shopkeeper variant is the only candidate for a separate sub-route (`/sign-up/ur` or similar), pending **OQ-I**.
+  - Phone is `unique`-indexed on `user`. Signup form must surface a friendly conflict error when the phone is already registered — verify the better-auth error shape and map it to the design's input error state.
+  - Mobile shopkeeper hero brand-grid: 8 brand placeholder tiles. If asset source is real product photos (pending **OQ-A**), legal sign-off may be needed before the batch can ship the assets — runner should not commit unsigned brand imagery.
+  - Per `02-design-inventory.md`, no auth screens were originally inventoried — this batch is the first time those Pencil frames are tracked. If a future inventory pass discovers more auth states (forgot-password, account-recovery, etc.), they are NOT in Batch 7 scope.
+
 ---
 
 ## Cross-cutting dependencies graph
@@ -202,6 +230,12 @@ Schema migrations and shared modules: which batch introduces them, which batches
 | `addresses.postalCode + province`                                               | **Batch 5** (buyer-settings)                                                      | Batch 6 (drawer "default Shop" subtitle), Batch 1 retroactively if buyer-orders meta line needs it — buyer-orders gap-analysis answer Q13 says "drop postal code from order meta line if address schema doesn't ship". **No retroactive change required.** |
 | `user.businessName`                                                             | **Batch 5** (buyer-settings)                                                      | Batch 6 (drawer identity card), Batch 2 retroactively (admin-dashboard recent-orders + admin-vendors customer cell) — admin-dashboard recent-orders renders user.name only until Batch 5 ships. **Confirmed acceptable gap.**                              |
 | `GET /api/user/profile-stats` (STUBBED)                                         | **Batch 6** (account-drawer)                                                      | None within Phase 5                                                                                                                                                                                                                                        |
+| `+92` phone-chip input molecule                                                 | **Batch 7** (buyer-signin)                                                        | Batch 7 (every other auth screen + checkout one-time-address card)                                                                                                                                                                                         |
+| `OTPInput` 4/6-box grid molecule                                                | **Batch 7** (buyer-otp)                                                           | None within Phase 5 (admin / vendor auth modals retain their existing form, pending OQ-V)                                                                                                                                                                  |
+| `user.accountType` enum (`generic` / `shopkeeper`) — **shape pending OQ-R**     | **Batch 7** (buyer-signup-generic)                                                | Batch 7 (shopkeeper signup writes `accountType='shopkeeper'`); Batch 6 retroactively if drawer identity card wants to surface account type — drawer currently renders without it, no regression                                                            |
+| Shop fields (`shopName` / `shopAddress`) — **location pending OQ-S**            | **Batch 7** (buyer-signup-shopkeeper)                                             | None within Phase 5 (vendor / admin views of shopkeeper accounts not in scope)                                                                                                                                                                             |
+| i18n / RTL infrastructure — **scope pending OQ-I**                              | **Batch 7** (buyer-signup-shopkeeper Urdu) — only if OQ-I resolves to (b)         | None within Phase 5 if OQ-I resolves (a) or (c). If (b), the entire app gains a locale wrapper — significant blast radius outside Phase 5.                                                                                                                 |
+| Inline `shippingAddress` snapshot path on checkout submit                       | **Batch 7** (buyer-checkout one-time-addr)                                        | None within Phase 5 (server schema already supports it; this is the first UI consumer)                                                                                                                                                                     |
 
 
 **What breaks if a batch fails:**
@@ -212,6 +246,7 @@ Schema migrations and shared modules: which batch introduces them, which batches
 - **Batch 4 fails** → Batch 6 ledger blocked (`payout_runs` not landed). Drawer (Batch 6) is unaffected.
 - **Batch 5 fails** → Batch 6 drawer ships with "—" for Saved-items + no businessName line; identity card degrades gracefully.
 - **Batch 6 fails** → revamp ships without the new account-drawer chrome (storefront keeps existing DropdownMenu) and without the vendor ledger surface. Both are recoverable as a follow-up batch — neither blocks anything else in Phase 5.
+- **Batch 7 fails** → buyers continue to use the existing `AuthModal` (phone-OTP, no signup distinction); checkout has no one-time delivery card (saved-addresses-only). No earlier batch is blocked or affected. If only the Urdu shopkeeper screen fails (OQ-I path b), the EN auth flow can still ship — runner should land the EN screens first inside the batch and only attempt Urdu after they are stable.
 
 ---
 
@@ -225,4 +260,57 @@ All five ordering questions were answered by the user on 2026-05-02. Outcomes ca
 4. **Reorder route conflict with `RetailerOrderDetail`.** **Resolved → option (b):** `buyer-reorder` ships at the new sub-route `/profile/orders/[id]/reorder`; `/profile/orders/[id]` continues to render `RetailerOrderDetail` untouched. When the order-tracking design eventually lands, tracking will render as a component inside that existing detail page. Plan **updated**: Batch 5 reorder description, Batch 5 watchout about `RetailerOrderDetail` displacement, Batch 1 watchout about `buyer-orders` "View details" CTA, and the dependency notes on `ReviewDrawer` (no longer at risk because `RetailerOrderDetail` survives).
 5. **Admin dashboard size vs Batch 2's 4-screen footprint.** **Resolved → option (a):** keep Batch 2 at 4 screens with admin-dashboard last. Plan unchanged.
 
-(End of Phase 5 Batch Plan. Stopping per workflow — implementation begins inside Batch 1 only after this plan is signed off.)
+## Open ordering questions — Batch 7 (pending user resolution)
+
+Per CLAUDE.md hard rule 1 ("Never invent fields, copy, or behavior"), the runner MUST NOT improvise on these. Resolve before Batch 7 starts. Format mirrors the Batches 1-6 questions above — once resolved, replace this section with an "— resolved" version capturing the decisions.
+
+1. **OQ-R · Sub-role schema shape.** Design has a `Generic ↔ Shopkeeper` switcher; current `user.role` enum is `admin | vendor | retailer` (`packages/database/src/schema/auth.ts`). How to model the buyer sub-role?
+   - (a) Add `user.accountType` enum (`generic | shopkeeper`), independent of `role`. `role` stays `retailer` for both. **Cheapest, no middleware churn.**
+   - (b) Split `RETAILER` into `RETAILER_GENERIC` and `RETAILER_SHOPKEEPER` in the existing `role` column. Touches every middleware / role-guard.
+   - (c) Infer from presence/absence of shop fields — no enum.
+
+   answer: (A) but make property type retailerType instead of accountType
+
+2. **OQ-S · Shop-specific columns location.** Where do `shopName` + `shopAddress` live?
+   - (a) Add `shopName` + `shopAddress` as nullable columns on `user`, next to `businessName` (Batch 5).
+   - (b) Reuse `user.businessName` from Batch 5 for `shopName`; add only `user.shopAddress`. Risk: semantic drift if `businessName` is later used by generic users.
+   - (c) New `shop_profiles` table (FK to `user`). Heaviest; only worth it if shop schema later grows (multiple shops per shopkeeper, opening hours, etc.).
+
+   answer: (a)
+
+3. **OQ-I · Urdu / RTL scope for this batch.** No i18n exists today.
+   - (a) Static Urdu placeholder: ship the Urdu shopkeeper screen as a separate route (e.g. `/sign-up/shopkeeper/ur`) with hard-coded Urdu copy + a `dir="rtl"` wrapper + load Noto Nastaliq Urdu via `next/font`. Language toggle stays UI-only. **Cheapest.**
+   - (b) Land `next-intl` (or equivalent), wire all auth screens through it, ship Urdu as a real locale. Largest scope — likely deserves its own batch.
+   - (c) Drop the Urdu screen from Batch 7; revisit when i18n becomes a real priority.
+
+   answer: ignore this urdu screens for now, will add later will complete implmentation.
+
+4. **OQ-G · Guest checkout scope.** Design shows `Continue as Guest` on sign-in.
+   - (a) UI-only: button sets a `guest=1` flag in cart-store; checkout still prompts sign-in/create when reached. **No schema change. Cheapest.**
+   - (b) Real guest order placement: relax `/api/checkout` `requireSession()`, add `orders.guestSessionId`, persist guest carts/orders without a `user` row.
+   - (c) Drop the Guest button entirely from sign-in.
+
+   answer: (b) guest should not need to signin, and we keep address as source of truth for user information throughout order lifecycle
+   
+5. **OQ-V · Vendor / Admin tertiary links on sign-in.**
+   - (a) Route to existing admin / vendor auth surfaces (the modal `AuthModal` or dedicated routes). Out of scope to redesign those.
+   - (b) Unified `/auth` with role auto-detection from phone (the user row already carries `role`).
+   - (c) Hide the tertiary links for now.
+
+   answer: (b)
+
+6. **OQ-O · OTP code length.** Design shows 4 input boxes; better-auth is configured for 6-digit codes.
+   - (a) Reduce better-auth config to 4-digit codes. One-line change, no migration. **Lower entropy — security trade-off.**
+   - (b) Keep 6-digit; render 6 OTP boxes. Treat the 4-box design as illustrative.
+   - (c) Make code length configurable via env, default 6.
+
+   answer: (b) Keep 6-digit; render 6 OTP boxes. Treat the 4-box design as illustrative.
+
+7. **OQ-A · Mart-shelf brand-grid asset source** (Shopkeeper signup mobile EN + Urdu).
+   - (a) Generic stylized illustrations / silhouettes. **No brand-IP risk.**
+   - (b) Real brand product photos. Legal sign-off required before assets are committed.
+   - (c) Drop the hero strip; ship a plain ink-bg headline section instead.
+
+   answer: (a).
+
+(End of Phase 5 Batch Plan. Stopping per workflow — implementation begins inside Batch 1 only after this plan is signed off. Batch 7 implementation begins only after the seven OQs above are resolved.)

@@ -18,10 +18,10 @@
 | `orders.guestSessionId` text nullable | **Batch 7** | `orders` | Yes | None |
 | `orders.shippingPostalCode` text nullable | **Batch 7** | `orders` | Yes | None |
 | `orders.shippingProvince` text nullable | **Batch 7** | `orders` | Yes | None |
-| `orders.shippingLandmark` text nullable | **Batch 7** | `orders` | Yes | None |
 | `addresses.postalCode` text nullable | **Batch 5** (predecessor) | `addresses` | Yes | **Hard predecessor** — Batch 7 fail-stops if missing |
 | `addresses.province` text nullable | **Batch 5** (predecessor) | `addresses` | Yes | Hard predecessor |
-| `addresses.landmark` text nullable | **Batch 5** (re-owned per one-time-addr Q6) | `addresses` | Yes | Hard predecessor — Batch 5 plan must be amended |
+
+> **Landmark dropped (2026-05-04):** the `addresses.landmark` and `orders.shippingLandmark` columns and the matching field on the one-time-addr card were dropped from Batch 7 scope per operator direction. The optional landmark input is omitted from both EN form variants until the column ownership is revisited in a future batch. References below have been left in §4–7 only where they still describe schemas correctly; treat all `landmark` mentions as out of scope for this batch.
 
 All migrations are forward-only and additive (nullable). Rollback = code revert; no data destruction risk.
 
@@ -99,19 +99,19 @@ ALTER TABLE "orders"
 ```sql
 ALTER TABLE "orders"
   ADD COLUMN "shipping_postal_code" text,
-  ADD COLUMN "shipping_province" text,
-  ADD COLUMN "shipping_landmark" text;
+  ADD COLUMN "shipping_province" text;
 ```
 
 - All nullable — legacy orders predate the new fields.
 - Snapshot semantics: written once at order creation, never updated.
 - Pencil province values constrained to the 7-element `pakistanProvinceEnum` (`packages/constants/src/geo/pakistan-provinces.ts`), but stored as `text` for flexibility.
+- `shipping_landmark` was originally planned but dropped 2026-05-04 (see §0).
 
 ### 2.3 `/api/checkout/route.ts` handler changes
 
 - Replace `requireSession()` with `requireSessionOrGuest()` that returns `{ userId } | { guestSessionId }`.
 - Read new payload fields from `checkoutCartPayloadSchema` (extended in §4).
-- Snapshot `shippingPostalCode + shippingProvince + shippingLandmark` from either:
+- Snapshot `shippingPostalCode + shippingProvince` from either:
   - The selected saved-address row (if `addressId` was provided), or
   - The inline `shippingAddress` payload object (if the one-time-addr card was used).
 - If `payload.saveAddress === true` AND the user is not a guest, run the address insert + the order insert in a single transaction.
@@ -131,17 +131,17 @@ Batch 7 cannot ship the one-time-addr card until Batch 5's `addresses` migration
 
 - Same as 3.1.
 
-### 3.3 `addresses.landmark` text nullable (Batch 5 owner — **plan amendment per one-time-addr Q6**)
+### 3.3 `addresses.landmark` — **DROPPED 2026-05-04**
 
-- The original `05-batch-plan.md` Batch 5 description listed only `postalCode + province`. **Add `landmark` to that migration** so the one-time-addr card has a full target schema and Batch 5's settings/addresses page can render the field.
-- One-line addition to the Batch 5 migration; no impact on Batch 5's existing scope.
+The original §3.3 amended Batch 5 to add `addresses.landmark` so the one-time-addr card had a full target schema. Per operator direction on 2026-05-04, the landmark field is omitted from both EN form variants and from the `addresses` schema for now. No Batch 5 amendment is required; the migration file `0013_addresses_landmark.sql` will NOT be authored.
 
 ### 3.4 Sequencing check (runner Step A)
 
 Before any Batch 7 implementation begins, the runner must:
 
-1. Read `packages/database/src/schema/addresses.ts` (or equivalent) and confirm `postalCode`, `province`, `landmark` columns exist.
-2. If missing → STOP, post a STATUS note "Batch 5 not yet applied", do not improvise.
+1. Read `packages/database/src/schema/addresses.ts` and confirm `postalCode`, `province` columns exist (not `landmark` — dropped per §3.3).
+2. Confirm `user.businessName` is present per Batch 5 migration 0012.
+3. If any of the above are missing → STOP, post a STATUS note "Batch 5 not yet applied", do not improvise.
 
 ---
 
@@ -196,7 +196,7 @@ export const shippingAddressSchema = z.object({
     'Azad Kashmir',
     'Islamabad Capital Territory',
   ]),
-  landmark: z.string().max(200).nullable().optional(),        // NEW
+  // landmark intentionally omitted — dropped from Batch 7 scope on 2026-05-04 (see §0 and §3.3)
 });
 
 export const checkoutCartPayloadSchema = z
@@ -223,13 +223,11 @@ Within Batch 7, run migrations in this order (each is a separate Drizzle migrati
 1. `00XX_user_retailer_type.sql` — adds `user.retailer_type`.
 2. `00XX_user_shop_columns.sql` — adds `user.shop_name`, `user.shop_address`.
 3. `00XX_orders_guest_session.sql` — adds `orders.guest_session_id`.
-4. `00XX_orders_shipping_extras.sql` — adds `orders.shipping_postal_code`, `orders.shipping_province`, `orders.shipping_landmark`.
+4. `00XX_orders_shipping_extras.sql` — adds `orders.shipping_postal_code`, `orders.shipping_province`. (`shipping_landmark` dropped 2026-05-04.)
 
 Files 1–4 are independent and could be merged into a single migration; keeping them separate makes diff-review easier.
 
-**Batch 5 amendment (separate PR, lands first):**
-
-5. `0012_addresses_landmark.sql` (or merge into Batch 5's existing `addresses` migration) — adds `addresses.landmark`. Confirms `addresses.postal_code` and `addresses.province` from the same Batch 5 migration are present.
+**Batch 5 amendment:** **NONE** as of 2026-05-04. The previously-planned `0013_addresses_landmark.sql` is dropped along with the field itself.
 
 ---
 
@@ -244,7 +242,7 @@ Every Batch 7 migration is additive and nullable. Rollback = code revert. The fo
 
 If Batch 7 is reverted post-merge:
 - `user.retailerType / shopName / shopAddress` orphan rows can be ignored or scrubbed in a future cleanup.
-- `orders.guestSessionId / shippingPostalCode / shippingProvince / shippingLandmark` orphan values likewise.
+- `orders.guestSessionId / shippingPostalCode / shippingProvince` orphan values likewise.
 
 ---
 
@@ -252,7 +250,7 @@ If Batch 7 is reverted post-merge:
 
 None. All seven Batch 7 OQs (OQ-R/S/I/G/V/O/A) are resolved. Per-screen gap-analysis questions are answered in the respective `screens/<slug>/gap-analysis.md` files.
 
-The only remaining unknown is **whether Batch 5 has applied `addresses.postalCode + province + landmark` by the time the runner picks up Batch 7**. That is a sequencing check, not an open question.
+The only remaining unknown is **whether Batch 5 has applied `addresses.postalCode + province` (and `user.businessName`) by the time the runner picks up Batch 7**. That is a sequencing check, not an open question.
 
 ---
 
