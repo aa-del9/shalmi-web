@@ -7,12 +7,14 @@ import {
   useCartStore,
   getCartTotalItems,
   getCartTotalPrice,
+  getCartTotalWeightGrams,
 } from '@/modules/cart/stores/cart-store';
 import { useSession } from '@/modules/auth/client/auth-client';
 import { useModalStore } from '@/modules/core/stores/modal-store';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 import { CartItemRow } from '@/modules/cart/components/cart-item-row';
 import { CartSummary } from '@/modules/cart/components/cart-summary';
+import { WeightGauge } from '@/modules/cart/components/weight-gauge';
 import { formatRupeesFromCents } from '@/modules/core/utils/format-price';
 import { useRouter } from 'next/navigation';
 
@@ -22,6 +24,7 @@ export default function CartPage() {
   const clearCart = useCartStore((s) => s.clearCart);
   const totalItems = getCartTotalItems(items);
   const totalPrice = getCartTotalPrice(items);
+  const totalWeightGrams = getCartTotalWeightGrams(items);
   const { data: session, isPending: sessionLoading } = useSession();
   const openAuthModal = useModalStore((s) => s.openAuthModal);
 
@@ -71,6 +74,10 @@ export default function CartPage() {
             <Trash2 className="size-3.5" aria-hidden />
             Clear cart
           </button>
+        </div>
+
+        <div className="mb-6">
+          <WeightGauge weightGrams={totalWeightGrams} />
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
