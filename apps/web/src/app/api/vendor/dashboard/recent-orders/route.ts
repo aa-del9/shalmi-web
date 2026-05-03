@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, inArray, sql } from 'drizzle-orm';
 import {
   db,
   subOrders,
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
         qty: sql<number>`COALESCE(SUM(${orderItems.quantity}), 0)::int`,
       })
       .from(orderItems)
-      .where(sql`${orderItems.subOrderId} = ANY(${subOrderIds})`)
+      .where(inArray(orderItems.subOrderId, subOrderIds))
       .groupBy(orderItems.subOrderId);
 
     const itemCountBy = new Map<string, number>();
