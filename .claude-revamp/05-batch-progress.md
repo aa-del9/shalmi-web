@@ -22,6 +22,7 @@
 2026-05-03T08:30Z | buyer-settings | SHIPPED | 5950add (build green; smoke deferred pending dev-DB apply of migration 0012 — middleware getSession reads new user.business_name column on every authed-route)
 2026-05-03T08:45Z | buyer-reorder | SHIPPED | 5ee6524 (build green; lands cart/utils/delivery-tiers constants module + cart-summary tier-aware delivery line; auth-gated smoke deferred behind migration 0012 same as buyer-settings)
 2026-05-03T15:30Z | buyer-account-drawer | SHIPPED | 3056786 (build green; smoke verified desktop 1440x900 + mobile 420x900 — drawer opens via header avatar, paper-2 user card with VERIFIED stamp + Member since Apr 2026 + STUBBED "—" stat grid, both nav cards render, lang toggle inert, version "Shalmi Mart · v0.0.0"; zero console errors, zero same-origin 4xx/5xx)
+2026-05-03T15:50Z | vendor-ledger | SHIPPED | 81802cb (build green — /vendor/ledger ships at 8.43 kB; lands GET /api/vendor/payouts + /api/vendor/payouts/breakdown + new modules/vendor-ledger; smoke deferred — current dev session is retailer-authed and middleware 307s vendor routes, same defer pattern as vendor-dashboard/vendor-products in Batch 4)
 
 ---
 
