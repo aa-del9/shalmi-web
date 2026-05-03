@@ -27,6 +27,8 @@ export const user = pgTable('user', {
   // the `addresses` table).
   shopName: text('shop_name'),
   shopAddress: text('shop_address'),
+  whatsappFirstSeenAt: timestamp('whatsapp_first_seen_at'),
+  whatsappLastSeenAt: timestamp('whatsapp_last_seen_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
