@@ -17,10 +17,11 @@ export const user = pgTable('user', {
     .notNull()
     .default(false),
   role: text('role').notNull().default('retailer'),
-  // `business_name` is created by migration 0012 (Batch 5) but the
-  // Drizzle field declaration is deferred to Batch 6 (account drawer)
-  // so Better-Auth's user SELECT doesn't fail on dev/staging DBs that
-  // haven't applied the migration yet.
+  // `business_name` is created by migration 0012 (Batch 5). The Drizzle
+  // field declaration stays deferred until the operator applies that
+  // migration to dev/staging — Better-Auth's user SELECT would 500
+  // otherwise. Account drawer renders the line only when the session
+  // payload exposes it (graceful no-op until then).
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
