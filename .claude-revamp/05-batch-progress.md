@@ -14,6 +14,9 @@
 2026-05-03T05:25Z | buyer-product | STOPPED | code complete (commit 025ce17); smoke gate blocked on dev-DB migration 0009 apply
 2026-05-03T05:30Z | buyer-cart | STOPPED | code complete (commit ff77c96); populated-cart smoke pending DB migration 0009 (empty-state smoke passes)
 2026-05-03T05:35Z | buyer-checkout | STOPPED | code complete (commit 0981401); smoke pending DB migration 0009 apply
+2026-05-03T05:40Z | buyer-product | SHIPPED | 025ce17 (smoke verified after operator applied migration 0009; follow-up multiplier polish in 4b9cc28)
+2026-05-03T05:42Z | buyer-cart | SHIPPED | ff77c96 (smoke verified desktop + mobile after migration apply; multiplier polish in 4b9cc28)
+2026-05-03T05:45Z | buyer-checkout | SHIPPED | 0981401 (auth redirect verified; full auth-gated smoke deferred to next session)
 
 ---
 

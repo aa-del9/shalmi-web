@@ -34,4 +34,12 @@ The seed data path (`packages/database/src/seed-products.ts`) was updated to wri
 
 ## Resolution
 
-(none yet — operator will fill this in once unblocked)
+Operator applied migration `0009_pack_pricing.sql` to the dev DB and re-seeded with the new pack-pricing CSV. Smoke gate re-run on 2026-05-03:
+
+- `/` — best-prices and hot-products grids render with pack eyebrows ("950 G · CARTON × 12", "475 G · CARTON × 24"). No console errors.
+- `/products/lipton-yellow-label-950g-94e832` — breadcrumb (HOME › CARTON › product), title eyebrow `(12 × 79g)` computed, price block Rs. 18,000 + per-unit Rs. 1,500 caption, BundleSelector with `1 pack | 12 pack BEST` (selected ink), spec section, MNP delivery card, YMAL rail with 8 related Carton products. No console errors.
+- `/cart` (after Add-to-cart from PDP) — pack eyebrow `ALIBABA · 950 G · 12 PACK`, multiplier caption `Rs. 18,000 × 1 pack`, ORDER SUMMARY card, Proceed to checkout CTA. After bumping qty to 2: `Rs. 18,000 × 2 packs` + `Rs. 36,000` line total + ORDER SUMMARY total in sync.
+- `/cart` mobile (420×900) — title `Your cart · 2`, mobile eyebrow drops PACK segment, sticky bottom bar with TOTAL + Checkout button.
+- `/checkout` — redirects to `/auth?redirect=/checkout` for signed-out user (expected). Auth-gated full smoke pending sign-in test.
+
+Screenshots saved under each screen's `screenshots/` folder.
