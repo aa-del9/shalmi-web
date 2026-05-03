@@ -2,7 +2,7 @@ import postgres, { type Sql } from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
 
-const connectionString = "postgresql://postgres.hnquyvscnklrijzryqof:shalmi-dev-db1395@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres";
+const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   throw new Error('DATABASE_URL environment variable is not set');
@@ -14,7 +14,6 @@ const client =
   globalForDb.pgClient ??
   postgres(connectionString, { prepare: false, max: 3 });
 
-// eslint-disable-next-line turbo/no-undeclared-env-vars
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.pgClient = client;
 }

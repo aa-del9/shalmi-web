@@ -32,9 +32,23 @@ Ask the user (do not assume) whenever:
 - A component looks similar to an existing one but has subtle differences (is it a variant? a replacement? a new component?).
 - The design omits something the current screen has (is this intentional removal or just not drawn?).
 
-## Batch mode
+## WhatsApp/MCP build rules
 
-When running in batch mode (operator pointed you at
-`.claude-revamp/BATCH_RUNNER.md`), the runner's stop conditions are
-non-negotiable. Stopping is the correct behavior. Do not improvise to
-keep the loop going.
+- Worker lives at `apps/whatsapp-worker`. `apps/web` is unchanged
+  except where service extraction or admin UI requires.
+- MCP tools live at `packages/mcp-server`. One file per tool.
+- Shared types/utilities at `packages/whatsapp-core`.
+- Vendor business logic must live at `packages/services` so both web
+  app and worker can call it without depending on `apps/web`.
+- Verification model: phone-trust. Admin-entered phone is trusted.
+  No OTPs, no link codes. Sensitive actions use a future approval
+  state model.
+- Every write tool requires a confirmation step in the conversation
+  state machine (catches fat-fingers, not auth).
+- Every tool authenticates the caller from the conversation context —
+  never accept user_id/vendor_id as a tool argument.
+- All inbound, outbound, LLM calls, tool calls logged to
+  `whatsapp_messages`.
+- Webhook handler must ack within 3 seconds. Heavy work goes to queue.
+- After completing each phase, append a one-paragraph log to
+  `.claude-whatsapp/<phase>-log.md`.
