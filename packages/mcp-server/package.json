@@ -11,6 +11,9 @@
     "check-types": "tsc --noEmit",
     "clean": "rm -rf node_modules .turbo dist"
   },
+  "dependencies": {
+    "@repo/services": "workspace:*"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "typescript": "^5.9.2"
