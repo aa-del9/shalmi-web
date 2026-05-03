@@ -82,24 +82,24 @@ REVAMP, not new. No nav entry points to add.
 
 ### Spec adherence — questions to satisfy
 
-| Q | Answer | Implementation target |
-|---|---|---|
-| 1 | LangToggle visible-but-inert | `util-strip/index.tsx` mini text + `LanguageToggle disabled` (mobile header — out of scope this batch) |
-| 2 | Static "Deliver to {city}" label | `subnav/index.tsx` (hard-coded city or fallback "Pakistan") |
-| 3 | Existing HeroCarousel retoken'd | `hero-carousel/index.tsx` dot palette + `home/hero-section/index.tsx` wrapper |
-| 4 | Hot products = re-skin of SuperSaversSection | `home/hot-products-grid/index.tsx` consuming `getSuperSaverProducts()` |
-| 5 | Promo strip = marketing copy | `home/promo-strip/index.tsx` static |
-| 6 | 4-col ink footer; drop social; city + © bottom | `footer/index.tsx` rewrite |
-| 7 | Drawer replaces dropdown | DEFER-TO-BATCH-6. Header dropdown stays. |
-| 8 | Cart pill desktop / icon mobile | DEFER-TO-BATCH-6 (chrome work) |
-| 9 | Categories tile = first-letter / empty swatch | `home/categories-grid/index.tsx` first-letter fallback |
-| 10 | Popular = re-skin existing first-N categories; no SKU count | `home/popular-section/index.tsx` |
-| 11 | Pack-based price model — STUBBED | `prod1-card/index.tsx` hides strikethrough + discount stamp until Batch 3 |
-| 12 | Wishlist STUBBED — heart hidden | `prod1-card/index.tsx` no heart |
-| 13 | Search route STUBBED — form action stays | No change (form already hits `/search`, broken until Batch 4 search milestone) |
-| 14 | One responsive header | DEFER-TO-BATCH-6 |
-| 15 | Footer links STUBBED `#` no-ops | `footer/index.tsx` `href="#"` |
-| 16 | Skeletons matching new geometry; null for empty | Loading states added inline; existing `null`-on-empty preserved |
+| Q   | Answer                                                      | Implementation target                                                                                  |
+| --- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | LangToggle visible-but-inert                                | `util-strip/index.tsx` mini text + `LanguageToggle disabled` (mobile header — out of scope this batch) |
+| 2   | Static "Deliver to {city}" label                            | `subnav/index.tsx` (hard-coded city or fallback "Pakistan")                                            |
+| 3   | Existing HeroCarousel retoken'd                             | `hero-carousel/index.tsx` dot palette + `home/hero-section/index.tsx` wrapper                          |
+| 4   | Hot products = re-skin of SuperSaversSection                | `home/hot-products-grid/index.tsx` consuming `getSuperSaverProducts()`                                 |
+| 5   | Promo strip = marketing copy                                | `home/promo-strip/index.tsx` static                                                                    |
+| 6   | 4-col ink footer; drop social; city + © bottom              | `footer/index.tsx` rewrite                                                                             |
+| 7   | Drawer replaces dropdown                                    | DEFER-TO-BATCH-6. Header dropdown stays.                                                               |
+| 8   | Cart pill desktop / icon mobile                             | DEFER-TO-BATCH-6 (chrome work)                                                                         |
+| 9   | Categories tile = first-letter / empty swatch               | `home/categories-grid/index.tsx` first-letter fallback                                                 |
+| 10  | Popular = re-skin existing first-N categories; no SKU count | `home/popular-section/index.tsx`                                                                       |
+| 11  | Pack-based price model — STUBBED                            | `prod1-card/index.tsx` hides strikethrough + discount stamp until Batch 3                              |
+| 12  | Wishlist STUBBED — heart hidden                             | `prod1-card/index.tsx` no heart                                                                        |
+| 13  | Search route STUBBED — form action stays                    | No change (form already hits `/search`, broken until Batch 4 search milestone)                         |
+| 14  | One responsive header                                       | DEFER-TO-BATCH-6                                                                                       |
+| 15  | Footer links STUBBED `#` no-ops                             | `footer/index.tsx` `href="#"`                                                                          |
+| 16  | Skeletons matching new geometry; null for empty             | Loading states added inline; existing `null`-on-empty preserved                                        |
 
 ### Deviations from plan
 
@@ -125,14 +125,14 @@ REVAMP, not new. No nav entry points to add.
 
 ## Quality gate
 
-| Check | Result |
-|---|---|
-| `pnpm --filter web check-types` | ✅ pass |
-| `pnpm --filter web lint` | ✅ pass |
-| `pnpm --filter web build` | ✅ pass |
+| Check                                | Result                                                     |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `pnpm --filter web check-types`      | ✅ pass                                                    |
+| `pnpm --filter web lint`             | ✅ pass                                                    |
+| `pnpm --filter web build`            | ✅ pass                                                    |
 | Playwright desktop (1440×900) at `/` | ✅ mounts, no console errors, all same-origin requests 200 |
-| Playwright mobile (420×900) at `/` | ✅ mounts, no console errors |
-| Existing Playwright e2e suite | N/A — repo has no Playwright/Vitest tests |
+| Playwright mobile (420×900) at `/`   | ✅ mounts, no console errors                               |
+| Existing Playwright e2e suite        | N/A — repo has no Playwright/Vitest tests                  |
 
 Smoke method: signed out the prior buyer/vendor cookies (the stale
 better-auth session cookie was triggering ECONNRESETs against the
@@ -151,24 +151,24 @@ Screenshots saved to `screenshots/desktop.png` and `screenshots/mobile.png`.
 `page.tsx` = `apps/web/src/app/(storefront)/page.tsx`,
 `layout.tsx` = `apps/web/src/app/(storefront)/layout.tsx`.
 
-| Q | Answer | Satisfied at |
-|---|---|---|
-| 1 | LangToggle visible-but-inert | `util-strip.tsx:30-43` (mini text, no interaction) |
-| 2 | Static "Deliver to" | `subnav.tsx:43-46` (static "Pakistan" label) |
-| 3 | Existing HeroCarousel retoken'd | `hero-carousel/index.tsx:84-99` (dot palette) + `home/hero-section/index.tsx` wrapper |
-| 4 | Hot products = re-skin of SuperSavers | `home/hot-products-grid/index.tsx:40` (consumes `getSuperSaverProducts`) |
-| 5 | Promo strip = static | `home/promo-strip/index.tsx` |
-| 6 | 4-col ink footer; drop social; city + © | `footer/index.tsx:50-100` + bottom row |
-| 7 | Drawer replaces dropdown | DEFER-TO-BATCH-6 (header dropdown left untouched per cross-batch dep) |
-| 8 | Cart pill desktop / icon mobile | DEFER-TO-BATCH-6 (chrome consolidation) |
-| 9 | Categories first-letter fallback | `home/categories-grid/index.tsx:51-54` (initial in green-bg swatch) |
-| 10 | Popular = re-skin first-N; no SKUs | `home/popular-section/index.tsx:65-83` (Browse, no count) |
-| 11 | Pack pricing STUBBED — hide strikethrough/discount | `prod1-card/index.tsx:118-128` (only lowestPriceCents shown) |
-| 12 | Wishlist STUBBED — heart hidden | `prod1-card/index.tsx:106-114` (no heart icon rendered) |
-| 13 | Search route STUBBED | No change (`StorefrontHeader` form action stays `/search`) |
-| 14 | Single responsive header | DEFER-TO-BATCH-6 |
-| 15 | Footer links → `#` | `footer/index.tsx:35-50` |
-| 16 | Skeleton geometry / null on empty | Each section returns `null` on empty (existing behavior preserved) |
+| Q   | Answer                                             | Satisfied at                                                                          |
+| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1   | LangToggle visible-but-inert                       | `util-strip.tsx:30-43` (mini text, no interaction)                                    |
+| 2   | Static "Deliver to"                                | `subnav.tsx:43-46` (static "Pakistan" label)                                          |
+| 3   | Existing HeroCarousel retoken'd                    | `hero-carousel/index.tsx:84-99` (dot palette) + `home/hero-section/index.tsx` wrapper |
+| 4   | Hot products = re-skin of SuperSavers              | `home/hot-products-grid/index.tsx:40` (consumes `getSuperSaverProducts`)              |
+| 5   | Promo strip = static                               | `home/promo-strip/index.tsx`                                                          |
+| 6   | 4-col ink footer; drop social; city + ©            | `footer/index.tsx:50-100` + bottom row                                                |
+| 7   | Drawer replaces dropdown                           | DEFER-TO-BATCH-6 (header dropdown left untouched per cross-batch dep)                 |
+| 8   | Cart pill desktop / icon mobile                    | DEFER-TO-BATCH-6 (chrome consolidation)                                               |
+| 9   | Categories first-letter fallback                   | `home/categories-grid/index.tsx:51-54` (initial in green-bg swatch)                   |
+| 10  | Popular = re-skin first-N; no SKUs                 | `home/popular-section/index.tsx:65-83` (Browse, no count)                             |
+| 11  | Pack pricing STUBBED — hide strikethrough/discount | `prod1-card/index.tsx:118-128` (only lowestPriceCents shown)                          |
+| 12  | Wishlist STUBBED — heart hidden                    | `prod1-card/index.tsx:106-114` (no heart icon rendered)                               |
+| 13  | Search route STUBBED                               | No change (`StorefrontHeader` form action stays `/search`)                            |
+| 14  | Single responsive header                           | DEFER-TO-BATCH-6                                                                      |
+| 15  | Footer links → `#`                                 | `footer/index.tsx:35-50`                                                              |
+| 16  | Skeleton geometry / null on empty                  | Each section returns `null` on empty (existing behavior preserved)                    |
 
 ## Completed
 
@@ -196,3 +196,67 @@ None — repo has no test suite at present.
 
 Already documented above under "Deviations from plan".
 
+---
+
+## Addendum — 2026-05-03 — StorefrontHeader revamp (Q14 / Q7 / Q8)
+
+User-driven follow-up to land the previously-deferred chrome work on the
+storefront header. Subnav and UtilStrip were not touched.
+
+### Scope answered before coding (Pencil `T9wgS` + `D2QeX` + `uonED`)
+
+| Q                               | Decision                                                                                             |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Saved pill                      | **Skipped** — feature doesn't exist; Wishlist scope-cut still in force                               |
+| Eyebrow "SHAH ALAM · WHOLESALE" | **Hardcoded verbatim** under brand text on desktop                                                   |
+| ⌘K hint                         | **Skipped** — no command palette, not just decorative                                                |
+| Mobile EN/اردو language pill    | **Visible-but-inert**, mirrors `UtilStrip` desktop strip                                             |
+| Mobile mic icon                 | **Skipped** — no voice search                                                                        |
+| Search placeholder copy         | Adopted verbatim — "Search 50,000+ items, vendors, or bazaars" desktop / "Search Shalmi Mart" mobile |
+| Cart count                      | Numeric badge on desktop pill; small green-2 dot on mobile icon when items > 0                       |
+
+### Behavioral preservation
+
+- Form `action="/search"` and `name="q"` unchanged (still STUBBED downstream).
+- `AccountDrawerTrigger` no longer used by the header — the open call is
+  inlined via `useAccountDrawerStore`. The trigger component is now
+  unused; left in place so the surrounding module structure isn't
+  disturbed mid-batch.
+- `<AccountDrawer />` is mounted exactly once at the bottom of the
+  `<header>`, gated on `session?.user`, to avoid two Sheet portals.
+- Cart count derivation (`getCartTotalItems`) and the auth `useSession`
+  hook are unchanged.
+
+### Visual/responsive
+
+- Desktop (`md+`): single row — brand cluster | flex-1 search | Account
+  pill + Cart pill (ink-fill primary). Sticky on scroll.
+- Mobile (`<md`): app bar (brand + lang pill + round 36 Account + round
+  36 Cart) above a search row with full-width 44h field.
+- Tablet (768px): tested — desktop layout kicks in cleanly; subnav wraps
+  to a second line which is acceptable.
+
+### Files changed
+
+- `apps/web/src/modules/storefront/components/header/index.tsx` — full
+  rewrite; replaces `bg-sidebar` single-row chrome with paper-toned
+  responsive header per Pencil `T9wgS` / `D2QeX` / `uonED`.
+
+### Quality gate
+
+| Check                         | Result                                         |
+| ----------------------------- | ---------------------------------------------- |
+| `pnpm --filter web lint`      | ✅ pass                                        |
+| Playwright desktop (1440×900) | ✅ matches Pencil `T9wgS`                      |
+| Playwright tablet (768×800)   | ✅ desktop layout, subnav wraps gracefully     |
+| Playwright mobile (420×844)   | ✅ matches Pencil `D2QeX` + `uonED`            |
+| Console errors                | none related to this change (favicon 404 only) |
+
+### Open follow-ups
+
+- `AccountDrawerTrigger` component is now unused; consider removal in a
+  cleanup pass after Batch 6 settles.
+- Lang toggle still TODO(post-v1) on both desktop UtilStrip and the new
+  mobile pill — flip both together when a real LanguageToggle ships.
+- `/search` route still STUBBED per buyer-home Q13 — header form action
+  unchanged.
