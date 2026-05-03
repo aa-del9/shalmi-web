@@ -17,6 +17,8 @@
 2026-05-03T05:40Z | buyer-product | SHIPPED | 025ce17 (smoke verified after operator applied migration 0009; follow-up multiplier polish in 4b9cc28)
 2026-05-03T05:42Z | buyer-cart | SHIPPED | ff77c96 (smoke verified desktop + mobile after migration apply; multiplier polish in 4b9cc28)
 2026-05-03T05:45Z | buyer-checkout | SHIPPED | 0981401 (auth redirect verified; full auth-gated smoke deferred to next session)
+2026-05-03T07:30Z | vendor-dashboard | SHIPPED | d0b2615 (build green; smoke deferred pending dev-DB apply of migration 0010 — same wrinkle as Batch 2 admin-dashboard)
+2026-05-03T08:15Z | vendor-products | SHIPPED | 7a7d1da (build green; smoke deferred pending dev-DB apply of migration 0011 — list endpoint refs new sku/brand/lowStockThreshold/status columns)
 
 ---
 
