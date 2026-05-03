@@ -15,6 +15,7 @@ export const ABSOLUTE_ROUTES = {
   VENDOR_PRODUCTS_NEW: '/vendor/products/new',
   VENDOR_ORDERS: '/vendor/orders',
   VENDOR_LEDGER: '/vendor/ledger',
+  VENDOR_SETTINGS: '/vendor/settings',
 
   ADMIN: '/admin',
   ADMIN_DASHBOARD: `/admin/dashboard`,

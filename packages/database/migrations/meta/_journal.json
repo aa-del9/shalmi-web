@@ -71,6 +71,13 @@
       "when": 1777836001000,
       "tag": "0009_pack_pricing",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1777922401000,
+      "tag": "0010_vendor_payouts",
+      "breakpoints": true
     }
   ]
 }

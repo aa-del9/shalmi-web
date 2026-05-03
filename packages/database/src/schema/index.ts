@@ -9,6 +9,7 @@ export * from './addresses';
 export * from './products';
 export * from './product-pack-tiers';
 export * from './vendors';
+export * from './payout-runs';
 export * from './orders';
 export * from './sub-orders';
 export * from './order-items';
