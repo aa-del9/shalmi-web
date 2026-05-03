@@ -17,10 +17,10 @@ export const user = pgTable('user', {
     .notNull()
     .default(false),
   role: text('role').notNull().default('retailer'),
-  // Batch 5 (buyer-settings) — IN_SCOPE per scope-cut "Buyer business
-  // name". Surfaces on Batch 6 account drawer identity card and
-  // recent-orders rows on admin/vendor dashboards.
-  businessName: text('business_name'),
+  // `business_name` is created by migration 0012 (Batch 5) but the
+  // Drizzle field declaration is deferred to Batch 6 (account drawer)
+  // so Better-Auth's user SELECT doesn't fail on dev/staging DBs that
+  // haven't applied the migration yet.
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
