@@ -220,6 +220,7 @@ export default function CheckoutPage() {
                     item.packTiers,
                     item.selectedPackQty
                   );
+                  const packLabel = item.quantity === 1 ? 'pack' : 'packs';
                   return (
                     <div key={item.productId} className="flex items-center gap-3">
                       <div className="bg-white relative size-10 shrink-0 overflow-hidden rounded-sm border border-rule">
@@ -244,7 +245,8 @@ export default function CheckoutPage() {
                           {item.name}
                         </p>
                         <p className="font-mono text-[10px] text-ink-3">
-                          QTY {item.quantity}
+                          {formatRupeesFromCents(perPack)} × {item.quantity}{' '}
+                          {packLabel}
                         </p>
                       </div>
                       <p className="font-mono text-xs font-bold text-ink">
@@ -262,20 +264,30 @@ export default function CheckoutPage() {
 
               {/* Mobile: per-line list with totals */}
               <div className="mt-4 space-y-2 lg:hidden">
-                {items.map((item) => (
-                  <div
-                    key={item.productId}
-                    className="flex items-center justify-between text-xs"
-                  >
-                    <span className="line-clamp-1 text-ink-2">
-                      {item.name}{' '}
-                      <span className="text-ink-3">× {item.quantity}</span>
-                    </span>
-                    <span className="font-mono font-bold text-ink">
-                      {formatRupeesFromCents(getCartLineSubtotal(item))}
-                    </span>
-                  </div>
-                ))}
+                {items.map((item) => {
+                  const perPack = resolvePerPackPrice(
+                    item.packTiers,
+                    item.selectedPackQty
+                  );
+                  const packLabel = item.quantity === 1 ? 'pack' : 'packs';
+                  return (
+                    <div
+                      key={item.productId}
+                      className="flex items-start justify-between gap-3 text-xs"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-1 text-ink-2">{item.name}</p>
+                        <p className="font-mono text-[10px] text-ink-3">
+                          {formatRupeesFromCents(perPack)} × {item.quantity}{' '}
+                          {packLabel}
+                        </p>
+                      </div>
+                      <span className="font-mono font-bold text-ink">
+                        {formatRupeesFromCents(getCartLineSubtotal(item))}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="mt-5 space-y-2 text-sm">

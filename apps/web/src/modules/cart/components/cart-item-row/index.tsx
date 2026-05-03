@@ -33,6 +33,8 @@ export function CartItemRow({ item }: CartItemRowProps) {
     : eyebrowParts.join(' · ');
   const eyebrowMobile = eyebrowParts.join(' · ');
 
+  const packLabel = item.quantity === 1 ? 'pack' : 'packs';
+
   return (
     <div className="flex gap-4 border-b border-rule py-4 last:border-b-0">
       {/* Image (inert per gap-analysis Q6) */}
@@ -89,14 +91,18 @@ export function CartItemRow({ item }: CartItemRowProps) {
             className="hidden sm:inline-flex"
           />
 
-          {/* Per-pack price column — desktop only per gap-analysis Q23 */}
-          <p className="hidden w-24 text-right font-mono text-[13px] text-ink-3 sm:block">
-            {formatRupeesFromCents(perPack)}
-          </p>
-
-          <p className="w-24 text-right font-mono text-[15px] font-extrabold text-ink">
-            {formatRupeesFromCents(lineTotal)}
-          </p>
+          {/* Per-pack price + line total — visible at all viewports.
+              Format makes the qty × per-pack math explicit:
+                Rs. 1,140 × 2 packs   (mono caption)
+                Rs. 2,280             (line total) */}
+          <div className="flex flex-col items-end gap-0.5">
+            <p className="font-mono text-[10px] text-ink-3 sm:text-[12px]">
+              {formatRupeesFromCents(perPack)} × {item.quantity} {packLabel}
+            </p>
+            <p className="font-mono text-[14px] font-extrabold text-ink sm:text-[15px]">
+              {formatRupeesFromCents(lineTotal)}
+            </p>
+          </div>
 
           {/* Remove icon — desktop only per gap-analysis Q24 + Q7 */}
           <button
