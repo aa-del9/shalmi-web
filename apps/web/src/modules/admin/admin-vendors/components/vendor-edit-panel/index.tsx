@@ -18,6 +18,8 @@ import { Spinner } from '@repo/ui/components/spinner';
 import { cn } from '@repo/ui/lib/utils';
 import {
   createVendorSchema,
+  isE164,
+  normalizePhoneToE164,
   updateVendorSchema,
   type CreateVendorInput,
   type UpdateVendorInput,
@@ -163,6 +165,15 @@ export function VendorEditPanel({
   const watchedFullName = form.watch('fullName');
   const watchedShopName = form.watch('shopName');
   const watchedIsActive = form.watch('isActive');
+  const watchedPhone = form.watch('phoneNumber');
+  const phonePreview = (() => {
+    const raw = (watchedPhone ?? '').trim();
+    if (!raw) return null;
+    const parsed = normalizePhoneToE164(raw);
+    if (!parsed) return null;
+    if (parsed === raw && isE164(parsed)) return null;
+    return parsed;
+  })();
   const headerTitle = isCreating
     ? 'New vendor'
     : variant === 'mobile' && watchedFullName
@@ -267,10 +278,19 @@ export function VendorEditPanel({
                   {...form.register('phoneNumber')}
                   placeholder="+923000000000"
                   autoComplete="tel"
-                  maxLength={13}
+                  maxLength={16}
                   disabled={isSaving}
                   aria-invalid={Boolean(form.formState.errors.phoneNumber)}
                 />
+                {phonePreview && !form.formState.errors.phoneNumber ? (
+                  <p
+                    className="text-ink-3 mt-1 font-mono text-[11px] tracking-[0.04em]"
+                    aria-live="polite"
+                  >
+                    Will save as{' '}
+                    <span className="text-ink-2 font-bold">{phonePreview}</span>
+                  </p>
+                ) : null}
                 <FieldError errors={[form.formState.errors.phoneNumber]} />
               </FieldContent>
             </Field>
@@ -356,6 +376,21 @@ export function VendorEditPanel({
               })}
             </div>
           </section>
+
+          {!isCreating && vendor ? (
+            <section className="border-rule rounded-md border p-4">
+              <h3 className="text-ink-3 font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
+                WhatsApp
+              </h3>
+              <p className="text-ink-2 mt-1 text-sm">
+                {vendor.whatsappFirstSeenAt
+                  ? `Active — last seen ${formatRelativeTime(
+                      vendor.whatsappLastSeenAt ?? vendor.whatsappFirstSeenAt
+                    )}`
+                  : 'Never used'}
+              </p>
+            </section>
+          ) : null}
 
           {showFullEditor ? (
             <section className="border-rule rounded-md border p-4">
@@ -448,4 +483,30 @@ export function VendorEditPanel({
       )}
     </aside>
   );
+}
+
+const RELATIVE_TIME_UNITS: ReadonlyArray<{
+  unit: Intl.RelativeTimeFormatUnit;
+  ms: number;
+}> = [
+  { unit: 'year', ms: 365 * 24 * 60 * 60 * 1000 },
+  { unit: 'month', ms: 30 * 24 * 60 * 60 * 1000 },
+  { unit: 'week', ms: 7 * 24 * 60 * 60 * 1000 },
+  { unit: 'day', ms: 24 * 60 * 60 * 1000 },
+  { unit: 'hour', ms: 60 * 60 * 1000 },
+  { unit: 'minute', ms: 60 * 1000 },
+  { unit: 'second', ms: 1000 },
+];
+
+function formatRelativeTime(iso: string): string {
+  const target = new Date(iso).getTime();
+  if (Number.isNaN(target)) return 'recently';
+  const diffMs = target - Date.now();
+  const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+  for (const { unit, ms } of RELATIVE_TIME_UNITS) {
+    if (Math.abs(diffMs) >= ms || unit === 'second') {
+      return formatter.format(Math.round(diffMs / ms), unit);
+    }
+  }
+  return 'just now';
 }

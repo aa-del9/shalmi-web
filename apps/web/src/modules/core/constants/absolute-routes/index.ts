@@ -28,6 +28,7 @@ export const ABSOLUTE_ROUTES = {
   ADMIN_USERS: '/admin/users',
   ADMIN_SALES_REPORTS: '/admin/sales-reports',
   ADMIN_AUDIT_LOG: '/admin/audit-log',
+  ADMIN_WHATSAPP_UNRECOGNIZED: '/admin/whatsapp-unrecognized',
 } as const;
 
 export const AUTH_REQUIRED_PREFIXES = [

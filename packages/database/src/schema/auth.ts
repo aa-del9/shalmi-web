@@ -22,6 +22,8 @@ export const user = pgTable('user', {
   // migration to dev/staging — Better-Auth's user SELECT would 500
   // otherwise. Account drawer renders the line only when the session
   // payload exposes it (graceful no-op until then).
+  whatsappFirstSeenAt: timestamp('whatsapp_first_seen_at'),
+  whatsappLastSeenAt: timestamp('whatsapp_last_seen_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

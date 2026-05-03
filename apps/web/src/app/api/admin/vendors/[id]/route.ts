@@ -45,6 +45,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
         bankName: vendors.bankName,
         accountTitle: vendors.accountTitle,
         iban: vendors.iban,
+        whatsappFirstSeenAt: user.whatsappFirstSeenAt,
+        whatsappLastSeenAt: user.whatsappLastSeenAt,
       })
       .from(vendors)
       .innerJoin(user, eq(vendors.userId, user.id))
@@ -77,6 +79,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
         accountTitle: row.accountTitle,
         iban: row.iban,
       },
+      whatsappFirstSeenAt:
+        row.whatsappFirstSeenAt instanceof Date
+          ? row.whatsappFirstSeenAt.toISOString()
+          : (row.whatsappFirstSeenAt as unknown as string | null) ?? null,
+      whatsappLastSeenAt:
+        row.whatsappLastSeenAt instanceof Date
+          ? row.whatsappLastSeenAt.toISOString()
+          : (row.whatsappLastSeenAt as unknown as string | null) ?? null,
     };
 
     return jsonSuccess(data);

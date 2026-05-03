@@ -21,6 +21,10 @@ export type VendorDetail = VendorListItem & {
     accountTitle: string;
     iban: string;
   };
+  /** ISO timestamp; null if vendor has never messaged the WhatsApp bot. */
+  whatsappFirstSeenAt: string | null;
+  /** ISO timestamp of the most recent inbound WhatsApp message. */
+  whatsappLastSeenAt: string | null;
 };
 
 export type VendorListMeta = {

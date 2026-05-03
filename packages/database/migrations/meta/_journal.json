@@ -92,6 +92,13 @@
       "when": 1778011801000,
       "tag": "0012_buyer_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778098201000,
+      "tag": "0013_whatsapp",
+      "breakpoints": true
     }
   ]
 }
