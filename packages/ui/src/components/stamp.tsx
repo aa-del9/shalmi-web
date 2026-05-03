@@ -28,7 +28,6 @@ const stampVariants = cva(
     'px-2 py-[3px]',
     'font-mono text-[11px] font-bold uppercase',
     'tracking-[0.08em] leading-none whitespace-nowrap',
-    '-rotate-1',
   ].join(' '),
   {
     variants: {
@@ -38,10 +37,19 @@ const stampVariants = cva(
         neutral: 'border-ink bg-paper-2 text-ink',
         warning: 'border-amber bg-amber-bg text-amber',
         critical: 'border-red bg-red-bg text-red',
+        // Per buyer-settings gap-analysis Q10: white-on-ink "DEFAULT" pill
+        // for non-status badges (e.g. address default marker). Smallest
+        // delta over a new primitive.
+        inverse: 'border-ink bg-ink text-white',
+      },
+      rotated: {
+        true: '-rotate-1',
+        false: '',
       },
     },
     defaultVariants: {
       variant: 'neutral',
+      rotated: true,
     },
   }
 );
@@ -49,12 +57,13 @@ const stampVariants = cva(
 function Stamp({
   className,
   variant,
+  rotated,
   ...props
 }: React.ComponentProps<'span'> & VariantProps<typeof stampVariants>) {
   return (
     <span
       data-slot="stamp"
-      className={cn(stampVariants({ variant }), className)}
+      className={cn(stampVariants({ variant, rotated }), className)}
       {...props}
     />
   );

@@ -6,7 +6,8 @@ export const ABSOLUTE_ROUTES = {
   CHECKOUT: '/checkout',
 
   PROFILE: '/profile',
-  PROFILE_ADDRESSES: '/profile/addresses',
+  PROFILE_SETTINGS: '/profile/settings',
+  PROFILE_ADDRESSES: '/profile/settings/addresses',
   PROFILE_ORDERS: '/profile/orders',
 
   VENDOR: '/vendor',

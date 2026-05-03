@@ -17,6 +17,10 @@ export const user = pgTable('user', {
     .notNull()
     .default(false),
   role: text('role').notNull().default('retailer'),
+  // Batch 5 (buyer-settings) — IN_SCOPE per scope-cut "Buyer business
+  // name". Surfaces on Batch 6 account drawer identity card and
+  // recent-orders rows on admin/vendor dashboards.
+  businessName: text('business_name'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

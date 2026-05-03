@@ -6,6 +6,8 @@ export type Address = {
   recipientPhone: string;
   address: string;
   city: string;
+  postalCode: string | null;
+  province: string | null;
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;
