@@ -21,10 +21,12 @@ import {
   useCartStore,
   getCartTotalItems,
   getCartTotalPrice,
+  getCartTotalWeightGrams,
   getCartLineSubtotal,
 } from '@/modules/cart/stores/cart-store';
 import { formatRupeesFromCents } from '@/modules/core/utils/format-price';
 import { resolvePerPackPrice } from '@/modules/cart/utils/pack-pricing';
+import { resolveDeliveryTier } from '@/modules/cart/utils/delivery-tiers';
 import { DeliveryAddressSection } from '@/modules/checkout/components/delivery-address-section';
 import { RiderInstructionsSection } from '@/modules/checkout/components/rider-instructions-section';
 import {
@@ -71,6 +73,10 @@ export default function CheckoutPage() {
   const clearCart = useCartStore((s) => s.clearCart);
   const totalItems = getCartTotalItems(items);
   const totalPrice = getCartTotalPrice(items);
+  const totalWeightGrams = getCartTotalWeightGrams(items);
+  const deliveryTier = resolveDeliveryTier(totalWeightGrams);
+  const deliveryFee = deliveryTier.feeCents;
+  const grandTotal = totalPrice + deliveryFee;
 
   const [submitting, setSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -298,8 +304,12 @@ export default function CheckoutPage() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-ink-3">Delivery</span>
-                  <span className="text-ink-3">Calculated at checkout</span>
+                  <span className="text-ink-3">
+                    Delivery ({deliveryTier.label})
+                  </span>
+                  <span className="font-mono text-ink">
+                    {formatRupeesFromCents(deliveryFee)}
+                  </span>
                 </div>
               </div>
               <div className="mt-4 flex items-baseline justify-between border-t-[1.5px] border-rule-2 pt-4">
@@ -307,7 +317,7 @@ export default function CheckoutPage() {
                   TOTAL
                 </span>
                 <span className="font-mono text-lg font-extrabold text-ink">
-                  {formatRupeesFromCents(totalPrice)}
+                  {formatRupeesFromCents(grandTotal)}
                 </span>
               </div>
             </div>
@@ -349,7 +359,7 @@ export default function CheckoutPage() {
             TOTAL
           </p>
           <p className="font-mono text-base font-extrabold text-ink">
-            {formatRupeesFromCents(totalPrice)}
+            {formatRupeesFromCents(grandTotal)}
           </p>
         </div>
         <Button

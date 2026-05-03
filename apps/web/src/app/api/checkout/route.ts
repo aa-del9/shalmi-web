@@ -14,6 +14,7 @@ import { jsonSuccess, jsonError } from '@/modules/core/api';
 import { getSessionFromRequest } from '@/modules/auth/server/session-from-request';
 import { requireSession } from '@/modules/auth/server/guards/require-session';
 import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
+import { resolveDeliveryTier } from '@/modules/cart/utils/delivery-tiers';
 
 function generateDisplayId(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -169,12 +170,21 @@ export async function POST(req: NextRequest) {
 
     const displayId = generateDisplayId();
     let totalItemsCost = 0;
+    let totalCartWeightGrams = 0;
 
     for (const groupItems of vendorGroups.values()) {
       for (const gi of groupItems) {
         totalItemsCost += gi.totalPrice;
+        totalCartWeightGrams += gi.packWeightGrams;
       }
     }
+
+    // Server-authoritative delivery fee — resolves the same tier table
+    // the cart + checkout summary use, so the persisted grandTotal
+    // matches what the buyer agreed to.
+    const orderDeliveryTier = resolveDeliveryTier(totalCartWeightGrams);
+    const totalShippingCost = orderDeliveryTier.feeCents;
+    const grandTotal = totalItemsCost + totalShippingCost;
 
     const result = await db.transaction(async (tx) => {
       const [order] = await tx
@@ -188,8 +198,8 @@ export async function POST(req: NextRequest) {
           shippingCity,
           addressId: orderAddressId,
           totalItemsCost,
-          totalShippingCost: 0,
-          grandTotal: totalItemsCost,
+          totalShippingCost,
+          grandTotal,
           status: 'processing',
           riderNotes: payloadRiderNotes ?? null,
         })
@@ -197,12 +207,26 @@ export async function POST(req: NextRequest) {
 
       if (!order) throw new Error('Order insert failed');
 
-      for (const [vendorId, groupItems] of vendorGroups.entries()) {
-        const itemsTotal = groupItems.reduce((s, i) => s + i.totalPrice, 0);
+      const vendorEntries = Array.from(vendorGroups.entries());
+      let shippingAllocated = 0;
+      for (let i = 0; i < vendorEntries.length; i++) {
+        const [vendorId, groupItems] = vendorEntries[i]!;
+        const itemsTotal = groupItems.reduce((s, gi) => s + gi.totalPrice, 0);
         const weightGrams = groupItems.reduce(
-          (s, i) => s + i.packWeightGrams,
+          (s, gi) => s + gi.packWeightGrams,
           0
         );
+
+        // Weight-proportional split; last sub-order absorbs rounding.
+        const isLast = i === vendorEntries.length - 1;
+        const subShipping = isLast
+          ? totalShippingCost - shippingAllocated
+          : totalCartWeightGrams > 0
+            ? Math.round(
+                (weightGrams / totalCartWeightGrams) * totalShippingCost
+              )
+            : 0;
+        shippingAllocated += subShipping;
 
         const [subOrder] = await tx
           .insert(subOrders)
@@ -211,9 +235,9 @@ export async function POST(req: NextRequest) {
             vendorId,
             status: 'pending',
             weightGrams,
-            codAmount: itemsTotal,
+            codAmount: itemsTotal + subShipping,
             itemsTotal,
-            shippingFeeCustomer: 0,
+            shippingFeeCustomer: subShipping,
             coolieFeeReimbursement: 0,
             courierCost: 0,
             platformCommission: 0,
