@@ -15,6 +15,7 @@ import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 import { CartItemRow } from '@/modules/cart/components/cart-item-row';
 import { CartSummary } from '@/modules/cart/components/cart-summary';
 import { WeightGauge } from '@/modules/cart/components/weight-gauge';
+import { HelpBanner } from '@/modules/cart/components/help-banner';
 import { formatRupeesFromCents } from '@/modules/core/utils/format-price';
 import { useRouter } from 'next/navigation';
 
@@ -76,8 +77,9 @@ export default function CartPage() {
           </button>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-6 flex flex-col gap-3">
           <WeightGauge weightGrams={totalWeightGrams} />
+          <HelpBanner weightGrams={totalWeightGrams} />
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
