@@ -19,6 +19,8 @@
 2026-05-03T05:45Z | buyer-checkout | SHIPPED | 0981401 (auth redirect verified; full auth-gated smoke deferred to next session)
 2026-05-03T07:30Z | vendor-dashboard | SHIPPED | d0b2615 (build green; smoke deferred pending dev-DB apply of migration 0010 — same wrinkle as Batch 2 admin-dashboard)
 2026-05-03T08:15Z | vendor-products | SHIPPED | 7a7d1da (build green; smoke deferred pending dev-DB apply of migration 0011 — list endpoint refs new sku/brand/lowStockThreshold/status columns)
+2026-05-03T08:30Z | buyer-settings | SHIPPED | 5950add (build green; smoke deferred pending dev-DB apply of migration 0012 — middleware getSession reads new user.business_name column on every authed-route)
+2026-05-03T08:45Z | buyer-reorder | SHIPPED | <pending> (build green; lands cart/utils/delivery-tiers constants module + cart-summary tier-aware delivery line; auth-gated smoke deferred behind migration 0012 same as buyer-settings)
 
 ---
 

@@ -166,11 +166,12 @@ export function OrderCard({ order }: OrderCardProps) {
     return `Delivered ${dayjs(handed).format('DD MMM')}`;
   })();
 
-  // Per Batch 1 watch-out: card click + "View details" route to the
-  // existing /profile/orders/[id] (RetailerOrderDetail). The Batch 5
-  // Reorder screen at /profile/orders/[id]/reorder will replace this
-  // target on a follow-up batch.
+  // "View details" routes to the existing /profile/orders/[id]
+  // (RetailerOrderDetail parcel-boxes view, kept per Batch 5 plan
+  // resolution Q4). "Reorder" routes to the new sub-route landed in
+  // Batch 5: /profile/orders/[id]/reorder.
   const detailHref = `/profile/orders/${order.id}`;
+  const reorderHref = `/profile/orders/${order.id}/reorder`;
 
   const desktopCaption = buildItemsCaption(
     uniqueItems,
@@ -323,10 +324,15 @@ export function OrderCard({ order }: OrderCardProps) {
         </div>
 
         {/* Action column — desktop only */}
-        <div className="hidden w-full md:block">
-          {/* Per Batch 1 watch-out, only "View details" ships now.
-              Reorder/Track-order CTAs land in Batch 5; Invoice is
-              DROPPED per scope-cut. */}
+        <div className="hidden w-full flex-col gap-2 md:flex">
+          {/* "Reorder" lands in Batch 5; Track-order remains DEFERRED
+              per scope-cut; Invoice is DROPPED. */}
+          <Link
+            href={reorderHref}
+            className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-sm bg-ink px-4 text-[13px] font-semibold text-white transition-colors hover:bg-ink/90"
+          >
+            Reorder
+          </Link>
           <Link
             href={detailHref}
             className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-sm border-[1.5px] border-ink/20 px-4 text-[13px] font-semibold text-ink transition-colors hover:bg-paper-2"
@@ -335,8 +341,14 @@ export function OrderCard({ order }: OrderCardProps) {
           </Link>
         </div>
 
-        {/* Action row — mobile (only View details until Batch 5) */}
-        <div className="md:hidden">
+        {/* Action row — mobile */}
+        <div className="flex flex-col gap-2 md:hidden">
+          <Link
+            href={reorderHref}
+            className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-sm bg-ink px-4 text-[13px] font-semibold text-white transition-colors hover:bg-ink/90"
+          >
+            Reorder
+          </Link>
           <Link
             href={detailHref}
             className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-sm border-[1.5px] border-ink/20 px-4 text-[13px] font-semibold text-ink transition-colors hover:bg-paper-2"

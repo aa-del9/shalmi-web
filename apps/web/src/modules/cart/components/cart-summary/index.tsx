@@ -6,8 +6,10 @@ import { Button } from '@repo/ui/components/button';
 import {
   useCartStore,
   getCartTotalPrice,
+  getCartTotalWeightGrams,
 } from '@/modules/cart/stores/cart-store';
 import { formatRupeesFromCents } from '@/modules/core/utils/format-price';
+import { resolveDeliveryTier } from '@/modules/cart/utils/delivery-tiers';
 import { useSession } from '@/modules/auth/client/auth-client';
 import { useModalStore } from '@/modules/core/stores/modal-store';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
@@ -31,6 +33,12 @@ export function CartSummary({ hideCta = false }: CartSummaryProps) {
   const openAuthModal = useModalStore((s) => s.openAuthModal);
   const items = useCartStore((s) => s.items);
   const totalPrice = getCartTotalPrice(items);
+  const totalWeightGrams = getCartTotalWeightGrams(items);
+  const deliveryTier = resolveDeliveryTier(totalWeightGrams);
+  // Q19 (cart-summary) STUBBED → IN_SCOPE in Batch 5: delivery resolves
+  // via the new constants module shared with the reorder screen.
+  const deliveryFee = deliveryTier.feeCents;
+  const total = totalPrice + deliveryFee;
 
   if (items.length === 0) return null;
 
@@ -50,8 +58,10 @@ export function CartSummary({ hideCta = false }: CartSummaryProps) {
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-ink-3">Delivery</span>
-            <span className="text-ink-3">Calculated at checkout</span>
+            <span className="text-ink-3">Delivery ({deliveryTier.label})</span>
+            <span className="font-mono text-ink">
+              {formatRupeesFromCents(deliveryFee)}
+            </span>
           </div>
         </div>
         <div className="mt-4 flex items-baseline justify-between border-t-[1.5px] border-rule-2 pt-4">
@@ -59,7 +69,7 @@ export function CartSummary({ hideCta = false }: CartSummaryProps) {
             TOTAL
           </span>
           <span className="font-mono text-lg font-extrabold text-ink">
-            {formatRupeesFromCents(totalPrice)}
+            {formatRupeesFromCents(total)}
           </span>
         </div>
       </div>
