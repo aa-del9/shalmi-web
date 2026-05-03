@@ -20,4 +20,8 @@ export const createProductDefaultValues: CreateProductInput = {
     },
   ],
   categoryIds: [],
+  sku: null,
+  brand: null,
+  lowStockThreshold: 10,
+  status: 'active',
 };

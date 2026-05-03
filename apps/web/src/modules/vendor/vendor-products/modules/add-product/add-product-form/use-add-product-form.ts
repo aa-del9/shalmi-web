@@ -15,7 +15,19 @@ import { mapDetailToForm } from '../utils';
 import { createProductDefaultValues } from '../constants';
 import { UseAddProductFormProps } from '../types';
 
-export const useAddProductForm = ({ productId }: UseAddProductFormProps) => {
+type UseAddProductFormOpts = UseAddProductFormProps & {
+  /** When true (the new inline mode), submit does NOT navigate — caller
+   * controls reset / close via `onSaved`. When false / undefined, submit
+   * navigates to the vendor products list (legacy /new + /[id]/edit). */
+  inline?: boolean;
+  onSaved?: () => void;
+};
+
+export const useAddProductForm = ({
+  productId,
+  inline,
+  onSaved,
+}: UseAddProductFormOpts) => {
   const router = useRouter();
   const isEdit = Boolean(productId);
   const createMutation = useCreateProductMutation();
@@ -57,14 +69,33 @@ export const useAddProductForm = ({ productId }: UseAddProductFormProps) => {
     });
   };
 
-  const onSubmit = form.handleSubmit(async (data) => {
+  const submitWithStatus = async (
+    data: CreateProductInput,
+    statusOverride?: 'active' | 'draft'
+  ) => {
+    const payload =
+      statusOverride !== undefined ? { ...data, status: statusOverride } : data;
     if (isEdit && productId) {
-      await updateMutation.mutateAsync(data);
+      await updateMutation.mutateAsync(payload);
     } else {
-      await createMutation.mutateAsync(data);
+      await createMutation.mutateAsync(payload);
+    }
+    if (inline) {
+      onSaved?.();
+      return;
     }
     router.push(ABSOLUTE_ROUTES.VENDOR_PRODUCTS);
-  });
+  };
+
+  const onSubmit = form.handleSubmit((data) => submitWithStatus(data));
+
+  const onSaveDraft = form.handleSubmit((data) =>
+    submitWithStatus(data, 'draft')
+  );
+
+  const onSaveActive = form.handleSubmit((data) =>
+    submitWithStatus(data, 'active')
+  );
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -76,6 +107,8 @@ export const useAddProductForm = ({ productId }: UseAddProductFormProps) => {
     isPending,
     isLoadingProduct,
     onSubmit,
+    onSaveDraft,
+    onSaveActive,
     handleAddTier,
     fields,
     remove,

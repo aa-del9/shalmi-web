@@ -24,6 +24,9 @@ export const productImageSchema = z.object({
   blurHash: z.string().nullable(),
 });
 
+export const PRODUCT_STATUSES = ['active', 'draft'] as const;
+export type ProductStatusInput = (typeof PRODUCT_STATUSES)[number];
+
 export const createProductSchema = z.object({
   name: z.string().min(3).max(255),
   slug: slugSchema.optional(),
@@ -42,6 +45,11 @@ export const createProductSchema = z.object({
   vendorId: z.string().uuid().optional(),
   packTiers: productPackTiersSchema,
   categoryIds: z.array(z.string().uuid()).optional(),
+  // Vendor product enrichment (Batch 4 schema landing).
+  sku: z.string().min(1).max(64).optional().nullable(),
+  brand: z.string().min(1).max(120).optional().nullable(),
+  lowStockThreshold: nonNegativeInt.optional().default(10),
+  status: z.enum(PRODUCT_STATUSES).optional().default('active'),
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;

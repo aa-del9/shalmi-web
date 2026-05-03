@@ -1,6 +1,9 @@
 'use client';
 
 import { Trash2Icon } from 'lucide-react';
+import { Button } from '@repo/ui/components/button';
+import { Input } from '@repo/ui/components/input';
+import { Spinner } from '@repo/ui/components/spinner';
 import {
   Field,
   FieldContent,
@@ -8,24 +11,30 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@repo/ui/components/field';
-import { Button } from '@repo/ui/components/button';
-import { Input } from '@repo/ui/components/input';
-import { Spinner } from '@repo/ui/components/spinner';
+import { Checkbox } from '@repo/ui/components/checkbox';
+import { cn } from '@repo/ui/lib/utils';
 import { ImageUpload } from '@/modules/common/components/image-upload';
 import { ProductImageThumbnail } from '../../../components/product-image-thumbnail';
-import { Checkbox } from '@repo/ui/components/checkbox';
 import { useAddProductForm } from './use-add-product-form';
 import { AddProductFormProps } from '../types';
 
 /**
- * Vendor add-product form — pack-pricing edition.
+ * Vendor add/edit product form — pack-pricing edition.
  *
- * Note: this is a minimum-compatibility update for Batch 3 (which lands
- * the pack-pricing schema). The visual revamp of this form to match the
- * Pencil "PRICING / Bundle pricing" inline-form per `vendor-products`
- * gap-analysis is owned by Batch 4.
+ * Inline mode (used by the vendor-products screen): mounts inside the
+ * single page; submits without navigating; renders Cancel + Save as
+ * draft + Save product footer.
+ *
+ * Legacy mode (existing /vendor/products/new and /vendor/products/[id]/edit
+ * routes): submits and navigates back to the products list. Q24 binding
+ * answer is DEFERRED — these routes stay alive in this batch.
  */
-export function AddProductForm({ productId }: AddProductFormProps = {}) {
+export function AddProductForm({
+  productId,
+  inline,
+  onCancel,
+  onSaved,
+}: AddProductFormProps = {}) {
   const {
     form,
     isEdit,
@@ -33,11 +42,13 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
     categoriesList,
     isPending,
     onSubmit,
+    onSaveDraft,
+    onSaveActive,
     handleAddTier,
     fields,
     product,
     remove,
-  } = useAddProductForm({ productId });
+  } = useAddProductForm({ productId, inline, onSaved });
 
   if (isEdit && isLoadingProduct) {
     return (
@@ -55,23 +66,73 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
     );
   }
 
+  const status = form.watch('status') ?? 'active';
+
   return (
     <form onSubmit={onSubmit} className="space-y-8">
       <FieldGroup className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2">
         <div className="space-y-6">
           <Field>
-            <FieldLabel htmlFor="product-name">Product name</FieldLabel>
+            <FieldLabel htmlFor="product-name">
+              Product name{' '}
+              <span className="text-red ml-1 font-mono text-[10px]">
+                Required
+              </span>
+            </FieldLabel>
             <FieldContent>
               <Input
                 id="product-name"
                 {...form.register('name')}
-                placeholder="e.g. Organic Honey 500g"
+                placeholder="e.g. Lays Family Pack · Carton of 30"
                 disabled={isPending}
                 aria-invalid={Boolean(form.formState.errors.name)}
               />
               <FieldError errors={[form.formState.errors.name]} />
+              <p className="text-ink-3 mt-1 text-xs">
+                Use the brand + variant + pack size. Buyers search this exact
+                text.
+              </p>
             </FieldContent>
           </Field>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="product-sku">SKU</FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-sku"
+                  placeholder="e.g. LFP-30"
+                  value={form.watch('sku') ?? ''}
+                  onChange={(e) =>
+                    form.setValue(
+                      'sku',
+                      e.target.value === '' ? null : e.target.value,
+                      { shouldValidate: true }
+                    )
+                  }
+                  disabled={isPending}
+                />
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="product-brand">Brand</FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-brand"
+                  placeholder="e.g. Lays"
+                  value={form.watch('brand') ?? ''}
+                  onChange={(e) =>
+                    form.setValue(
+                      'brand',
+                      e.target.value === '' ? null : e.target.value,
+                      { shouldValidate: true }
+                    )
+                  }
+                  disabled={isPending}
+                />
+              </FieldContent>
+            </Field>
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field>
@@ -216,18 +277,81 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
             </FieldContent>
           </Field>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="product-stock">Stock count</FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-stock"
+                  type="number"
+                  min={0}
+                  {...form.register('stock', { valueAsNumber: true })}
+                  disabled={isPending}
+                  aria-invalid={Boolean(form.formState.errors.stock)}
+                />
+                <FieldError errors={[form.formState.errors.stock]} />
+                <p className="text-ink-3 mt-1 text-xs">cartons</p>
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="product-lowStockThreshold">
+                Low-stock alert
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="product-lowStockThreshold"
+                  type="number"
+                  min={0}
+                  {...form.register('lowStockThreshold', {
+                    valueAsNumber: true,
+                  })}
+                  disabled={isPending}
+                />
+                <p className="text-ink-3 mt-1 text-xs">alert at</p>
+              </FieldContent>
+            </Field>
+          </div>
+
+          {/* Visibility toggle (Q9 binding — light version, no
+              pending_review). */}
           <Field>
-            <FieldLabel htmlFor="product-stock">Stock (in packs)</FieldLabel>
+            <FieldLabel>Visibility</FieldLabel>
             <FieldContent>
-              <Input
-                id="product-stock"
-                type="number"
-                min={0}
-                {...form.register('stock', { valueAsNumber: true })}
-                disabled={isPending}
-                aria-invalid={Boolean(form.formState.errors.stock)}
-              />
-              <FieldError errors={[form.formState.errors.stock]} />
+              <div className="border-rule inline-flex rounded-sm border bg-white p-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    form.setValue('status', 'active', { shouldValidate: true })
+                  }
+                  className={cn(
+                    'rounded-sm px-3 py-1.5 font-mono text-[11px] font-bold tracking-[0.08em] uppercase transition-colors',
+                    status === 'active'
+                      ? 'bg-ink text-white'
+                      : 'text-ink-2 hover:bg-paper-2'
+                  )}
+                  disabled={isPending}
+                >
+                  Active
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    form.setValue('status', 'draft', { shouldValidate: true })
+                  }
+                  className={cn(
+                    'rounded-sm px-3 py-1.5 font-mono text-[11px] font-bold tracking-[0.08em] uppercase transition-colors',
+                    status === 'draft'
+                      ? 'bg-ink text-white'
+                      : 'text-ink-2 hover:bg-paper-2'
+                  )}
+                  disabled={isPending}
+                >
+                  Draft
+                </button>
+              </div>
+              <p className="text-ink-3 mt-1 text-xs">
+                Drafts stay hidden until you mark them active.
+              </p>
             </FieldContent>
           </Field>
 
@@ -383,7 +507,7 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
                       disabled={isPending}
                       aria-label="Remove tier"
                     >
-                      <Trash2Icon className="size-4" />
+                      <Trash2Icon className="size-4" aria-hidden />
                     </Button>
                   )}
                 </div>
@@ -444,20 +568,62 @@ export function AddProductForm({ productId }: AddProductFormProps = {}) {
         </div>
       </FieldGroup>
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={isPending}>
-          {isPending ? (
-            <>
-              <Spinner className="size-4" />
-              Saving…
-            </>
-          ) : isEdit ? (
-            'Update product'
-          ) : (
-            'Create product'
-          )}
-        </Button>
-      </div>
+      {inline ? (
+        <div className="border-rule flex flex-col gap-3 rounded-md border bg-white p-4 md:flex-row md:items-center md:justify-end md:p-5">
+          {/* Q23 binding: Cancel discards in-memory changes (explicit-save
+              model — Q10 is DEFERRED so autosave is not wired). */}
+          {onCancel ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isPending}
+              className="md:order-1"
+            >
+              Cancel
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onSaveDraft}
+            disabled={isPending}
+            className="md:order-2"
+          >
+            Save as draft
+          </Button>
+          <Button
+            type="button"
+            onClick={onSaveActive}
+            disabled={isPending}
+            className="md:order-3"
+          >
+            {isPending ? (
+              <>
+                <Spinner className="size-4" />
+                Saving…
+              </>
+            ) : (
+              'Save product'
+            )}
+          </Button>
+        </div>
+      ) : (
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
+              <>
+                <Spinner className="size-4" />
+                Saving…
+              </>
+            ) : isEdit ? (
+              'Update product'
+            ) : (
+              'Create product'
+            )}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

@@ -78,6 +78,13 @@
       "when": 1777922401000,
       "tag": "0010_vendor_payouts",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1777925401000,
+      "tag": "0011_vendor_product_enrichment",
+      "breakpoints": true
     }
   ]
 }

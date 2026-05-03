@@ -47,6 +47,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
         pricePerUnitCents: products.pricePerUnitCents,
         images: products.images,
         stock: products.stock,
+        sku: products.sku,
+        brand: products.brand,
+        lowStockThreshold: products.lowStockThreshold,
+        status: products.status,
         createdAt: products.createdAt,
       })
       .from(products)
@@ -136,6 +140,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       pricePerUnitCents?: number | null;
       images?: { url: string; blurHash: string | null }[];
       stock?: number;
+      sku?: string | null;
+      brand?: string | null;
+      lowStockThreshold?: number;
+      status?: 'active' | 'draft';
     } = {};
     if (data.name !== undefined) updatePayload.name = data.name;
     if (data.packWeightGrams !== undefined)
@@ -157,6 +165,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         blurHash: string | null;
       }[];
     if (data.stock !== undefined) updatePayload.stock = data.stock;
+    if (data.sku !== undefined) updatePayload.sku = data.sku ?? null;
+    if (data.brand !== undefined) updatePayload.brand = data.brand ?? null;
+    if (data.lowStockThreshold !== undefined)
+      updatePayload.lowStockThreshold = data.lowStockThreshold;
+    if (data.status !== undefined) updatePayload.status = data.status;
 
     await db.transaction(async (tx) => {
       const [existing] = await tx

@@ -22,5 +22,9 @@ export function mapDetailToForm(
       isDefault: t.isDefault,
     })),
     categoryIds: detail.categoryIds ?? [],
+    sku: detail.sku ?? null,
+    brand: detail.brand ?? null,
+    lowStockThreshold: detail.lowStockThreshold ?? 10,
+    status: detail.status ?? 'active',
   };
 }
