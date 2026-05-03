@@ -28,10 +28,10 @@ export async function HomeBestPricesGrid() {
     >
       <header className="mb-4 flex items-end justify-between gap-3 md:mb-5">
         <div className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-red md:text-[11px] md:tracking-[0.16em]">
+          <span className="text-red font-mono text-[10px] font-bold tracking-[0.14em] uppercase md:text-[11px] md:tracking-[0.16em]">
             Best prices · Super savers
           </span>
-          <h2 className="font-sans text-xl font-extrabold tracking-[-0.01em] text-ink md:text-3xl">
+          <h2 className="text-ink font-sans text-xl font-extrabold tracking-[-0.01em] md:text-3xl">
             Today&apos;s lowest
           </h2>
         </div>

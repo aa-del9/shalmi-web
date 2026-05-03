@@ -77,8 +77,14 @@ export function ProductCard({ product }: ProductCardProps) {
               src={firstImage.url}
               alt={product.name}
               fill
-              className="object-cover"
+              className="object-contain"
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+              {...(firstImage.blurHash
+                ? {
+                    placeholder: 'blur',
+                    blurDataURL: firstImage.blurHash,
+                  }
+                : {})}
             />
           ) : (
             <div className="flex h-full items-center justify-center">

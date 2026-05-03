@@ -27,26 +27,26 @@ export function UserCard({
   const initials = computeInitials(name);
 
   return (
-    <div className="border-b border-rule bg-paper-2 px-6 py-5">
+    <div className="border-rule bg-paper-2 border-b px-6 py-5">
       <div className="flex items-center gap-3.5">
         <div
           aria-hidden
-          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-ink font-bold text-white"
+          className="bg-ink flex size-14 shrink-0 items-center justify-center rounded-full font-bold text-white"
           style={{ fontSize: 18 }}
         >
           {initials || '·'}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[17px] font-bold leading-tight tracking-[-0.01em] text-ink">
+          <p className="text-ink truncate text-[17px] leading-tight font-bold tracking-[-0.01em]">
             {name}
           </p>
           {phoneNumber ? (
-            <p className="truncate font-mono text-[13px] text-ink-3">
+            <p className="text-ink-3 truncate font-mono text-[13px]">
               {phoneNumber}
             </p>
           ) : null}
           {businessName ? (
-            <p className="truncate text-[13px] text-ink-3">{businessName}</p>
+            <p className="text-ink-3 truncate text-[13px]">{businessName}</p>
           ) : null}
         </div>
       </div>
@@ -54,18 +54,18 @@ export function UserCard({
       <div className="mt-3.5 flex items-center gap-2">
         {isPhoneVerified ? <Stamp variant="success">VERIFIED</Stamp> : null}
         {memberSince ? (
-          <span className="text-[12px] text-ink-3">
+          <span className="text-ink-3 text-[12px]">
             Member since {memberSince}
           </span>
         ) : null}
       </div>
 
-      <div className="mt-3.5 grid grid-cols-3 border-t border-rule pt-3.5">
-        {/* TODO(post-v1): wire to `GET /api/user/profile-stats` (gap-analysis Q2/Q11 STUBBED). */}
+      {/* TODO(post-v1): wire to `GET /api/user/profile-stats` (gap-analysis Q2/Q11 STUBBED). */}
+      {/* <div className="mt-3.5 grid grid-cols-3 border-t border-rule pt-3.5">
         <StatCell label="ORDERS" value="—" />
         <StatCell label="SPENT" value="—" hairline />
         <StatCell label="SAVED" value="—" hairline tone="green" />
-      </div>
+      </div> */}
     </div>
   );
 }
@@ -77,6 +77,7 @@ interface StatCellProps {
   tone?: 'ink' | 'green';
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StatCell({
   label,
   value,
@@ -86,16 +87,14 @@ function StatCell({
   return (
     <div
       className={
-        hairline
-          ? 'border-l border-rule pl-3 text-center'
-          : 'pr-3 text-center'
+        hairline ? 'border-rule border-l pl-3 text-center' : 'pr-3 text-center'
       }
     >
       <p
         className={
           tone === 'green'
             ? 'font-mono text-[18px] font-bold text-green-700'
-            : 'font-mono text-[18px] font-bold text-ink'
+            : 'text-ink font-mono text-[18px] font-bold'
         }
       >
         {value}
@@ -104,7 +103,7 @@ function StatCell({
         className={
           tone === 'green'
             ? 'font-mono text-[10px] font-semibold tracking-[0.12em] text-green-700'
-            : 'font-mono text-[10px] font-semibold tracking-[0.12em] text-ink-3'
+            : 'text-ink-3 font-mono text-[10px] font-semibold tracking-[0.12em]'
         }
       >
         {label}

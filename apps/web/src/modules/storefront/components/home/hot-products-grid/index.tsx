@@ -29,10 +29,10 @@ export async function HomeHotProductsGrid() {
     >
       <header className="mb-4 flex items-end justify-between gap-3 md:mb-5">
         <div className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-amber md:text-[11px] md:tracking-[0.16em]">
+          <span className="text-amber font-mono text-[10px] font-bold tracking-[0.14em] uppercase md:text-[11px] md:tracking-[0.16em]">
             Trending now
           </span>
-          <h2 className="font-sans text-xl font-extrabold tracking-[-0.01em] text-ink md:text-3xl">
+          <h2 className="text-ink font-sans text-xl font-extrabold tracking-[-0.01em] md:text-3xl">
             Hot products this week
           </h2>
         </div>

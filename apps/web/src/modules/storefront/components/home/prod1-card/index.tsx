@@ -10,27 +10,22 @@ import { cn } from '@repo/ui/lib/utils';
 
 import { useCartStore } from '@/modules/cart/stores/cart-store';
 import type { CartItemInput, PackTier } from '@/modules/cart/types';
-import { findDefaultTier, buildPackEyebrow } from '@/modules/cart/utils/pack-pricing';
+import {
+  findDefaultTier,
+  buildPackEyebrow,
+} from '@/modules/cart/utils/pack-pricing';
 
 import { formatRupeesFromCents } from '@/modules/core/utils/format-price';
 import type { StorefrontProduct } from '@/modules/storefront/types';
 
 interface Prod1CardProps {
   product: StorefrontProduct;
-  /** Optional pencil eyebrow override ("HOT", "-12%"). */
   badgeText?: string | null;
-  /** Override eyebrow above name ("TAPAL", "DALDA"). */
-  vendorEyebrow?: string | null;
 }
 
-const DEFAULT_VENDOR_EYEBROW = 'SHALMI WAREHOUSE';
-
-export function Prod1Card({
-  product,
-  badgeText = null,
-  vendorEyebrow = null,
-}: Prod1CardProps) {
+export function Prod1Card({ product, badgeText = null }: Prod1CardProps) {
   const firstImage = product.images[0];
+
   const addItem = useCartStore((s) => s.addItem);
   const [adding, setAdding] = useState(false);
 
@@ -82,16 +77,16 @@ export function Prod1Card({
   }
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-[10px] border border-rule bg-white">
+    <article className="border-rule flex flex-col overflow-hidden rounded-[10px] border bg-white">
       <Link
         href={`/products/${product.slug}`}
         className="group flex flex-col"
         prefetch={false}
       >
-        <div className="relative flex h-[200px] flex-col justify-between overflow-hidden bg-paper-2 p-3.5">
+        <div className="bg-paper-2 relative flex h-[200px] flex-col justify-between overflow-hidden p-3.5">
           {badgeText ? (
             <div className="flex items-start justify-between">
-              <span className="rounded-xs bg-red px-2 py-1 font-mono text-[11px] font-bold text-white">
+              <span className="bg-red rounded-xs px-2 py-1 font-mono text-[11px] font-bold text-white">
                 {badgeText}
               </span>
               <span aria-hidden />
@@ -106,28 +101,30 @@ export function Prod1Card({
                   alt={product.name}
                   fill
                   className="object-contain transition-transform group-hover:scale-105"
-                  sizes="(max-width: 768px) 50vw, 25vw"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                  {...(firstImage.blurHash
+                    ? {
+                        placeholder: 'blur',
+                        blurDataURL: firstImage.blurHash,
+                      }
+                    : {})}
                 />
               </div>
             ) : (
               <PackageIcon
-                className="size-16 text-ink-4"
+                className="text-ink-4 size-16"
                 aria-hidden
                 strokeWidth={1.25}
               />
             )}
           </div>
-
-          <span className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-ink-3">
-            {vendorEyebrow ?? DEFAULT_VENDOR_EYEBROW}
-          </span>
         </div>
 
         <div className="flex flex-col gap-2 p-3.5">
-          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-ink">
+          <h3 className="text-ink line-clamp-2 text-sm leading-snug font-bold">
             {product.name}
           </h3>
-          <p className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-ink-3">
+          <p className="text-ink-3 font-mono text-[10px] font-bold tracking-[0.08em] uppercase">
             {buildPackEyebrow({
               packWeightGrams: product.packWeightGrams,
               packSize: product.packSize,
@@ -135,7 +132,7 @@ export function Prod1Card({
             })}
           </p>
           <div className="flex items-end gap-2">
-            <span className="font-mono text-lg font-extrabold text-ink">
+            <span className="text-ink font-mono text-lg font-extrabold">
               {formatRupeesFromCents(product.lowestPriceCents)}
             </span>
           </div>
