@@ -1,16 +1,15 @@
 import type { NextRequest } from 'next/server';
-import { eq, and } from 'drizzle-orm';
-import { db, subOrders } from '@repo/database';
+import { updateOrderStatus } from '@repo/services/vendor/orders';
+import {
+  InvalidStateError,
+  NotFoundError,
+  ValidationError,
+} from '@repo/services/errors';
 import { jsonSuccess, jsonError } from '@/modules/core/api';
 import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
 import { getSessionFromRequest } from '@/modules/auth/server/session-from-request';
 import { requireVendor } from '@/modules/auth/server/guards/require-role';
 import { getVendorIdFromSession } from '@/modules/auth/server/get-vendor-id-from-session';
-
-const ALLOWED_TRANSITIONS: Record<string, string> = {
-  pending: 'packed',
-  packed: 'handed_to_courier',
-};
 
 export async function PATCH(
   req: NextRequest,
@@ -26,38 +25,8 @@ export async function PATCH(
     }
 
     const { subOrderId } = await params;
-
-    const [existing] = await db
-      .select({ id: subOrders.id, status: subOrders.status })
-      .from(subOrders)
-      .where(
-        and(eq(subOrders.id, subOrderId), eq(subOrders.vendorId, vendorId))
-      )
-      .limit(1);
-
-    if (!existing) {
-      return jsonError('Sub-order not found', 404);
-    }
-
-    const nextStatus = ALLOWED_TRANSITIONS[existing.status];
-    if (!nextStatus) {
-      return jsonError(
-        `Cannot advance from status "${existing.status}"`,
-        400
-      );
-    }
-
-    const now = new Date();
-    await db
-      .update(subOrders)
-      .set({
-        status: nextStatus,
-        updatedAt: now,
-        ...(nextStatus === 'handed_to_courier' ? { handedAt: now } : {}),
-      })
-      .where(eq(subOrders.id, subOrderId));
-
-    return jsonSuccess({ id: subOrderId, status: nextStatus });
+    const result = await updateOrderStatus({ vendorId, subOrderId });
+    return jsonSuccess(result);
   } catch (err) {
     if (err instanceof Error) {
       const message = err.message;
@@ -69,6 +38,12 @@ export async function PATCH(
           message === AUTH_GUARD_ERRORS.SESSION_REQUIRED ? 401 : 403;
         return jsonError(message, status);
       }
+    }
+    if (err instanceof NotFoundError) {
+      return jsonError(err.message, 404);
+    }
+    if (err instanceof InvalidStateError || err instanceof ValidationError) {
+      return jsonError(err.message, 400);
     }
     console.error('PATCH /api/vendor/orders/[subOrderId] error:', err);
     return jsonError('Failed to update order status.', 500);

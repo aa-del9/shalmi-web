@@ -47,6 +47,9 @@ importers:
       '@repo/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
+      '@repo/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@repo/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -180,6 +183,9 @@ importers:
       '@repo/mcp-server':
         specifier: workspace:*
         version: link:../../packages/mcp-server
+      '@repo/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@repo/whatsapp-core':
         specifier: workspace:*
         version: link:../../packages/whatsapp-core
@@ -330,6 +336,10 @@ importers:
         version: 5.9.3
 
   packages/mcp-server:
+    dependencies:
+      '@repo/services':
+        specifier: workspace:*
+        version: link:../services
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -355,6 +365,43 @@ importers:
         version: 9.39.2(jiti@2.6.1)
       typescript:
         specifier: ^5.8.0
+        version: 5.9.3
+
+  packages/services:
+    dependencies:
+      '@repo/constants':
+        specifier: workspace:*
+        version: link:../constants
+      '@repo/database':
+        specifier: workspace:*
+        version: link:../database
+      '@repo/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@repo/utils':
+        specifier: workspace:*
+        version: link:../utils
+      drizzle-orm:
+        specifier: ^0.45.1
+        version: 0.45.1(kysely@0.28.9)(postgres@3.4.8)
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.19.6
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.2(jiti@2.6.1)
+      typescript:
+        specifier: ^5.9.2
         version: 5.9.3
 
   packages/storage:
