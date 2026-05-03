@@ -9,7 +9,7 @@ import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 import type { VendorNextPayout } from '../../hooks/use-vendor-next-payout-query';
 import type { VendorShop } from '../../hooks/use-vendor-shop-query';
 
-const RELEASE_FMT = new Intl.DateTimeFormat(undefined, {
+const RELEASE_FMT = new Intl.DateTimeFormat('en-IN', {
   weekday: 'long',
   day: 'numeric',
   month: 'long',

@@ -9,7 +9,7 @@ import { getSubOrderStatusDisplay } from '@/modules/core/utils/order-status-disp
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 import type { VendorRecentOrder } from '../../hooks/use-vendor-recent-orders-query';
 
-const TIME_FMT = new Intl.DateTimeFormat(undefined, {
+const TIME_FMT = new Intl.DateTimeFormat('en-IN', {
   hour: 'numeric',
   minute: '2-digit',
 });

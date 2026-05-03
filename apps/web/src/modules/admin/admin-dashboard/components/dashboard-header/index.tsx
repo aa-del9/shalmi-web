@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Button } from '@repo/ui/components/button';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 
-const MONTH_FORMAT = new Intl.DateTimeFormat(undefined, {
+const MONTH_FORMAT = new Intl.DateTimeFormat('en-IN', {
   month: 'long',
   year: 'numeric',
 });

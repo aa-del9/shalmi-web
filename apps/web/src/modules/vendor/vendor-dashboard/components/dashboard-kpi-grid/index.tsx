@@ -9,7 +9,7 @@ import type { VendorNextPayout } from '../../hooks/use-vendor-next-payout-query'
 
 const NUMBER_FMT = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
 
-const PAYOUT_RELEASE_FMT = new Intl.DateTimeFormat(undefined, {
+const PAYOUT_RELEASE_FMT = new Intl.DateTimeFormat('en-IN', {
   weekday: 'short',
   day: 'numeric',
   month: 'short',

@@ -17,13 +17,13 @@ export function ProductsPageHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-4">
       <div className="flex flex-col gap-1.5">
-        <p className="text-amber font-mono text-[11px] font-bold tracking-[0.16em] uppercase">
+        <div className="text-amber font-mono text-[11px] font-bold tracking-[0.16em] uppercase">
           {activeCount === null ? (
             <Skeleton className="inline-block h-3 w-24" />
           ) : (
             <>Catalog · {activeCount} active</>
           )}
-        </p>
+        </div>
         <h1 className="text-ink text-[28px] font-extrabold tracking-[-0.02em] md:text-[32px]">
           Your products
         </h1>

@@ -8,7 +8,7 @@ import { Skeleton } from '@repo/ui/components/skeleton';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 import type { VendorShop } from '../../hooks/use-vendor-shop-query';
 
-const DATE_FMT = new Intl.DateTimeFormat(undefined, {
+const DATE_FMT = new Intl.DateTimeFormat('en-IN', {
   weekday: 'long',
   day: 'numeric',
   month: 'long',

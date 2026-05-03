@@ -13,7 +13,7 @@ import {
 } from '../../utils/derive-order-display';
 
 const NUMBER_FMT = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
-const DATE_FMT = new Intl.DateTimeFormat(undefined, {
+const DATE_FMT = new Intl.DateTimeFormat('en-IN', {
   day: 'numeric',
   month: 'short',
 });
