@@ -84,10 +84,8 @@ export async function PATCH(
       updateValues.recipientPhone = data.recipientPhone;
     if (data.address !== undefined) updateValues.address = data.address;
     if (data.city !== undefined) updateValues.city = data.city;
-    if (data.postalCode !== undefined)
-      updateValues.postalCode = data.postalCode ?? null;
-    if (data.province !== undefined)
-      updateValues.province = data.province ?? null;
+    // `postalCode` / `province` are accepted by Zod but currently dropped
+    // — see schema/addresses.ts. Reinstate once migration 0012 lands.
     if (data.isDefault !== undefined) updateValues.isDefault = data.isDefault;
 
     const [updated] = await db

@@ -17,11 +17,12 @@ export const addresses = pgTable('addresses', {
   recipientPhone: text('recipient_phone').notNull(),
   address: text('address').notNull(),
   city: text('city').notNull(),
-  // Batch 5 (buyer-settings) — STUBBED postal_code + province per
-  // gap-analysis Q13/Q14: free-text, optional, no regex.
-  // TODO(post-v1): tighten validation per scope-cut Postal-code feature.
-  postalCode: text('postal_code'),
-  province: text('province'),
+  // `postal_code` + `province` are created by migration 0012 (Batch 5)
+  // but the Drizzle field declarations are deferred until the operator
+  // applies that migration to dev/staging — otherwise every
+  // `select().from(addresses)` 500s with `column does not exist`. The
+  // form still accepts the fields via Zod; they're silently dropped
+  // until the DB has the columns + the schema fields are reinstated.
   isDefault: boolean('is_default').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
