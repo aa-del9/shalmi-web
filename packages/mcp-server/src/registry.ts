@@ -62,6 +62,15 @@ export function getToolsForRole(role: ToolRole): ToolDefinition[] {
 }
 
 /**
+ * Look up a tool definition by name. The inbound consumer uses this
+ * to inspect `requiresConfirmation` before deciding whether to route
+ * through the YES/NO state machine.
+ */
+export function getTool(name: string): ToolDefinition | undefined {
+  return registry.get(name);
+}
+
+/**
  * Look up a tool, validate input/output, gate by role, and invoke the
  * handler. The handler reads identity from `ctx`; the registry never
  * trusts the input object for vendor/user identity.

@@ -733,5 +733,79 @@ async function resolveProductId(
     .limit(1);
   if (bySku) return bySku.id;
 
+  // Fallback: substring-match the product name within this vendor's
+  // catalog. Pull at most 2 to differentiate "exactly one" from
+  // "multiple". Multi-match throws a ValidationError so the caller
+  // (LLM) can ask the vendor to disambiguate by SKU.
+  const byName = await db
+    .select({ id: products.id, name: products.name })
+    .from(products)
+    .where(
+      and(
+        ilike(products.name, `%${productIdOrSku}%`),
+        eq(products.vendorId, vendorId)
+      )
+    )
+    .limit(2);
+  if (byName.length === 1 && byName[0]) return byName[0].id;
+  if (byName.length > 1) {
+    throw new ValidationError(
+      `Multiple products match "${productIdOrSku}". Please use the SKU to be specific.`
+    );
+  }
+
   throw new NotFoundError('Product not found');
+}
+
+// ----------------------------------------------------------------------------
+// getVendorProductByIdOrSku — small read used by the WhatsApp write-tool
+// preview functions. Returns the fields needed to compose a confirmation
+// prompt + the resolved canonical product id.
+// ----------------------------------------------------------------------------
+
+const getVendorProductByIdOrSkuInputSchema = z.object({
+  vendorId: z.string().min(1),
+  productIdOrSku: z.string().min(1),
+});
+
+export type GetVendorProductByIdOrSkuInput = z.input<
+  typeof getVendorProductByIdOrSkuInputSchema
+>;
+
+export interface VendorProductSummary {
+  id: string;
+  name: string;
+  sku: string | null;
+  packWholesalePriceCents: number;
+  stock: number;
+}
+
+export async function getVendorProductByIdOrSku(
+  input: GetVendorProductByIdOrSkuInput
+): Promise<VendorProductSummary> {
+  const parsed = getVendorProductByIdOrSkuInputSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.flatten().formErrors[0] ?? 'Invalid input'
+    );
+  }
+  const { vendorId, productIdOrSku } = parsed.data;
+  const productId = await resolveProductId(vendorId, productIdOrSku);
+
+  const [row] = await db
+    .select({
+      id: products.id,
+      name: products.name,
+      sku: products.sku,
+      packWholesalePriceCents: products.packWholesalePriceCents,
+      stock: products.stock,
+    })
+    .from(products)
+    .where(and(eq(products.id, productId), eq(products.vendorId, vendorId)))
+    .limit(1);
+
+  if (!row) {
+    throw new NotFoundError('Product not found');
+  }
+  return row;
 }
