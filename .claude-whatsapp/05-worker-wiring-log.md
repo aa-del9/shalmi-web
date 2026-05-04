@@ -732,3 +732,184 @@ verifyWebhookToken('nope')         → false
 - **No outside-24h-window detection.** Removed because waapi has
   no such concept. If we migrate back to an official BSP, restore
   this in the outbound consumer.
+
+---
+
+## Addendum 2 — @lid privacy resolution + chatId/phone split
+
+Date: 2026-05-04 (same day, evening).
+
+### Why
+
+Real production traffic exposed two issues the synthetic fixtures
+hadn't surfaced:
+
+1. **WhatsApp serves `@lid` chat-ids for first-contact senders.**
+   When two parties haven't mutually saved each other, WhatsApp's
+   newer privacy protocol relays via an anonymous `<digits>@lid`
+   handle instead of the canonical `<phone>@c.us`. The bot's
+   paired account hadn't saved test customers as contacts (and
+   can't, by the chicken-and-egg of "we don't know their phone
+   until they message us"), so every real inbound arrived as
+   `from: 153978989985921@lid`. The original parser rejected
+   these as `group_or_self`.
+2. **The same person has two distinct identifiers** — the LID
+   (used for routing the conversation thread) and the underlying
+   E.164 phone (used for vendor-identity lookup against
+   `user.phone_number`). Conflating them breaks identity
+   resolution.
+
+### What landed
+
+**`packages/whatsapp-core/src/types.ts`:**
+- `InboundMessage` gained `chatId: string` alongside `phone: string`.
+  The two are conceptually distinct now — `chatId` is for routing,
+  `phone` is for identity.
+- `OutboundJobPayload` replaced `phoneE164: string` with
+  `chatId: string` + `phone: string` (the latter is for the
+  `whatsapp_messages.phone` audit column).
+
+**`packages/whatsapp-core/src/waapi-client.ts`:**
+- `parseWaapiInbound` now emits both fields. For `@c.us` /
+  `@s.whatsapp.net` chat-ids the phone is the normalized E.164.
+  For `@lid` it's the LID itself (placeholder until resolution).
+- New `getContactById(chatId)` REST helper wraps waapi's
+  `client/action/get-contact-by-id` action (Bearer + JSON body
+  `{ contactId }`). Returns a typed `WaapiContact` with
+  `serializedId`, `number`, `pushname`, `isMyContact`,
+  `isWAContact`.
+- New `resolveLidToE164(lidChatId)` async helper — calls
+  `getContactById`, prefers `id._serialized` if it ends in
+  `@c.us`, otherwise falls back to the `number` field. Returns
+  `null` when WhatsApp won't expose the underlying phone (or when
+  the contact lookup fails) so callers can fall through to the
+  unrecognized path.
+- New `isLidPhone(phone)` predicate.
+- `sendTextMessage` now takes `{ chatId, body }` — the caller is
+  responsible for choosing the right chat-id. `e164ToWaapiChatId`
+  remains as the helper used by `/internal/send-message` to
+  convert E.164 input.
+
+**`apps/whatsapp-worker/src/webhook.ts`:**
+- After `parseWaapiInbound`, when the resolved `phone` is still a
+  LID, the handler awaits `resolveLidToE164(chatId)`. Success
+  swaps the LID for the resolved E.164 in `inbound.phone`;
+  failure leaves it as-is and the unrecognized path fires.
+- The `/internal/send-message` endpoint now writes
+  `chatId: e164ToWaapiChatId(phoneE164)` + `phone: phoneE164` into
+  the queued job.
+
+**`apps/whatsapp-worker/src/workers/inbound.ts`:**
+- New `preferredOutboundChatId(message)` helper picks the chat-id
+  for replies. When `phone` is E.164, prefer the
+  `<digits>@c.us` form (works under waapi's trial "static
+  receiver" config; merges threads with mutual contacts on prod).
+  When `phone` is still a LID (no resolution), fall back to the
+  original `chatId`.
+
+**`apps/whatsapp-worker/src/workers/outbound.ts`:**
+- `sendTextMessage` is now called with `{ chatId }` from the job
+  payload. The audit log row uses `payload.phone`.
+
+**Diagnostics:**
+- `apps/whatsapp-worker/src/scripts/probe-lid.ts` — one-shot CLI
+  that hits 6 candidate waapi actions to test which (if any) can
+  resolve a `@lid` to a real phone. We confirmed
+  `get-contact-by-id` works:
+  ```
+  ── get-contact-by-id  {"contactId":"153978989985921@lid"} ──
+  data.id._serialized = "923154333909@c.us"
+  data.number         = "153978989985921"
+  data.pushname       = "Aadel"
+  data.isMyContact    = false
+  data.isWAContact    = true
+  ```
+- `apps/whatsapp-worker/src/scripts/parse-fixture.ts` — local
+  fixture suite for `parseWaapiInbound`. 4 cases (real `@lid`,
+  `@c.us` mutual, group, self) all green.
+- `webhook.ts` carries verbose log lines for the foreseeable
+  future (event type, resolved phone, parsed inbound, skip
+  reasons). Will be trimmed when the surface stabilizes.
+
+### Trial caveat (waapi.app)
+
+waapi's free trial restricts outbound to a single configurable
+chat-id (the "Trial phone number (static receiver)" field in the
+instance settings). Set this to the test customer's `@c.us`
+(e.g. `923154333909@c.us`) — without that, the bot's outbound
+gets a 403:
+
+```
+The trial phone number of your account does not match with the
+chatId of this request! Your trial instance is only able to send
+actions to <static receiver>!
+```
+
+Once configured, real round-trip works in trial.
+
+### End-to-end verification
+
+With:
+- `WAAPI_INSTANCE_ID = 91000` paired to **+92 305 4333909**
+  (Shalmi Mart)
+- waapi trial static receiver = `923154333909@c.us`
+- `user.phone_number = +923154333909` seeded on a vendor row
+
+Test customer (`+923154333909`, "Aadel") sent "Hi" via WhatsApp.
+Railway logs:
+
+```
+[webhook] event=message
+[webhook] resolved @lid → +923154333909 (chatId=153978989985921@lid)
+[webhook] inbound chatId=153978989985921@lid phone=+923154333909 type=text id=…
+```
+
+Test customer received on their phone:
+
+```
+You said: "Hi". The bot brain is coming online soon.
+```
+
+(Echo only, because `whatsappFirstSeenAt` had already flipped
+during an earlier failed-outbound attempt — first-contact flip is
+race-safe and one-shot.)
+
+DB after:
+
+```
+whatsapp_messages
+─ direction='inbound',  status='processed', phone='+923154333909',  body='Hi'
+─ direction='outbound', status='sent',      phone='+923154333909',  body='You said: "Hi". …'
+
+user
+─ whatsapp_first_seen_at: 2026-05-04 …
+─ whatsapp_last_seen_at:  2026-05-04 …
+
+whatsapp_conversations
+─ phone='+923154333909', user_id=<vendor>, role='vendor', state='idle'
+```
+
+### Hard-rule re-check (post-`@lid`)
+
+- ✅ Webhook ack < 3 s — adds one extra waapi REST call
+  (`get-contact-by-id`, ~300 ms) only on `@lid` paths. Still well
+  under budget.
+- ✅ Webhook auth — path-token compare unchanged.
+- ✅ Dedupe — `metaMessageId` keyed by `id._serialized` which now
+  includes the LID (`false_<lid>_<id>`). Globally unique.
+- ✅ Atomic first-contact flip — unchanged.
+- ✅ All inbound + outbound logged.
+- ✅ Lazy env loading throughout.
+- ✅ No LLM.
+
+### Phase 5 — closed
+
+End-to-end round-trip proven against real WhatsApp via waapi:
+inbound (with `@lid` resolution) → identity lookup → vendor recognized
+→ outbound reply delivered.
+
+Phase 6 (LLM / Gemini tool-use loop) picks up next:
+swap `buildVendorReply` for a Gemini call that consumes the
+`@repo/mcp-server` tool registry. The plumbing it needs
+(`whatsapp_conversations.recent_turns`, the queues, the LID
+resolution, the audit log) all landed in this phase.
