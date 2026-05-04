@@ -23,7 +23,10 @@ import type { ToolDefinition } from '../types';
 
 const inputSchema = z.object({
   productIdOrSku: z.string().min(1),
-  newPrice: z.number().int().positive(),
+  // .min(1) instead of .positive() — zod-to-json-schema emits
+  // `exclusiveMinimum: 0` for .positive(), which Gemini's schema
+  // dialect rejects with "Unknown name 'exclusiveMinimum'".
+  newPrice: z.number().int().min(1),
 });
 
 const outputSchema = z.object({

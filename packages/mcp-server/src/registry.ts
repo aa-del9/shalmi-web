@@ -8,6 +8,43 @@ import type {
   ToolRole,
 } from './types';
 
+/**
+ * Walk a JSON-Schema-shaped object and strip / convert keywords that
+ * Gemini's schema dialect rejects. Specifically:
+ *   - `exclusiveMinimum: <n>` → `minimum: <n + 1>` (assumes integer
+ *     bounds; safe for all our int schemas)
+ *   - `exclusiveMaximum: <n>` → `maximum: <n - 1>` (same caveat)
+ *   - bare `exclusiveMinimum: true` / `exclusiveMaximum: true` →
+ *     dropped (would only matter if a sibling `minimum`/`maximum`
+ *     was already present, which our generators don't emit)
+ *
+ * Recurses into `properties`, `items`, `anyOf`, `oneOf`, `allOf`.
+ * Returns a new object — does not mutate the input.
+ */
+function sanitizeForGemini(node: unknown): unknown {
+  if (Array.isArray(node)) {
+    return node.map(sanitizeForGemini);
+  }
+  if (!node || typeof node !== 'object') return node;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+    if (key === 'exclusiveMinimum') {
+      if (typeof value === 'number') {
+        out.minimum = value + 1;
+      }
+      continue;
+    }
+    if (key === 'exclusiveMaximum') {
+      if (typeof value === 'number') {
+        out.maximum = value - 1;
+      }
+      continue;
+    }
+    out[key] = sanitizeForGemini(value);
+  }
+  return out;
+}
+
 function firstZodMessage(error: ZodError, fallback: string): string {
   const flat = error.flatten();
   if (flat.formErrors[0]) return flat.formErrors[0];
@@ -136,7 +173,7 @@ export function getGeminiToolDeclarations(
     return {
       name: tool.name,
       description: tool.description,
-      parameters,
+      parameters: sanitizeForGemini(parameters) as Record<string, unknown>,
     };
   });
 
