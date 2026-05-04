@@ -12,8 +12,6 @@ import {
 import { checkoutCartPayloadSchema } from '@repo/schemas/orders/checkout';
 import { jsonSuccess, jsonError } from '@/modules/core/api';
 import { getSessionFromRequest } from '@/modules/auth/server/session-from-request';
-import { requireSession } from '@/modules/auth/server/guards/require-session';
-import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
 import { resolveDeliveryTier } from '@/modules/cart/utils/delivery-tiers';
 
 function generateDisplayId(): string {
@@ -24,10 +22,11 @@ function generateDisplayId(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Per OQ-G(b) — `requireSession` is relaxed to "session OR
+    // guestSessionId on payload". The guard runs after we parse the
+    // payload so we can read `guestSessionId` from the body.
     const session = await getSessionFromRequest(req);
-    requireSession(session);
-
-    const userId = (session.user as { id: string }).id;
+    const sessionUserId = (session?.user as { id?: string } | undefined)?.id ?? null;
 
     let body: unknown;
     try {
@@ -46,12 +45,32 @@ export async function POST(req: NextRequest) {
       addressId: payloadAddressId,
       shippingAddress: payloadShippingAddress,
       riderNotes: payloadRiderNotes,
+      saveAddress: payloadSaveAddress,
+      guestSessionId: payloadGuestSessionId,
     } = parsed.data;
+
+    // OQ-G refine — at least one of (sessionUserId, guestSessionId) must
+    // be present.
+    if (!sessionUserId && !payloadGuestSessionId) {
+      return jsonError('Authentication required', 401);
+    }
+    const isGuest = !sessionUserId;
+
+    // Saved-address path is user-only (saved addresses are user-bound).
+    if (isGuest && payloadAddressId) {
+      return jsonError('Guest checkout cannot use a saved address', 400);
+    }
+    if (isGuest && payloadSaveAddress) {
+      // Guests have no account to save into. Q3(b) — ignore the flag
+      // rather than 400; mirrors the UI which hides the toggle.
+    }
 
     let shippingName: string;
     let shippingPhone: string;
-    let shippingAddress: string;
+    let shippingAddressLine: string;
     let shippingCity: string;
+    let shippingPostalCode: string | null = null;
+    let shippingProvince: string | null = null;
     let orderAddressId: string | null = null;
 
     if (payloadAddressId) {
@@ -60,19 +79,23 @@ export async function POST(req: NextRequest) {
         .from(addresses)
         .where(eq(addresses.id, payloadAddressId));
 
-      if (!addressRow || addressRow.userId !== userId) {
+      if (!addressRow || addressRow.userId !== sessionUserId) {
         return jsonError('Invalid or unauthorized address', 400);
       }
       shippingName = addressRow.recipientName;
       shippingPhone = addressRow.recipientPhone;
-      shippingAddress = addressRow.address;
+      shippingAddressLine = addressRow.address;
       shippingCity = addressRow.city;
+      shippingPostalCode = addressRow.postalCode ?? null;
+      shippingProvince = addressRow.province ?? null;
       orderAddressId = payloadAddressId;
     } else if (payloadShippingAddress) {
       shippingName = payloadShippingAddress.name;
       shippingPhone = payloadShippingAddress.phone;
-      shippingAddress = payloadShippingAddress.address;
+      shippingAddressLine = payloadShippingAddress.address;
       shippingCity = payloadShippingAddress.city;
+      shippingPostalCode = payloadShippingAddress.postalCode ?? null;
+      shippingProvince = payloadShippingAddress.province ?? null;
     } else {
       return jsonError('Provide addressId or shippingAddress', 400);
     }
@@ -179,24 +202,53 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Server-authoritative delivery fee — resolves the same tier table
-    // the cart + checkout summary use, so the persisted grandTotal
-    // matches what the buyer agreed to.
     const orderDeliveryTier = resolveDeliveryTier(totalCartWeightGrams);
     const totalShippingCost = orderDeliveryTier.feeCents;
     const grandTotal = totalItemsCost + totalShippingCost;
 
     const result = await db.transaction(async (tx) => {
+      // Per buyer-checkout one-time-addr Q11(b) — when toggle is OFF on
+      // an authed checkout, save the address inside the same tx and
+      // capture the new addressId for the order row.
+      let resolvedAddressId = orderAddressId;
+      if (
+        !isGuest &&
+        sessionUserId &&
+        payloadSaveAddress &&
+        payloadShippingAddress &&
+        !payloadAddressId
+      ) {
+        const [savedAddress] = await tx
+          .insert(addresses)
+          .values({
+            userId: sessionUserId,
+            title: 'Saved at checkout',
+            recipientName: shippingName,
+            recipientPhone: shippingPhone,
+            address: shippingAddressLine,
+            city: shippingCity,
+            postalCode: shippingPostalCode,
+            province: shippingProvince,
+            isDefault: false,
+          })
+          .returning({ id: addresses.id });
+        if (!savedAddress) throw new Error('Address insert failed');
+        resolvedAddressId = savedAddress.id;
+      }
+
       const [order] = await tx
         .insert(orders)
         .values({
-          userId,
+          userId: sessionUserId, // null for guests, per OQ-G(b)
+          guestSessionId: isGuest ? (payloadGuestSessionId ?? null) : null,
           displayId,
           shippingName,
           shippingPhone,
-          shippingAddress,
+          shippingAddress: shippingAddressLine,
           shippingCity,
-          addressId: orderAddressId,
+          shippingPostalCode,
+          shippingProvince,
+          addressId: resolvedAddressId,
           totalItemsCost,
           totalShippingCost,
           grandTotal,
@@ -217,7 +269,6 @@ export async function POST(req: NextRequest) {
           0
         );
 
-        // Weight-proportional split; last sub-order absorbs rounding.
         const isLast = i === vendorEntries.length - 1;
         const subShipping = isLast
           ? totalShippingCost - shippingAllocated
@@ -259,7 +310,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Decrement stock (in packs).
       for (const item of cartItems) {
         const product = productMap.get(item.productId)!;
         await tx
@@ -277,11 +327,6 @@ export async function POST(req: NextRequest) {
       201
     );
   } catch (err) {
-    if (err instanceof Error) {
-      if (err.message === AUTH_GUARD_ERRORS.SESSION_REQUIRED) {
-        return jsonError(err.message, 401);
-      }
-    }
     console.error('POST /api/checkout error:', err);
     return jsonError('Failed to place order. Please try again.', 500);
   }

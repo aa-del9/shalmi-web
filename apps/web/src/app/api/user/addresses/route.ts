@@ -76,12 +76,10 @@ export async function POST(req: NextRequest) {
       recipientPhone,
       address,
       city,
+      postalCode,
+      province,
       isDefault,
     } = parsed.data;
-    // `postalCode` / `province` are accepted by Zod but the Drizzle
-    // schema fields are deferred until migration 0012 is applied —
-    // see schema/addresses.ts for the rationale. Silently dropping
-    // them is safer than 500-ing on missing columns.
 
     if (isDefault === true) {
       await db
@@ -99,6 +97,8 @@ export async function POST(req: NextRequest) {
         recipientPhone,
         address,
         city,
+        postalCode: postalCode ?? null,
+        province: province ?? null,
         isDefault: isDefault ?? false,
       })
       .returning();
