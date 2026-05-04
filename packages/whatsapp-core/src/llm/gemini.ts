@@ -60,6 +60,17 @@ export interface RunVendorFollowupTurnInput {
   functionResult: Record<string, unknown>;
 }
 
+export interface RunVendorFollowupTurnMultiInput {
+  message: string;
+  conversation: ConversationTurn[];
+  tools: FunctionDeclaration[];
+  system: string;
+  /** N parallel function calls returned by Gemini in the prior turn. */
+  functionCalls: FunctionCall[];
+  /** Results aligned 1:1 with `functionCalls` (same order). */
+  functionResults: Record<string, unknown>[];
+}
+
 export interface GeminiUsage {
   inputTokens: number;
   outputTokens: number;
@@ -98,6 +109,27 @@ export function firstFunctionCall(
     if (part.functionCall) return part.functionCall;
   }
   return null;
+}
+
+/**
+ * Pull every function call from a Gemini response, in order. Used by
+ * the compound-read path — the worker dispatches multiple read tools
+ * in one turn and folds all results into a single followup call.
+ *
+ * Falls back to the parts-walk if `response.functionCalls` is absent
+ * (older shape returned for some models).
+ */
+export function allFunctionCalls(
+  response: GenerateContentResponse
+): FunctionCall[] {
+  const calls = response.functionCalls;
+  if (calls && calls.length > 0) return calls;
+  const parts = response.candidates?.[0]?.content?.parts ?? [];
+  const out: FunctionCall[] = [];
+  for (const part of parts) {
+    if (part.functionCall) out.push(part.functionCall);
+  }
+  return out;
 }
 
 export async function runVendorTurn(
@@ -141,6 +173,63 @@ export async function runVendorFollowupTurn(
     { role: 'user', parts: [{ text: input.message }] },
     { role: 'model', parts: [functionCallPart] },
     { role: 'user', parts: [functionResponsePart] },
+  ];
+
+  return client.models.generateContent({
+    model: MODEL,
+    contents,
+    config: {
+      systemInstruction: { parts: [{ text: input.system }] },
+      temperature: TEMPERATURE,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      tools: input.tools.length > 0
+        ? [{ functionDeclarations: input.tools }]
+        : undefined,
+    },
+  });
+}
+
+/**
+ * Same shape as `runVendorFollowupTurn` but feeds back N parallel
+ * function calls + their results in a single followup. Used by the
+ * compound-read path.
+ *
+ * Conversation contents become:
+ *   [...prior turns, user, model(N functionCalls), user(N functionResponses)]
+ *
+ * The model sees every result at once and produces a single
+ * natural-language summary across all of them, capped by
+ * `maxOutputTokens: 300`.
+ */
+export async function runVendorFollowupTurnMulti(
+  input: RunVendorFollowupTurnMultiInput
+): Promise<GenerateContentResponse> {
+  if (input.functionCalls.length !== input.functionResults.length) {
+    throw new Error(
+      `runVendorFollowupTurnMulti: functionCalls (${input.functionCalls.length}) and functionResults (${input.functionResults.length}) must align`
+    );
+  }
+  const client = getClient();
+
+  const modelParts: Part[] = input.functionCalls.map((fc) => ({
+    functionCall: fc,
+  }));
+
+  const responseParts: Part[] = input.functionCalls.map((fc, idx) => {
+    const result = input.functionResults[idx] ?? {};
+    return {
+      functionResponse: {
+        name: fc.name ?? 'unknown',
+        response: result,
+      },
+    };
+  });
+
+  const contents: Content[] = [
+    ...turnsToContents(input.conversation),
+    { role: 'user', parts: [{ text: input.message }] },
+    { role: 'model', parts: modelParts },
+    { role: 'user', parts: responseParts },
   ];
 
   return client.models.generateContent({
