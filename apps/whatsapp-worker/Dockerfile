@@ -83,11 +83,14 @@ COPY --from=prod-deps --chown=app:app /repo/package.json /repo/package.json
 COPY --from=prod-deps --chown=app:app /repo/pnpm-workspace.yaml /repo/pnpm-workspace.yaml
 COPY --from=prod-deps --chown=app:app /repo/apps/whatsapp-worker/node_modules /repo/apps/whatsapp-worker/node_modules
 
-# manifests + built JS from the build stage
+# manifests + worker source (we run via tsx because every workspace
+# dep exports its TypeScript source, not a compiled bundle)
 COPY --from=build --chown=app:app /repo/apps/whatsapp-worker/package.json /repo/apps/whatsapp-worker/package.json
-COPY --from=build --chown=app:app /repo/apps/whatsapp-worker/dist /repo/apps/whatsapp-worker/dist
+COPY --from=build --chown=app:app /repo/apps/whatsapp-worker/tsconfig.json /repo/apps/whatsapp-worker/tsconfig.json
+COPY --from=build --chown=app:app /repo/apps/whatsapp-worker/src /repo/apps/whatsapp-worker/src
 
 # workspace package sources (entry points are .ts; resolved via pnpm symlinks)
+COPY --from=build --chown=app:app /repo/packages/typescript-config /repo/packages/typescript-config
 COPY --from=build --chown=app:app /repo/packages/whatsapp-core /repo/packages/whatsapp-core
 COPY --from=build --chown=app:app /repo/packages/mcp-server /repo/packages/mcp-server
 COPY --from=build --chown=app:app /repo/packages/database /repo/packages/database
@@ -101,4 +104,6 @@ USER app
 
 EXPOSE 3000
 
-CMD ["node", "apps/whatsapp-worker/dist/index.js"]
+# tsx ships its own ESM loader; we install it as a runtime dep so we
+# can load the workspace TypeScript packages without a bundle step.
+CMD ["node", "--import", "tsx/esm", "apps/whatsapp-worker/src/index.ts"]

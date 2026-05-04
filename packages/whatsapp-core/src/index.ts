@@ -1,7 +1,27 @@
-// TODO: future contents of @repo/whatsapp-core
-//   - phone normalization (E.164 helpers, PK country defaults)
-//   - Meta WhatsApp Cloud API client (send text/template, media upload)
-//   - conversation context builder (load vendor + recent messages)
-//   - reply formatter (LLM output -> WhatsApp-safe markdown)
-//   - shared types (InboundMessage, OutboundMessage, ConversationState)
-export {};
+export {
+  normalizeToE164,
+  isE164,
+  splitE164,
+} from './phone';
+export {
+  sendTextMessage,
+  setInstanceWebhook,
+  getInstanceClientStatus,
+  getInstance,
+  verifyWebhookToken,
+  parseWaapiInbound,
+  readWaapiEventType,
+  e164ToWaapiChatId,
+  WaapiApiError,
+  WaapiConfigError,
+  WaapiInboundError,
+  type SendTextMessageInput,
+  type SetInstanceWebhookInput,
+} from './waapi-client';
+export type {
+  InboundMessage,
+  InboundMessageType,
+  OutboundMessage,
+  InboundJobPayload,
+  OutboundJobPayload,
+} from './types';

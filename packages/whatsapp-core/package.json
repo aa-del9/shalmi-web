@@ -4,14 +4,21 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./phone": "./src/phone.ts",
+    "./interakt": "./src/interakt-client.ts",
+    "./types": "./src/types.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
     "clean": "rm -rf node_modules .turbo dist"
   },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
     "typescript": "^5.9.2"
   }
 }
