@@ -25,6 +25,13 @@ export const auth = betterAuth({
         defaultValue: USER_ROLES.RETAILER,
         input: false,
       },
+      // Per OQ-R(a) — buyer sub-role written by the signup flow via the
+      // post-signup hook (not by better-auth's signUpOnVerification path).
+      retailerType: {
+        type: 'string',
+        required: false,
+        input: false,
+      },
     },
   },
   trustedOrigins: [

@@ -18,6 +18,9 @@ export const user = pgTable('user', {
     .default(false),
   role: text('role').notNull().default('retailer'),
   businessName: text('business_name'),
+  // Per OQ-R(a) — buyer sub-role; nullable, populated by signup flow.
+  // Values: 'generic' | 'shopkeeper'. Validated by zod, not Postgres enum.
+  retailerType: text('retailer_type'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

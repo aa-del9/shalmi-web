@@ -8,7 +8,8 @@
     "./catalog/product-pack-tiers": "./src/catalog/product-pack-tiers.ts",
     "./catalog/product": "./src/catalog/product.ts",
     "./cart/line-item": "./src/cart/line-item.ts",
-    "./orders/checkout": "./src/orders/checkout.ts"
+    "./orders/checkout": "./src/orders/checkout.ts",
+    "./auth/signup": "./src/auth/signup.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",

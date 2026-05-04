@@ -20,6 +20,10 @@ import { AuthBrandCluster } from '@/modules/auth/components/auth-brand-cluster';
 import { AuthMobileAppBar } from '@/modules/auth/components/auth-mobile-app-bar';
 import { OtpGrid, type OtpGridHandle } from '@/modules/auth/components/otp-grid';
 import { OtpHelpDialog } from '@/modules/auth/components/otp-help-dialog';
+import {
+  readPendingSignup,
+  clearPendingSignup,
+} from '@/modules/auth/utils/pending-signup';
 
 const OTP_LENGTH = 6;
 
@@ -77,6 +81,25 @@ export function OtpVerification() {
     }
     const { data: session } = await authClient.getSession();
     const role = (session?.user as { role?: string } | undefined)?.role;
+
+    // Drain pending signup payload (per buyer-signup-generic Q8(b)) and
+    // POST it to the post-signup hook so name + retailerType (and shop
+    // fields if shopkeeper) land on the freshly-created user row.
+    const pending = readPendingSignup();
+    if (pending) {
+      try {
+        await fetch('/api/auth/post-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pending),
+        });
+      } catch {
+        // Surface but don't block the redirect — the user is verified.
+        toast.error('Saved sign-in but could not finalise profile fields.');
+      }
+      clearPendingSignup();
+    }
+
     router.push(getPostAuthRedirectUrl(redirectParam, role));
   }
 
