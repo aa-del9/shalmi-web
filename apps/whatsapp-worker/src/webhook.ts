@@ -67,6 +67,45 @@ export function buildApp(): Hono {
       return c.json({ ok: true, skipped: eventType ?? 'unknown' });
     }
 
+    // Temporary structural snapshot to debug payload shape from waapi.
+    // Remove once the parser is known to behave end-to-end.
+    const debugRoot = payload as Record<string, unknown> | null;
+    const debugData = debugRoot?.data as Record<string, unknown> | undefined;
+    const debugMessage = debugData?.message as Record<string, unknown> | undefined;
+    const debugMsgInner = debugMessage?.message as Record<string, unknown> | undefined;
+    const debugId = (debugMessage?.id ?? debugMsgInner?.id) as
+      | Record<string, unknown>
+      | string
+      | undefined;
+    // eslint-disable-next-line no-console
+    console.log(
+      '[webhook] payload top-level keys=' +
+        JSON.stringify(Object.keys(debugRoot ?? {})) +
+        ' data keys=' +
+        JSON.stringify(Object.keys(debugData ?? {})) +
+        ' message keys=' +
+        JSON.stringify(Object.keys(debugMessage ?? {})) +
+        ' inner keys=' +
+        JSON.stringify(Object.keys(debugMsgInner ?? {}))
+    );
+    // eslint-disable-next-line no-console
+    console.log(
+      '[webhook] from=' +
+        String(debugMessage?.from ?? debugMsgInner?.from) +
+        ' fromMe=' +
+        String(debugMessage?.fromMe ?? debugMsgInner?.fromMe) +
+        ' type=' +
+        String(debugMessage?.type ?? debugMsgInner?.type) +
+        ' body=' +
+        JSON.stringify(
+          (debugMessage?.body as string | undefined) ??
+            (debugMsgInner?.body as string | undefined) ??
+            null
+        ).slice(0, 200) +
+        ' id=' +
+        JSON.stringify(debugId).slice(0, 200)
+    );
+
     let inbound;
     try {
       inbound = parseWaapiInbound(payload);
@@ -80,8 +119,14 @@ export function buildApp(): Hono {
     }
     if (!inbound) {
       // Self-authored or non-individual chat — ack and skip.
+      const skippedFrom = String(debugMessage?.from ?? debugMsgInner?.from);
+      const skippedFromMe = String(
+        debugMessage?.fromMe ?? debugMsgInner?.fromMe
+      );
       // eslint-disable-next-line no-console
-      console.log('[webhook] message skipped (group_or_self)');
+      console.log(
+        `[webhook] skipped group_or_self (from=${skippedFrom} fromMe=${skippedFromMe})`
+      );
       return c.json({ ok: true, skipped: 'group_or_self' });
     }
     // eslint-disable-next-line no-console
