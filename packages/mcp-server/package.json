@@ -5,17 +5,30 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./registry": "./src/registry.ts",
+    "./types": "./src/types.ts",
     "./tools/*": "./src/tools/*.ts"
   },
   "scripts": {
+    "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit",
+    "build": "tsc",
+    "test-harness": "tsx src/test-harness.ts",
     "clean": "rm -rf node_modules .turbo dist"
   },
   "dependencies": {
-    "@repo/services": "workspace:*"
+    "@modelcontextprotocol/sdk": "^1.18.1",
+    "@repo/database": "workspace:*",
+    "@repo/services": "workspace:*",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
+    "eslint": "^9.39.1",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.2"
   }
 }

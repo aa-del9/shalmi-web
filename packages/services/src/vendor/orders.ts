@@ -149,6 +149,99 @@ export async function listVendorOrders(
   return { subOrders: data, meta };
 }
 
+// ----------------------------------------------------------------------------
+// getOrderDetails — vendor-scoped sub-order detail with line items.
+// Mirrors the projection used by `listVendorOrders`, but for a single
+// sub-order. Used by the WhatsApp `get_order_details` tool.
+// ----------------------------------------------------------------------------
+
+const getOrderDetailsInputSchema = z.object({
+  vendorId: z.string().min(1),
+  subOrderId: z.string().min(1),
+});
+
+export type GetOrderDetailsInput = z.input<typeof getOrderDetailsInputSchema>;
+
+export interface VendorSubOrderDetail extends VendorSubOrderRow {
+  handedAt: Date | null;
+  courierTrackingId: string | null;
+  shippingFeeCustomer: number;
+  coolieFeeReimbursement: number;
+  courierCost: number;
+  platformCommission: number;
+}
+
+export async function getOrderDetails(
+  input: GetOrderDetailsInput
+): Promise<VendorSubOrderDetail> {
+  const parsed = getOrderDetailsInputSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new ValidationError(
+      parsed.error.flatten().formErrors[0] ?? 'Invalid input'
+    );
+  }
+  const { vendorId, subOrderId } = parsed.data;
+
+  const [row] = await db
+    .select({
+      id: subOrders.id,
+      orderId: subOrders.orderId,
+      status: subOrders.status,
+      codAmount: subOrders.codAmount,
+      itemsTotal: subOrders.itemsTotal,
+      weightGrams: subOrders.weightGrams,
+      handedAt: subOrders.handedAt,
+      courierTrackingId: subOrders.courierTrackingId,
+      shippingFeeCustomer: subOrders.shippingFeeCustomer,
+      coolieFeeReimbursement: subOrders.coolieFeeReimbursement,
+      courierCost: subOrders.courierCost,
+      platformCommission: subOrders.platformCommission,
+      createdAt: subOrders.createdAt,
+      updatedAt: subOrders.updatedAt,
+      orderDisplayId: orders.displayId,
+      shippingName: orders.shippingName,
+      shippingPhone: orders.shippingPhone,
+      shippingAddress: orders.shippingAddress,
+      shippingCity: orders.shippingCity,
+    })
+    .from(subOrders)
+    .innerJoin(orders, eq(subOrders.orderId, orders.id))
+    .where(and(eq(subOrders.id, subOrderId), eq(subOrders.vendorId, vendorId)))
+    .limit(1);
+
+  if (!row) {
+    throw new NotFoundError('Sub-order not found');
+  }
+
+  const itemRows = await db
+    .select({
+      id: orderItems.id,
+      productId: orderItems.productId,
+      quantity: orderItems.quantity,
+      unitPrice: orderItems.unitPrice,
+      totalPrice: orderItems.totalPrice,
+      productName: products.name,
+      productImages: products.images,
+    })
+    .from(orderItems)
+    .innerJoin(products, eq(orderItems.productId, products.id))
+    .where(eq(orderItems.subOrderId, subOrderId));
+
+  const items: VendorSubOrderItem[] = itemRows.map((item) => ({
+    id: item.id,
+    productId: item.productId,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    totalPrice: item.totalPrice,
+    product: {
+      name: item.productName,
+      imageUrl: (item.productImages as { url: string }[])?.[0]?.url ?? null,
+    },
+  }));
+
+  return { ...row, items };
+}
+
 const updateOrderStatusInputSchema = z.object({
   vendorId: z.string().min(1),
   subOrderId: z.string().min(1),
