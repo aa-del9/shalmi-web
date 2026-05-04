@@ -12,6 +12,7 @@
     "waapi-status": "tsx --env-file-if-exists=.env src/scripts/waapi-status.ts",
     "parse-fixture": "tsx src/scripts/parse-fixture.ts",
     "probe-lid": "tsx --env-file-if-exists=.env src/scripts/probe-lid.ts",
+    "gemini-loop-harness": "tsx --env-file-if-exists=.env src/scripts/gemini-loop-harness.ts",
     "check-types": "tsc --noEmit",
     "clean": "rm -rf node_modules .turbo dist"
   },
