@@ -11,7 +11,6 @@ import {
 import { formatRupeesFromCents } from '@/modules/core/utils/format-price';
 import { resolveDeliveryTier } from '@/modules/cart/utils/delivery-tiers';
 import { useSession } from '@/modules/auth/client/auth-client';
-import { useModalStore } from '@/modules/core/stores/modal-store';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 
 interface CartSummaryProps {
@@ -30,7 +29,6 @@ interface CartSummaryProps {
  */
 export function CartSummary({ hideCta = false }: CartSummaryProps) {
   const { data: session, isPending: sessionLoading } = useSession();
-  const openAuthModal = useModalStore((s) => s.openAuthModal);
   const items = useCartStore((s) => s.items);
   const totalPrice = getCartTotalPrice(items);
   const totalWeightGrams = getCartTotalWeightGrams(items);
@@ -87,11 +85,17 @@ export function CartSummary({ hideCta = false }: CartSummaryProps) {
             <Button
               className="h-12 w-full"
               size="lg"
-              onClick={() => openAuthModal(ABSOLUTE_ROUTES.CHECKOUT)}
+              asChild
               disabled={sessionLoading}
             >
-              Proceed to checkout
-              <ArrowRight className="ml-1 size-4" aria-hidden />
+              {/* Per buyer-signin gap-analysis Q16(a): repoint to /auth page,
+                  not the (now retired) AuthModal. */}
+              <Link
+                href={`${ABSOLUTE_ROUTES.AUTH}?redirect=${encodeURIComponent(ABSOLUTE_ROUTES.CHECKOUT)}`}
+              >
+                Proceed to checkout
+                <ArrowRight className="ml-1 size-4" aria-hidden />
+              </Link>
             </Button>
           )}
 
