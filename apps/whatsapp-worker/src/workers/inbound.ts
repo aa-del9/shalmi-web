@@ -60,8 +60,10 @@ import {
   MAX_INVALID_CONFIRMATION_REPLIES,
   runVendorTurn,
   runVendorFollowupTurn,
+  runVendorFollowupTurnMulti,
   extractUsage,
   firstFunctionCall,
+  allFunctionCalls,
   getVendorSystemPrompt,
   type ConversationRow,
   type ConversationTurnEntry,
@@ -91,7 +93,11 @@ import {
   buildExpiredReply,
   buildInvalidNudge,
 } from '../confirmation';
-import { INBOUND_QUEUE_NAME, getOutboundQueue, getRedisConnection } from '../queues';
+import {
+  INBOUND_QUEUE_NAME,
+  getOutboundQueue,
+  getRedisConnection,
+} from '../queues';
 
 const UNRECOGNIZED_REPLY =
   "We don't recognize this number. Please contact Shalmi support.";
@@ -109,7 +115,9 @@ interface ResolvedIdentity {
   vendorId: string | null;
 }
 
-async function resolveIdentity(phoneE164: string): Promise<ResolvedIdentity | null> {
+async function resolveIdentity(
+  phoneE164: string
+): Promise<ResolvedIdentity | null> {
   const rows = await db
     .select({
       userId: user.id,
@@ -164,7 +172,10 @@ async function upsertConversation(
   userId: string
 ): Promise<void> {
   const [existing] = await db
-    .select({ id: whatsappConversations.id, userId: whatsappConversations.userId })
+    .select({
+      id: whatsappConversations.id,
+      userId: whatsappConversations.userId,
+    })
     .from(whatsappConversations)
     .where(eq(whatsappConversations.phone, phoneE164))
     .limit(1);
@@ -222,8 +233,10 @@ async function updateInboundRow(
   };
   if (patch.toolCalls !== undefined) set.toolCalls = patch.toolCalls;
   if (patch.toolResults !== undefined) set.toolResults = patch.toolResults;
-  if (patch.llmInputTokens !== undefined) set.llmInputTokens = patch.llmInputTokens;
-  if (patch.llmOutputTokens !== undefined) set.llmOutputTokens = patch.llmOutputTokens;
+  if (patch.llmInputTokens !== undefined)
+    set.llmInputTokens = patch.llmInputTokens;
+  if (patch.llmOutputTokens !== undefined)
+    set.llmOutputTokens = patch.llmOutputTokens;
   if (patch.latencyMs !== undefined) set.latencyMs = patch.latencyMs;
   if (patch.error !== undefined) set.error = patch.error.slice(0, 1000);
 
@@ -397,7 +410,9 @@ async function runGeminiVendorFlow(opts: {
   totalUsage.outputTokens += firstUsage.outputTokens;
   totalUsage.totalTokens += firstUsage.totalTokens;
 
-  const fnCall: FunctionCall | null = firstFunctionCall(first);
+  const fnCalls: FunctionCall[] = allFunctionCalls(first);
+  const fnCall: FunctionCall | null =
+    fnCalls.length > 0 ? (fnCalls[0] ?? null) : firstFunctionCall(first);
 
   logLLMCall({
     phone: opts.phone,
@@ -405,17 +420,108 @@ async function runGeminiVendorFlow(opts: {
     model: 'gemini-2.5-flash',
     tokensIn: firstUsage.inputTokens,
     tokensOut: firstUsage.outputTokens,
-    toolCallsCount: fnCall ? 1 : 0,
+    toolCallsCount: fnCalls.length || (fnCall ? 1 : 0),
     latencyMs: firstLatency,
     step: 'turn',
   });
 
+  // Compound read path — Gemini returned 2+ function calls and none
+  // require confirmation. Dispatch them in parallel, then fold every
+  // result into a single followup. If ANY of the calls is a write
+  // tool, fall through to the single-tool path below — chained
+  // confirmations are intentionally out of scope.
+  if (fnCalls.length > 1) {
+    const allReadOnly = fnCalls.every((fc) => {
+      const t = getTool(fc.name ?? '');
+      return t !== undefined && !t.requiresConfirmation;
+    });
+
+    if (allReadOnly) {
+      const dispatched = await Promise.all(
+        fnCalls.map(async (fc) => {
+          const name = fc.name ?? '';
+          const args = fc.args ?? {};
+          toolCallsLog.push({ name, args });
+          try {
+            const data = await callTool(name, args, ctx);
+            toolResultsLog.push({ name, ok: true, result: data });
+            return { ok: true as const, payload: { ok: true, data } };
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            const code =
+              err instanceof ToolDispatchError ? err.code : 'TOOL_ERROR';
+            toolResultsLog.push({ name, ok: false, error: message, code });
+            // eslint-disable-next-line no-console
+            console.error(
+              JSON.stringify({
+                kind: 'tool_error',
+                phone: opts.phone,
+                tool: name,
+                code,
+                error: message,
+              })
+            );
+            return {
+              ok: false as const,
+              payload: { ok: false, error: message, code },
+            };
+          }
+        })
+      );
+
+      const t1 = Date.now();
+      const followup = await runVendorFollowupTurnMulti({
+        message: opts.message,
+        conversation: conversationForLLM,
+        tools: opts.tools,
+        system: opts.system,
+        functionCalls: fnCalls,
+        functionResults: dispatched.map((d) => d.payload),
+      });
+      const followupLatency = Date.now() - t1;
+      const followupUsage = extractUsage(followup);
+      totalUsage.inputTokens += followupUsage.inputTokens;
+      totalUsage.outputTokens += followupUsage.outputTokens;
+      totalUsage.totalTokens += followupUsage.totalTokens;
+
+      logLLMCall({
+        phone: opts.phone,
+        role: 'vendor',
+        model: 'gemini-2.5-flash',
+        tokensIn: followupUsage.inputTokens,
+        tokensOut: followupUsage.outputTokens,
+        toolCallsCount: 0,
+        latencyMs: followupLatency,
+        step: 'followup',
+      });
+
+      const finalText = (followup.text ?? '').trim();
+      const anyErrored = dispatched.some((d) => !d.ok);
+      return {
+        replyText:
+          finalText.length > 0
+            ? finalText
+            : "Sorry — I couldn't summarize that. Please try again.",
+        toolCallsLog,
+        toolResultsLog,
+        totalUsage,
+        llmLatencyMs: firstLatency + followupLatency,
+        errored: anyErrored,
+        awaitingConfirmation: false,
+      };
+    }
+    // Mixed / write-bearing compound — fall through to single-tool
+    // path. The first call wins; subsequent calls are dropped (same
+    // pre-compound behavior, intentional for the write surface).
+  }
+
   if (!fnCall) {
     const text = (first.text ?? '').trim();
     return {
-      replyText: text.length > 0
-        ? text
-        : "Sorry — I couldn't generate a reply. Please try again.",
+      replyText:
+        text.length > 0
+          ? text
+          : "Sorry — I couldn't generate a reply. Please try again.",
       toolCallsLog: null,
       toolResultsLog: null,
       totalUsage,
@@ -485,8 +591,7 @@ async function runGeminiVendorFlow(opts: {
       });
       const finalText = (followup.text ?? '').trim();
       return {
-        replyText:
-          finalText.length > 0 ? finalText : TOOL_ERROR_REPLY,
+        replyText: finalText.length > 0 ? finalText : TOOL_ERROR_REPLY,
         toolCallsLog,
         toolResultsLog,
         totalUsage,
@@ -787,9 +892,10 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
 
         await updateInboundRow(message.metaMessageId, {
           userId: identity.userId,
-          status: outcome.result === 'expired' || outcome.result === 'auto_cancelled'
-            ? 'processed'
-            : 'processed',
+          status:
+            outcome.result === 'expired' || outcome.result === 'auto_cancelled'
+              ? 'processed'
+              : 'processed',
           toolCalls: outcome.toolCalls,
           toolResults: outcome.toolResults,
           error: outcome.error,
@@ -836,7 +942,9 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
         return { result: 'non_text' };
       }
 
-      const tools = getGeminiToolDeclarations('vendor') as unknown as FunctionDeclaration[];
+      const tools = getGeminiToolDeclarations(
+        'vendor'
+      ) as unknown as FunctionDeclaration[];
       const system = getVendorSystemPrompt();
 
       let flow: VendorTurnResult;
@@ -925,9 +1033,7 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
 
   worker.on('failed', (job, err) => {
     // eslint-disable-next-line no-console
-    console.error(
-      `[inbound] job ${job?.id ?? '?'} failed: ${err.message}`
-    );
+    console.error(`[inbound] job ${job?.id ?? '?'} failed: ${err.message}`);
   });
 
   return worker;
