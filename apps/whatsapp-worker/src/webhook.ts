@@ -25,6 +25,9 @@ import {
   readWaapiEventType,
   verifyWebhookToken,
   normalizeToE164,
+  resolveLidToE164,
+  isLidPhone,
+  e164ToWaapiChatId,
 } from '@repo/whatsapp-core';
 import { getInboundQueue, getOutboundQueue } from './queues';
 
@@ -58,66 +61,14 @@ export function buildApp(): Hono {
     }
 
     const eventType = readWaapiEventType(payload);
-    // eslint-disable-next-line no-console
-    console.log(`[webhook] event=${eventType ?? 'unknown'}`);
     if (eventType !== 'message') {
       // Lifecycle events (`ready`, `qr`, `disconnected`,
       // `authenticated`, etc.) and message status callbacks are
       // ack'd quietly. Not processed in Phase 5.
+      // eslint-disable-next-line no-console
+      console.log(`[webhook] skipped event=${eventType ?? 'unknown'}`);
       return c.json({ ok: true, skipped: eventType ?? 'unknown' });
     }
-
-    // Temporary structural snapshot to debug payload shape from waapi.
-    // Remove once the parser is known to behave end-to-end.
-    const debugRoot = payload as Record<string, unknown> | null;
-    const debugData = debugRoot?.data as Record<string, unknown> | undefined;
-    const debugMessage = debugData?.message as
-      | Record<string, unknown>
-      | undefined;
-    const debugMsgInner = debugMessage?.message as
-      | Record<string, unknown>
-      | undefined;
-    const debugId = (debugMessage?.id ?? debugMsgInner?.id) as
-      | Record<string, unknown>
-      | string
-      | undefined;
-    // eslint-disable-next-line no-console
-    console.log(
-      '[webhook] payload top-level keys=' +
-        JSON.stringify(Object.keys(debugRoot ?? {})) +
-        ' data keys=' +
-        JSON.stringify(Object.keys(debugData ?? {})) +
-        ' message keys=' +
-        JSON.stringify(Object.keys(debugMessage ?? {})) +
-        ' inner keys=' +
-        JSON.stringify(Object.keys(debugMsgInner ?? {}))
-    );
-    // eslint-disable-next-line no-console
-    console.log(
-      '[webhook] from=' +
-        String(debugMessage?.from ?? debugMsgInner?.from) +
-        ' to=' +
-        String(debugMessage?.to ?? debugMsgInner?.to) +
-        ' fromMe=' +
-        String(debugMessage?.fromMe ?? debugMsgInner?.fromMe) +
-        ' type=' +
-        String(debugMessage?.type ?? debugMsgInner?.type) +
-        ' body=' +
-        JSON.stringify(
-          (debugMessage?.body as string | undefined) ??
-            (debugMsgInner?.body as string | undefined) ??
-            null
-        ).slice(0, 200) +
-        ' id=' +
-        JSON.stringify(debugId).slice(0, 200)
-    );
-    // Full _data dump so we can find the real sender phone for @lid
-    // payloads (WhatsApp's anonymous Linked-ID handle).
-    const debugDataField = debugMessage?._data;
-    // eslint-disable-next-line no-console
-    console.log(
-      '[webhook] _data=' + JSON.stringify(debugDataField).slice(0, 4000)
-    );
 
     let inbound;
     try {
@@ -131,20 +82,41 @@ export function buildApp(): Hono {
       return c.json({ ok: false, error: 'bad inbound payload' }, 400);
     }
     if (!inbound) {
-      // Self-authored or non-individual chat — ack and skip.
-      const skippedFrom = String(debugMessage?.from ?? debugMsgInner?.from);
-      const skippedFromMe = String(
-        debugMessage?.fromMe ?? debugMsgInner?.fromMe
-      );
       // eslint-disable-next-line no-console
-      console.log(
-        `[webhook] skipped group_or_self (from=${skippedFrom} fromMe=${skippedFromMe})`
-      );
+      console.log('[webhook] message skipped (group/self/unknown chat-id)');
       return c.json({ ok: true, skipped: 'group_or_self' });
+    }
+
+    // For privacy-hidden @lid senders, try to resolve the underlying
+    // phone via waapi's contact API so vendor identity lookup works.
+    // On any failure we fall back to the LID — identity lookup will
+    // miss and the worker will fire the "unrecognized" path.
+    if (isLidPhone(inbound.phone)) {
+      try {
+        const resolved = await resolveLidToE164(inbound.chatId);
+        if (resolved) {
+          // eslint-disable-next-line no-console
+          console.log(
+            `[webhook] resolved @lid → ${resolved} (chatId=${inbound.chatId})`
+          );
+          inbound = { ...inbound, phone: resolved };
+        } else {
+          // eslint-disable-next-line no-console
+          console.log(
+            `[webhook] could not resolve @lid (chatId=${inbound.chatId}) — falling back`
+          );
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(
+          '[webhook] @lid resolution failed:',
+          err instanceof Error ? err.message : String(err)
+        );
+      }
     }
     // eslint-disable-next-line no-console
     console.log(
-      `[webhook] inbound from=${inbound.phone} type=${inbound.messageType} id=${inbound.metaMessageId}`
+      `[webhook] inbound chatId=${inbound.chatId} phone=${inbound.phone} type=${inbound.messageType} id=${inbound.metaMessageId}`
     );
 
     // Dedupe — waapi may retry on timeout. If we've already logged
@@ -218,7 +190,8 @@ export function buildApp(): Hono {
     }
 
     await getOutboundQueue().add('send', {
-      phoneE164,
+      chatId: e164ToWaapiChatId(phoneE164),
+      phone: phoneE164,
       body: body.body,
       userId: null,
       inReplyToMessageId: null,
