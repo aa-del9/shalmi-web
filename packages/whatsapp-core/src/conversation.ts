@@ -145,3 +145,226 @@ export async function clearPendingAction(input: {
     })
     .where(eq(whatsappConversations.id, input.conversationId));
 }
+
+export const AWAITING_CONFIRMATION_STATE = 'awaiting_confirmation';
+export const CONFIRMATION_TTL_MS = 5 * 60 * 1000;
+export const MAX_INVALID_CONFIRMATION_REPLIES = 3;
+
+export interface PendingAction {
+  toolName: string;
+  input: Record<string, unknown>;
+  preview: Record<string, unknown>;
+  language: 'en' | 'ur-roman';
+  expiresAt: string;
+  invalidAttempts: number;
+}
+
+export async function setPendingAction(input: {
+  conversationId: string;
+  action: PendingAction;
+}): Promise<void> {
+  await db
+    .update(whatsappConversations)
+    .set({
+      pendingAction: input.action,
+      state: AWAITING_CONFIRMATION_STATE,
+      stateData: { startedAt: new Date().toISOString() },
+      updatedAt: sql`now()`,
+    })
+    .where(eq(whatsappConversations.id, input.conversationId));
+}
+
+export async function bumpInvalidAttempts(input: {
+  conversationId: string;
+  action: PendingAction;
+}): Promise<void> {
+  const next: PendingAction = {
+    ...input.action,
+    invalidAttempts: input.action.invalidAttempts + 1,
+  };
+  await db
+    .update(whatsappConversations)
+    .set({
+      pendingAction: next,
+      updatedAt: sql`now()`,
+    })
+    .where(eq(whatsappConversations.id, input.conversationId));
+}
+
+export function coercePendingAction(value: unknown): PendingAction | null {
+  if (!value || typeof value !== 'object') return null;
+  const v = value as Record<string, unknown>;
+  if (
+    typeof v.toolName !== 'string' ||
+    typeof v.expiresAt !== 'string' ||
+    typeof v.input !== 'object' ||
+    v.input === null ||
+    typeof v.preview !== 'object' ||
+    v.preview === null
+  ) {
+    return null;
+  }
+  const language = v.language === 'ur-roman' ? 'ur-roman' : 'en';
+  const invalidAttempts =
+    typeof v.invalidAttempts === 'number' && Number.isFinite(v.invalidAttempts)
+      ? v.invalidAttempts
+      : 0;
+  return {
+    toolName: v.toolName,
+    input: v.input as Record<string, unknown>,
+    preview: v.preview as Record<string, unknown>,
+    language,
+    expiresAt: v.expiresAt,
+    invalidAttempts,
+  };
+}
+
+const YES_TOKENS = new Set([
+  'yes',
+  'y',
+  'ok',
+  'okay',
+  'confirm',
+  'confirmed',
+  'sure',
+  'yep',
+  'yeah',
+  'han',
+  'haan',
+  'haanji',
+  'hanji',
+  'ji',
+  'jee',
+  'jihan',
+  'jihaan',
+  'jeehan',
+  'jeehaan',
+  'theek',
+  'theekhai',
+  'sahi',
+  'kardo',
+  'krdo',
+  'kardein',
+]);
+
+const NO_TOKENS = new Set([
+  'no',
+  'n',
+  'nope',
+  'cancel',
+  'cancelled',
+  'stop',
+  'nahi',
+  'nahin',
+  'nai',
+  'na',
+  'mat',
+  'matkaro',
+  'rehnedo',
+  'rukk',
+  'ruko',
+]);
+
+/** Strip whitespace, punctuation, lowercase, collapse internal spaces. */
+function canon(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export type ConfirmationParse = 'yes' | 'no' | 'invalid';
+
+export function parseConfirmationReply(text: string): ConfirmationParse {
+  const c = canon(text);
+  if (c.length === 0) return 'invalid';
+
+  // Single-token short-circuit
+  const collapsed = c.replace(/\s+/g, '');
+  if (YES_TOKENS.has(collapsed)) return 'yes';
+  if (NO_TOKENS.has(collapsed)) return 'no';
+
+  const tokens = c.split(' ');
+  for (const t of tokens) {
+    if (NO_TOKENS.has(t)) return 'no';
+  }
+  for (const t of tokens) {
+    if (YES_TOKENS.has(t)) return 'yes';
+  }
+  return 'invalid';
+}
+
+const ROMAN_URDU_HINTS = [
+  'kya',
+  'kar',
+  'kr',
+  'do',
+  'dein',
+  'kardo',
+  'krdo',
+  'kardein',
+  'krdein',
+  'ka',
+  'ki',
+  'ke',
+  'mein',
+  'main',
+  'ko',
+  'se',
+  'pe',
+  'par',
+  'aur',
+  'kitne',
+  'kitna',
+  'kitni',
+  'kya',
+  'hai',
+  'hain',
+  'tha',
+  'thi',
+  'thay',
+  'aaye',
+  'aaya',
+  'aayi',
+  'jao',
+  'jaye',
+  'jaayein',
+  'mat',
+  'nahi',
+  'nahin',
+  'han',
+  'haan',
+  'ji',
+  'mera',
+  'meri',
+  'mere',
+  'apna',
+  'apni',
+  'apne',
+  'wala',
+  'wali',
+  'lay',
+  'lo',
+  'lagao',
+  'rakho',
+  'set',
+  'price',
+  'stock',
+];
+
+export function detectLanguage(text: string): 'en' | 'ur-roman' {
+  const c = canon(text);
+  if (c.length === 0) return 'en';
+  const tokens = c.split(' ');
+  for (const t of tokens) {
+    if (ROMAN_URDU_HINTS.includes(t)) return 'ur-roman';
+  }
+  return 'en';
+}
+
+export function isExpired(action: PendingAction, now: Date = new Date()): boolean {
+  const expiresAt = Date.parse(action.expiresAt);
+  if (Number.isNaN(expiresAt)) return true;
+  return expiresAt <= now.getTime();
+}

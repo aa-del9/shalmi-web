@@ -7,20 +7,31 @@
  *   3. Load or create a `whatsapp_conversations` row.
  *   4. Update the inbound `whatsapp_messages` row with `user_id` /
  *      status.
- *   5. Run the Gemini tool-use loop:
+ *   5. **Pre-LLM gate** — if the conversation is in
+ *      `awaiting_confirmation`, parse YES/NO/expired/invalid against
+ *      the persisted `pending_action` *without* calling Gemini. YES
+ *      executes the stored tool via `mcpRegistry.callTool` (which
+ *      hits idempotency under the hood), NO cancels.
+ *   6. Otherwise run the Gemini tool-use loop:
  *        - first call → text reply OR a function call;
- *        - if a function call, dispatch via `@repo/mcp-server`'s
- *          registry, then a follow-up Gemini call to fold the tool
- *          result into a natural-language reply.
+ *        - if a function call:
+ *            - if the tool requires confirmation, run its preview
+ *              function (read-only), persist `pending_action`, send
+ *              a deterministic confirmation message, and stop. The
+ *              follow-up Gemini call is intentionally skipped — it
+ *              would fight the deterministic prompt.
+ *            - else dispatch via the registry, then a follow-up
+ *              Gemini call to fold the tool result into a natural-
+ *              language reply.
  *      Tool failures surface as a graceful error message; everything
  *      is captured on the inbound `whatsapp_messages` row
  *      (`tool_calls`, `tool_results`, `llm_input_tokens`,
  *      `llm_output_tokens`, `latency_ms`).
- *   6. Append the user + model turns to the conversation buffer
+ *   7. Append the user + model turns to the conversation buffer
  *      (capped at the last 6 entries).
- *   7. On first contact, prepend the welcome line so the vendor sees
+ *   8. On first contact, prepend the welcome line so the vendor sees
  *      a single outbound with welcome + answer.
- *   8. Push an outbound job for the reply.
+ *   9. Push an outbound job for the reply.
  */
 
 import { Worker, type Job } from 'bullmq';
@@ -38,6 +49,15 @@ import {
   loadConversation,
   appendTurn,
   clearPendingAction,
+  setPendingAction,
+  bumpInvalidAttempts,
+  coercePendingAction,
+  parseConfirmationReply,
+  detectLanguage,
+  isExpired,
+  AWAITING_CONFIRMATION_STATE,
+  CONFIRMATION_TTL_MS,
+  MAX_INVALID_CONFIRMATION_REPLIES,
   runVendorTurn,
   runVendorFollowupTurn,
   extractUsage,
@@ -50,14 +70,27 @@ import {
   type GeminiUsage,
   type InboundJobPayload,
   type InboundMessage,
+  type PendingAction,
 } from '@repo/whatsapp-core';
 import {
   callTool,
   getGeminiToolDeclarations,
+  getTool,
+  previewUpdateProductPrice,
+  previewUpdateProductStock,
+  previewUpdateOrderStatus,
   ToolDispatchError,
   type ToolContext,
   type ToolRole,
 } from '@repo/mcp-server';
+import {
+  buildAppliedReply,
+  buildAutoCancelReply,
+  buildCancelledReply,
+  buildConfirmationPrompt,
+  buildExpiredReply,
+  buildInvalidNudge,
+} from '../confirmation';
 import { INBOUND_QUEUE_NAME, getOutboundQueue, getRedisConnection } from '../queues';
 
 const UNRECOGNIZED_REPLY =
@@ -253,6 +286,64 @@ function logLLMCall(entry: {
   );
 }
 
+/**
+ * Run a tool's preview function. Returns a serializable payload that
+ * the confirmation message + state row both consume. Throws if the
+ * underlying lookup fails (e.g. SKU not found) — the caller should
+ * surface a graceful error reply.
+ */
+async function runPreview(
+  toolName: string,
+  input: unknown,
+  ctx: { subjectId: string }
+): Promise<Record<string, unknown>> {
+  if (toolName === 'update_product_price') {
+    return (await previewUpdateProductPrice(
+      input as { productIdOrSku: string; newPrice: number },
+      ctx
+    )) as unknown as Record<string, unknown>;
+  }
+  if (toolName === 'update_product_stock') {
+    return (await previewUpdateProductStock(
+      input as { productIdOrSku: string; newCount: number },
+      ctx
+    )) as unknown as Record<string, unknown>;
+  }
+  if (toolName === 'update_order_status') {
+    return (await previewUpdateOrderStatus(
+      input as { orderId: string; status: 'packed' | 'handed_to_courier' },
+      ctx
+    )) as unknown as Record<string, unknown>;
+  }
+  throw new Error(`No preview function registered for tool "${toolName}"`);
+}
+
+/**
+ * Execute a previously-staged confirmation. Returns the deterministic
+ * reply (built from the tool's success result) on success, or a tool
+ * error reply on failure.
+ */
+async function executePendingAction(
+  action: PendingAction,
+  ctx: ToolContext
+): Promise<{ reply: string; toolResult: unknown; error?: string }> {
+  try {
+    const result = await callTool(action.toolName, action.input, ctx);
+    return {
+      reply: buildAppliedReply(action, result),
+      toolResult: { ok: true, result },
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const code = err instanceof ToolDispatchError ? err.code : 'TOOL_ERROR';
+    return {
+      reply: TOOL_ERROR_REPLY,
+      toolResult: { ok: false, error: message, code },
+      error: message,
+    };
+  }
+}
+
 interface VendorTurnResult {
   replyText: string;
   toolCallsLog: unknown;
@@ -260,6 +351,11 @@ interface VendorTurnResult {
   totalUsage: GeminiUsage;
   llmLatencyMs: number;
   errored: boolean;
+  /**
+   * If true, the worker has already enqueued / staged a deterministic
+   * confirmation reply and the LLM follow-up should NOT run.
+   */
+  awaitingConfirmation: boolean;
 }
 
 async function runGeminiVendorFlow(opts: {
@@ -325,6 +421,7 @@ async function runGeminiVendorFlow(opts: {
       totalUsage,
       llmLatencyMs: firstLatency,
       errored: false,
+      awaitingConfirmation: false,
     };
   }
 
@@ -333,6 +430,103 @@ async function runGeminiVendorFlow(opts: {
     args: fnCall.args ?? {},
   });
 
+  const calledName = fnCall.name ?? '';
+  const calledTool = getTool(calledName);
+
+  // Write tool path — stage a confirmation, no follow-up Gemini call.
+  if (calledTool?.requiresConfirmation) {
+    let preview: Record<string, unknown>;
+    try {
+      preview = await runPreview(calledName, fnCall.args ?? {}, ctx);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const code = err instanceof ToolDispatchError ? err.code : 'TOOL_ERROR';
+      toolResultsLog.push({
+        name: calledName,
+        ok: false,
+        stage: 'preview',
+        error: message,
+        code,
+      });
+      // eslint-disable-next-line no-console
+      console.error(
+        JSON.stringify({
+          kind: 'preview_error',
+          phone: opts.phone,
+          tool: calledName,
+          code,
+          error: message,
+        })
+      );
+      // Let Gemini turn this into a natural-language error reply.
+      const t1 = Date.now();
+      const followup = await runVendorFollowupTurn({
+        message: opts.message,
+        conversation: conversationForLLM,
+        tools: opts.tools,
+        system: opts.system,
+        functionCall: fnCall,
+        functionResult: { ok: false, error: message, code },
+      });
+      const followupLatency = Date.now() - t1;
+      const followupUsage = extractUsage(followup);
+      totalUsage.inputTokens += followupUsage.inputTokens;
+      totalUsage.outputTokens += followupUsage.outputTokens;
+      totalUsage.totalTokens += followupUsage.totalTokens;
+      logLLMCall({
+        phone: opts.phone,
+        role: 'vendor',
+        model: 'gemini-2.5-flash',
+        tokensIn: followupUsage.inputTokens,
+        tokensOut: followupUsage.outputTokens,
+        toolCallsCount: 0,
+        latencyMs: followupLatency,
+        step: 'followup',
+      });
+      const finalText = (followup.text ?? '').trim();
+      return {
+        replyText:
+          finalText.length > 0 ? finalText : TOOL_ERROR_REPLY,
+        toolCallsLog,
+        toolResultsLog,
+        totalUsage,
+        llmLatencyMs: firstLatency + followupLatency,
+        errored: true,
+        awaitingConfirmation: false,
+      };
+    }
+
+    const language = detectLanguage(opts.message);
+    const action: PendingAction = {
+      toolName: calledName,
+      input: (fnCall.args ?? {}) as Record<string, unknown>,
+      preview,
+      language,
+      expiresAt: new Date(Date.now() + CONFIRMATION_TTL_MS).toISOString(),
+      invalidAttempts: 0,
+    };
+    await setPendingAction({
+      conversationId: opts.conversation.id,
+      action,
+    });
+    toolResultsLog.push({
+      name: calledName,
+      ok: true,
+      stage: 'preview',
+      preview,
+    });
+    return {
+      replyText: buildConfirmationPrompt(action),
+      toolCallsLog,
+      toolResultsLog,
+      totalUsage,
+      llmLatencyMs: firstLatency,
+      errored: false,
+      awaitingConfirmation: true,
+    };
+  }
+
+  // Read tool path — dispatch immediately + follow up.
   let toolResult: Record<string, unknown>;
   let toolErrored = false;
   try {
@@ -374,6 +568,7 @@ async function runGeminiVendorFlow(opts: {
       totalUsage,
       llmLatencyMs: firstLatency,
       errored: true,
+      awaitingConfirmation: false,
     };
   }
 
@@ -414,7 +609,79 @@ async function runGeminiVendorFlow(opts: {
     totalUsage,
     llmLatencyMs: firstLatency + followupLatency,
     errored: false,
+    awaitingConfirmation: false,
   };
+}
+
+interface ConfirmationGateOutcome {
+  reply: string;
+  result:
+    | 'confirmed_yes'
+    | 'confirmed_no'
+    | 'invalid'
+    | 'auto_cancelled'
+    | 'expired';
+  toolCalls?: unknown;
+  toolResults?: unknown;
+  error?: string;
+}
+
+/**
+ * Runs the confirmation state machine. Caller has already established
+ * the conversation is in `awaiting_confirmation`. Returns a
+ * deterministic reply and a result tag — never calls Gemini.
+ */
+async function handleAwaitingConfirmation(opts: {
+  conversation: ConversationRow;
+  action: PendingAction;
+  userText: string;
+  ctx: ToolContext;
+}): Promise<ConfirmationGateOutcome> {
+  if (isExpired(opts.action)) {
+    await clearPendingAction({ conversationId: opts.conversation.id });
+    return { reply: buildExpiredReply(opts.action), result: 'expired' };
+  }
+
+  const verdict = parseConfirmationReply(opts.userText);
+  if (verdict === 'yes') {
+    const exec = await executePendingAction(opts.action, opts.ctx);
+    await clearPendingAction({ conversationId: opts.conversation.id });
+    return {
+      reply: exec.reply,
+      result: 'confirmed_yes',
+      toolCalls: [{ name: opts.action.toolName, args: opts.action.input }],
+      toolResults: [
+        {
+          name: opts.action.toolName,
+          stage: 'execute',
+          ...(exec.toolResult as Record<string, unknown>),
+        },
+      ],
+      error: exec.error,
+    };
+  }
+  if (verdict === 'no') {
+    await clearPendingAction({ conversationId: opts.conversation.id });
+    return {
+      reply: buildCancelledReply(opts.action),
+      result: 'confirmed_no',
+    };
+  }
+
+  // Invalid — bump counter and decide whether to nudge or auto-cancel.
+  const nextAttempts = opts.action.invalidAttempts + 1;
+  if (nextAttempts >= MAX_INVALID_CONFIRMATION_REPLIES) {
+    await clearPendingAction({ conversationId: opts.conversation.id });
+    return {
+      reply: buildAutoCancelReply(opts.action),
+      result: 'auto_cancelled',
+    };
+  }
+  await bumpInvalidAttempts({
+    conversationId: opts.conversation.id,
+    action: opts.action,
+  });
+  return { reply: buildInvalidNudge(opts.action), result: 'invalid' };
 }
 
 export function startInboundWorker(): Worker<InboundJobPayload> {
@@ -464,8 +731,6 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
 
       const conversation = await loadConversation(message.phone);
       if (!conversation) {
-        // upsertConversation just ran; this should never happen, but
-        // surface a graceful failure instead of crashing the consumer.
         await updateInboundRow(message.metaMessageId, {
           userId: identity.userId,
           status: 'failed',
@@ -481,17 +746,79 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
         return { result: 'conversation_missing' };
       }
 
-      // Any free-text turn implicitly cancels a stale pending
-      // confirmation — Phase 7 will re-enter the state machine when it
-      // detects yes/no replies.
-      if (conversation.pendingAction || conversation.state !== 'idle') {
+      const userText = (message.body ?? '').trim();
+
+      // -------- Pre-LLM gate: awaiting confirmation? --------
+      const pending =
+        conversation.state === AWAITING_CONFIRMATION_STATE
+          ? coercePendingAction(conversation.pendingAction)
+          : null;
+
+      if (pending) {
+        const ctx: ToolContext = {
+          role: 'vendor',
+          subjectId: identity.vendorId,
+          phone: message.phone,
+          conversationId: conversation.id,
+        };
+
+        const outcome = await handleAwaitingConfirmation({
+          conversation,
+          action: pending,
+          userText,
+          ctx,
+        });
+
+        // Persist user turn + bot reply to the conversation buffer
+        // — invalid-nudge paths included so the LLM sees the back-
+        // and-forth if the user later types something else.
+        if (userText.length > 0) {
+          await appendTurn({
+            conversationId: conversation.id,
+            role: 'user',
+            content: userText,
+          });
+        }
+        await appendTurn({
+          conversationId: conversation.id,
+          role: 'model',
+          content: outcome.reply,
+        });
+
+        await updateInboundRow(message.metaMessageId, {
+          userId: identity.userId,
+          status: outcome.result === 'expired' || outcome.result === 'auto_cancelled'
+            ? 'processed'
+            : 'processed',
+          toolCalls: outcome.toolCalls,
+          toolResults: outcome.toolResults,
+          error: outcome.error,
+        });
+
+        const finalReply = isFirstContact
+          ? `${buildWelcome(identity.shopName)}\n\n${outcome.reply}`
+          : outcome.reply;
+
+        await getOutboundQueue().add('send', {
+          chatId: preferredOutboundChatId(message),
+          phone: message.phone,
+          body: finalReply,
+          userId: identity.userId,
+          inReplyToMessageId: message.metaMessageId,
+        });
+
+        return { result: outcome.result };
+      }
+
+      // -------- Idle path — run Gemini --------
+
+      // Free-text turn implicitly cancels any other lingering state
+      // (in case state != idle but pending was unparseable).
+      if (conversation.state !== 'idle') {
         await clearPendingAction({ conversationId: conversation.id });
       }
 
-      const userText = (message.body ?? '').trim();
       if (userText.length === 0) {
-        // No text body (image without caption, sticker, etc.). Don't
-        // spend tokens — fall back to a friendly nudge.
         await updateInboundRow(message.metaMessageId, {
           userId: identity.userId,
           status: 'processed',
@@ -582,7 +909,7 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
       });
 
       return {
-        result: 'ok',
+        result: flow.awaitingConfirmation ? 'awaiting_confirmation' : 'ok',
         isFirstContact,
         toolCalls: flow.toolCallsLog,
         tokensIn: flow.totalUsage.inputTokens,
