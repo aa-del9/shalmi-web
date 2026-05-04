@@ -9,10 +9,15 @@
 
 import { Queue, type ConnectionOptions } from 'bullmq';
 import IORedis, { type Redis } from 'ioredis';
-import type { InboundJobPayload, OutboundJobPayload } from '@repo/whatsapp-core';
+import type {
+  InboundJobPayload,
+  OutboundJobPayload,
+} from '@repo/whatsapp-core';
 
-export const INBOUND_QUEUE_NAME = 'whatsapp:inbound';
-export const OUTBOUND_QUEUE_NAME = 'whatsapp:outbound';
+// BullMQ v5 forbids `:` in queue names (collides with internal Redis
+// key separators), so we use `-`.
+export const INBOUND_QUEUE_NAME = 'whatsapp-inbound';
+export const OUTBOUND_QUEUE_NAME = 'whatsapp-outbound';
 
 let connection: Redis | null = null;
 let inboundQueue: Queue<InboundJobPayload> | null = null;
