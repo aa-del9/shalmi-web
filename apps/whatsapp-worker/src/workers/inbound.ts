@@ -23,7 +23,14 @@ import {
   whatsappConversations,
   whatsappMessages,
 } from '@repo/database';
-import type { InboundJobPayload } from '@repo/whatsapp-core';
+import {
+  e164ToWaapiChatId,
+  isE164,
+} from '@repo/whatsapp-core';
+import type {
+  InboundJobPayload,
+  InboundMessage,
+} from '@repo/whatsapp-core';
 import { INBOUND_QUEUE_NAME, getOutboundQueue, getRedisConnection } from '../queues';
 
 const UNRECOGNIZED_REPLY =
@@ -140,6 +147,30 @@ async function markInboundProcessed(
     .where(eq(whatsappMessages.metaMessageId, metaMessageId));
 }
 
+/**
+ * Pick the chat-id to send a reply on.
+ *
+ * If we resolved the sender's @lid to a real E.164 phone (or they
+ * arrived as @c.us in the first place), prefer the `<digits>@c.us`
+ * form. This:
+ *   - keeps replies aimed at a stable, public chat-id (waapi trial's
+ *     "static receiver" config is a `@c.us`, so this is the only
+ *     form that gets through during trial);
+ *   - normalizes routing across mutual-contact and LID senders.
+ *
+ * Falls back to the original chat-id (typically the `@lid`) when we
+ * have no E.164 — e.g. when waapi's contact lookup couldn't resolve
+ * the LID. In that case identity lookup will already have missed and
+ * the reply is the "unrecognized" fallback, so thread fidelity
+ * matters less than just trying.
+ */
+function preferredOutboundChatId(message: InboundMessage): string {
+  if (isE164(message.phone)) {
+    return e164ToWaapiChatId(message.phone);
+  }
+  return message.chatId;
+}
+
 function buildVendorReply(opts: {
   shopName: string | null;
   body: string | null;
@@ -170,7 +201,7 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
         // Unknown phone — reply once and stop.
         await markInboundProcessed(message.metaMessageId, null);
         await getOutboundQueue().add('send', {
-          chatId: message.chatId,
+          chatId: preferredOutboundChatId(message),
           phone: message.phone,
           body: UNRECOGNIZED_REPLY,
           userId: null,
@@ -190,7 +221,7 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
       });
 
       await getOutboundQueue().add('send', {
-        chatId: message.chatId,
+        chatId: preferredOutboundChatId(message),
         phone: message.phone,
         body: reply,
         userId: identity.userId,
