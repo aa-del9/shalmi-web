@@ -1,17 +1,7 @@
 import { eq, asc, inArray, and, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import {
-  db,
-  subOrders,
-  orderItems,
-  products,
-  orders,
-} from '@repo/database';
-import {
-  InvalidStateError,
-  NotFoundError,
-  ValidationError,
-} from '../errors';
+import { db, subOrders, orderItems, products, orders } from '@repo/database';
+import { InvalidStateError, NotFoundError, ValidationError } from '../errors';
 
 const ALLOWED_TRANSITIONS: Record<string, string> = {
   pending: 'packed',
@@ -140,8 +130,7 @@ export async function listVendorOrders(
       totalPrice: item.totalPrice,
       product: {
         name: item.productName,
-        imageUrl:
-          (item.productImages as { url: string }[])?.[0]?.url ?? null,
+        imageUrl: (item.productImages as { url: string }[])?.[0]?.url ?? null,
       },
     })),
   }));
@@ -165,6 +154,8 @@ export type GetOrderDetailsInput = z.input<typeof getOrderDetailsInputSchema>;
 export interface VendorSubOrderDetail extends VendorSubOrderRow {
   handedAt: Date | null;
   courierTrackingId: string | null;
+  shippingPostalCode: string | null;
+  shippingProvince: string | null;
   shippingFeeCustomer: number;
   coolieFeeReimbursement: number;
   courierCost: number;
@@ -203,6 +194,8 @@ export async function getOrderDetails(
       shippingPhone: orders.shippingPhone,
       shippingAddress: orders.shippingAddress,
       shippingCity: orders.shippingCity,
+      shippingPostalCode: orders.shippingPostalCode,
+      shippingProvince: orders.shippingProvince,
     })
     .from(subOrders)
     .innerJoin(orders, eq(subOrders.orderId, orders.id))
@@ -274,9 +267,7 @@ export async function updateOrderStatus(
   const [existing] = await db
     .select({ id: subOrders.id, status: subOrders.status })
     .from(subOrders)
-    .where(
-      and(eq(subOrders.id, subOrderId), eq(subOrders.vendorId, vendorId))
-    )
+    .where(and(eq(subOrders.id, subOrderId), eq(subOrders.vendorId, vendorId)))
     .limit(1);
 
   if (!existing) {
