@@ -14,6 +14,12 @@ COPY apps/whatsapp-worker/package.json apps/whatsapp-worker/package.json
 COPY packages/whatsapp-core/package.json packages/whatsapp-core/package.json
 COPY packages/mcp-server/package.json packages/mcp-server/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
+COPY packages/database/package.json packages/database/package.json
+COPY packages/services/package.json packages/services/package.json
+COPY packages/utils/package.json packages/utils/package.json
+COPY packages/constants/package.json packages/constants/package.json
+COPY packages/schemas/package.json packages/schemas/package.json
+COPY packages/types/package.json packages/types/package.json
 
 RUN pnpm install --frozen-lockfile --filter=whatsapp-worker...
 
@@ -28,6 +34,12 @@ COPY --from=deps /repo /repo
 COPY packages/typescript-config packages/typescript-config
 COPY packages/whatsapp-core packages/whatsapp-core
 COPY packages/mcp-server packages/mcp-server
+COPY packages/database packages/database
+COPY packages/services packages/services
+COPY packages/utils packages/utils
+COPY packages/constants packages/constants
+COPY packages/schemas packages/schemas
+COPY packages/types packages/types
 COPY apps/whatsapp-worker apps/whatsapp-worker
 
 RUN pnpm turbo run build --filter=whatsapp-worker...
@@ -48,6 +60,12 @@ COPY apps/whatsapp-worker/package.json apps/whatsapp-worker/package.json
 COPY packages/whatsapp-core/package.json packages/whatsapp-core/package.json
 COPY packages/mcp-server/package.json packages/mcp-server/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
+COPY packages/database/package.json packages/database/package.json
+COPY packages/services/package.json packages/services/package.json
+COPY packages/utils/package.json packages/utils/package.json
+COPY packages/constants/package.json packages/constants/package.json
+COPY packages/schemas/package.json packages/schemas/package.json
+COPY packages/types/package.json packages/types/package.json
 
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter=whatsapp-worker...
 
@@ -72,6 +90,12 @@ COPY --from=build --chown=app:app /repo/apps/whatsapp-worker/dist /repo/apps/wha
 # workspace package sources (entry points are .ts; resolved via pnpm symlinks)
 COPY --from=build --chown=app:app /repo/packages/whatsapp-core /repo/packages/whatsapp-core
 COPY --from=build --chown=app:app /repo/packages/mcp-server /repo/packages/mcp-server
+COPY --from=build --chown=app:app /repo/packages/database /repo/packages/database
+COPY --from=build --chown=app:app /repo/packages/services /repo/packages/services
+COPY --from=build --chown=app:app /repo/packages/utils /repo/packages/utils
+COPY --from=build --chown=app:app /repo/packages/constants /repo/packages/constants
+COPY --from=build --chown=app:app /repo/packages/schemas /repo/packages/schemas
+COPY --from=build --chown=app:app /repo/packages/types /repo/packages/types
 
 USER app
 
