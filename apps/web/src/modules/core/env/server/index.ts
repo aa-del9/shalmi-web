@@ -6,7 +6,11 @@ export const serverEnv = createEnv({
     DATABASE_URL: z.string(),
     BETTER_AUTH_SECRET: z.string(),
     REVALIDATE_SECRET_TOKEN: z.string().optional(),
-    CRON_SECRET: z.string(),
+    // Optional — only the /api/cron/finalize-deliveries route reads it,
+    // and that route already 500s gracefully when missing. Marking it
+    // required here forced every dev/build invocation to set it; the
+    // production cron remains protected by the runtime check.
+    CRON_SECRET: z.string().optional(),
     // Optional: Twilio credentials for SMS OTP. If unset, OTP is logged in dev only.
     TWILIO_ACCOUNT_SID: z.string().optional(),
     TWILIO_AUTH_TOKEN: z.string().optional(),
