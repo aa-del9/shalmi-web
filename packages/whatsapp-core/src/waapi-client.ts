@@ -110,7 +110,8 @@ export function e164ToWaapiChatId(e164: string): string {
 }
 
 export interface SendTextMessageInput {
-  phoneE164: string;
+  /** waapi chat-id, e.g. `923001234567@c.us` or `153978989985921@lid`. */
+  chatId: string;
   body: string;
 }
 
@@ -129,18 +130,20 @@ interface SendMessageResponse {
 }
 
 /**
- * Send a free-form text message to a phone. waapi has no template /
- * window concept, so this is the only outbound shape we need.
+ * Send a free-form text message to a chat-id. waapi has no template /
+ * window concept, so this is the only outbound shape we need. The
+ * caller decides whether to send to `@c.us` or `@lid` — for replies
+ * we always echo the chat-id we received from to keep the same
+ * conversation thread.
  */
 export async function sendTextMessage(
   input: SendTextMessageInput
 ): Promise<OutboundMessage> {
   const { instanceId } = getWaapiConfig();
-  const chatId = e164ToWaapiChatId(input.phoneE164);
   const result = (await waapiFetch(
     'POST',
     `/api/v1/instances/${instanceId}/client/action/send-message`,
-    { chatId, message: input.body }
+    { chatId: input.chatId, message: input.body }
   )) as SendMessageResponse | null;
 
   // ExecutedAction shape: { data: { data: { id: { _serialized } }, ack, ... } }
@@ -150,6 +153,108 @@ export async function sendTextMessage(
   const messageId =
     inner?.id?._serialized ?? inner?.id?.id ?? '';
   return { messageId, status: 'sent' };
+}
+
+interface ContactByIdResponse {
+  data?: {
+    data?: {
+      id?: { server?: string; user?: string; _serialized?: string };
+      number?: string;
+      pushname?: string;
+      isMyContact?: boolean;
+      isWAContact?: boolean;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface WaapiContact {
+  /** Resolved canonical id (e.g. `923154333909@c.us`). */
+  serializedId: string | null;
+  /** Underlying phone digits if exposed (e.g. `923154333909`). */
+  number: string | null;
+  /** Display name the sender chose on WhatsApp (e.g. `'Aadel'`). */
+  pushname: string | null;
+  /** Whether the bot's account has this number saved as a contact. */
+  isMyContact: boolean;
+  /** Whether the id resolves to a real WhatsApp user. */
+  isWAContact: boolean;
+}
+
+/**
+ * Look up a contact by waapi/WhatsApp id. Useful for resolving
+ * privacy-hidden `@lid` chat-ids back to a real `@c.us` + phone
+ * number — see `resolveLidToE164`.
+ */
+export async function getContactById(
+  chatId: string
+): Promise<WaapiContact | null> {
+  const { instanceId } = getWaapiConfig();
+  const result = (await waapiFetch(
+    'POST',
+    `/api/v1/instances/${instanceId}/client/action/get-contact-by-id`,
+    { contactId: chatId }
+  )) as ContactByIdResponse | null;
+
+  const inner = result?.data?.data;
+  if (!inner) return null;
+
+  // Sometimes id.user is the @c.us digits, sometimes _serialized
+  // already carries the full id. Read both for robustness.
+  const id = inner.id;
+  const serializedId = id?._serialized?.trim() ?? null;
+  const number = inner.number?.trim() ?? id?.user?.trim() ?? null;
+
+  return {
+    serializedId,
+    number: number ?? null,
+    pushname: inner.pushname?.trim() ?? null,
+    isMyContact: inner.isMyContact === true,
+    isWAContact: inner.isWAContact === true,
+  };
+}
+
+/**
+ * Resolve a `@lid` chat-id to an E.164 phone, or `null` if WhatsApp
+ * is unwilling to expose it. Wraps `getContactById` with E.164
+ * normalization. Network errors propagate so the caller can decide
+ * whether to fall back gracefully.
+ */
+export async function resolveLidToE164(
+  lidChatId: string
+): Promise<string | null> {
+  if (!lidChatId.endsWith('@lid')) {
+    throw new Error(`resolveLidToE164: not a @lid id: ${lidChatId}`);
+  }
+  const contact = await getContactById(lidChatId);
+  if (!contact) return null;
+
+  // Prefer the @c.us serialized id when present.
+  if (contact.serializedId && contact.serializedId.endsWith('@c.us')) {
+    const digits = contact.serializedId.slice(
+      0,
+      contact.serializedId.length - '@c.us'.length
+    );
+    if (digits) {
+      try {
+        return normalizeToE164(digits);
+      } catch {
+        // fall through to `number`
+      }
+    }
+  }
+
+  if (contact.number) {
+    try {
+      return normalizeToE164(contact.number);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 export interface SetInstanceWebhookInput {
@@ -265,12 +370,45 @@ export class WaapiInboundError extends Error {
   override name = 'WaapiInboundError';
 }
 
+const PHONE_CHAT_SUFFIXES = ['@c.us', '@s.whatsapp.net'] as const;
+const LID_SUFFIX = '@lid';
+const SKIP_SUFFIXES = ['@g.us', '@broadcast', '@status'] as const;
+
+/**
+ * Decide what to put in `InboundMessage.phone` for a given chat-id.
+ *
+ * - `<digits>@c.us` / `<digits>@s.whatsapp.net` → normalized E.164.
+ * - `<id>@lid` → the LID itself (caller can later swap in a resolved
+ *   E.164 via `resolveLidToE164`). Returning the LID here means
+ *   identity lookup will miss until resolution succeeds.
+ * - groups / broadcast / status / unknown → `null` (the message
+ *   should be skipped).
+ */
+function phoneFromChatId(fromRaw: string): string | null {
+  for (const sfx of SKIP_SUFFIXES) {
+    if (fromRaw.endsWith(sfx)) return null;
+  }
+  for (const sfx of PHONE_CHAT_SUFFIXES) {
+    if (fromRaw.endsWith(sfx)) {
+      const digits = fromRaw.slice(0, fromRaw.length - sfx.length).trim();
+      if (!digits) {
+        throw new WaapiInboundError('empty phone digits in `from`');
+      }
+      return normalizeToE164(digits);
+    }
+  }
+  if (fromRaw.endsWith(LID_SUFFIX)) {
+    return fromRaw;
+  }
+  return null;
+}
+
 /**
  * Convert a waapi `event: "message"` webhook payload into the shape
  * the worker uses internally. Returns `null` for valid envelopes the
- * worker should silently ack and skip — group chats and any messages
- * the bot itself authored. Throws on malformed payloads, which the
- * webhook handler converts to a 400.
+ * worker should silently ack and skip — groups, broadcasts, and
+ * messages the bot itself authored. Throws on malformed payloads,
+ * which the webhook handler converts to a 400.
  */
 export function parseWaapiInbound(
   payload: unknown
@@ -286,16 +424,11 @@ export function parseWaapiInbound(
     return null;
   }
 
-  const fromRaw = (msg.from ?? '').trim();
-  if (!fromRaw.endsWith('@c.us')) {
-    // Group (`@g.us`), broadcast, status, etc. — out of scope for
-    // the vendor 1-on-1 bot.
-    return null;
-  }
+  const chatId = (msg.from ?? '').trim();
+  if (!chatId) throw new WaapiInboundError('missing data.message.from');
 
-  const digits = fromRaw.slice(0, fromRaw.length - '@c.us'.length).trim();
-  if (!digits) throw new WaapiInboundError('empty phone digits in `from`');
-  const phone = normalizeToE164(digits);
+  const phone = phoneFromChatId(chatId);
+  if (phone === null) return null;
 
   const metaMessageId = msg.id?._serialized?.trim() ?? msg.id?.id?.trim();
   if (!metaMessageId) {
@@ -303,6 +436,7 @@ export function parseWaapiInbound(
   }
 
   return {
+    chatId,
     phone,
     metaMessageId,
     body: msg.body ?? null,
@@ -313,6 +447,14 @@ export function parseWaapiInbound(
         ? new Date(msg.timestamp * 1000).toISOString()
         : new Date().toISOString(),
   };
+}
+
+/**
+ * Convenience predicate: did `parseWaapiInbound` give us a LID we
+ * should try to resolve before identity lookup?
+ */
+export function isLidPhone(phone: string): boolean {
+  return phone.endsWith(LID_SUFFIX);
 }
 
 /**

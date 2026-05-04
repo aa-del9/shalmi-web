@@ -170,7 +170,8 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
         // Unknown phone — reply once and stop.
         await markInboundProcessed(message.metaMessageId, null);
         await getOutboundQueue().add('send', {
-          phoneE164: message.phone,
+          chatId: message.chatId,
+          phone: message.phone,
           body: UNRECOGNIZED_REPLY,
           userId: null,
           inReplyToMessageId: message.metaMessageId,
@@ -189,7 +190,8 @@ export function startInboundWorker(): Worker<InboundJobPayload> {
       });
 
       await getOutboundQueue().add('send', {
-        phoneE164: message.phone,
+        chatId: message.chatId,
+        phone: message.phone,
         body: reply,
         userId: identity.userId,
         inReplyToMessageId: message.metaMessageId,

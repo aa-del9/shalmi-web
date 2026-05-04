@@ -28,7 +28,7 @@ async function logPendingOutbound(
   const [row] = await db
     .insert(whatsappMessages)
     .values({
-      phone: payload.phoneE164,
+      phone: payload.phone,
       userId: payload.userId ?? null,
       direction: 'outbound',
       body: payload.body,
@@ -84,7 +84,7 @@ export function startOutboundWorker(): Worker<OutboundJobPayload> {
 
       try {
         const result = await sendTextMessage({
-          phoneE164: job.data.phoneE164,
+          chatId: job.data.chatId,
           body: job.data.body,
         });
         await markOutboundSent(rowId, result.messageId, startedAt);
