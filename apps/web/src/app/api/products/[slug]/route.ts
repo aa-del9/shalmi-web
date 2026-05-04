@@ -5,8 +5,8 @@ import { jsonSuccess, jsonError } from '@/modules/core/api';
 type RouteContext = { params: Promise<{ slug: string }> };
 
 /**
- * Public storefront API: single product by slug with priceTiers and vendorId
- * for cart/quick-add. Returns same shape as ProductDetail needs.
+ * Public storefront API: single product by slug, with pack-pricing tiers
+ * + primary category (for breadcrumb) + vendor name (for cart-line eyebrow).
  */
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
@@ -25,10 +25,18 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       name: product.name,
       slug: product.slug,
       vendorId: product.vendorId,
+      vendorName: product.vendorName,
       images: product.images,
-      weightGrams: product.weightGrams,
+      packWeightGrams: product.packWeightGrams,
+      packSize: product.packSize,
+      unitWeightGrams: product.unitWeightGrams,
+      unitLabel: product.unitLabel,
+      packMrpCents: product.packMrpCents,
+      packWholesalePriceCents: product.packWholesalePriceCents,
+      pricePerUnitCents: product.pricePerUnitCents,
       stock: product.stock,
-      priceTiers: product.priceTiers,
+      packTiers: product.packTiers,
+      primaryCategory: product.primaryCategory,
     });
   } catch (err) {
     console.error('GET /api/products/[slug] error:', err);

@@ -1,9 +1,9 @@
 import type { NextRequest } from 'next/server';
-import { eq, inArray, asc } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import {
   db,
   products,
-  productPriceTiers,
+  productPackTiers,
   orders,
   subOrders,
   orderItems,
@@ -12,8 +12,7 @@ import {
 import { checkoutCartPayloadSchema } from '@repo/schemas/orders/checkout';
 import { jsonSuccess, jsonError } from '@/modules/core/api';
 import { getSessionFromRequest } from '@/modules/auth/server/session-from-request';
-import { requireSession } from '@/modules/auth/server/guards/require-session';
-import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
+import { resolveDeliveryTier } from '@/modules/cart/utils/delivery-tiers';
 
 function generateDisplayId(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -21,28 +20,13 @@ function generateDisplayId(): string {
   return `ORD-${ts}-${rand}`;
 }
 
-function resolveTierPrice(
-  tiers: { minQty: number; maxQty: number | null; priceCents: number }[],
-  quantity: number
-): number {
-  const sorted = [...tiers].sort((a, b) => a.minQty - b.minQty);
-  for (let i = sorted.length - 1; i >= 0; i--) {
-    const tier = sorted[i]!;
-    if (quantity >= tier.minQty) {
-      if (tier.maxQty === null || quantity <= tier.maxQty) {
-        return tier.priceCents;
-      }
-    }
-  }
-  return sorted[0]?.priceCents ?? 0;
-}
-
 export async function POST(req: NextRequest) {
   try {
+    // Per OQ-G(b) — `requireSession` is relaxed to "session OR
+    // guestSessionId on payload". The guard runs after we parse the
+    // payload so we can read `guestSessionId` from the body.
     const session = await getSessionFromRequest(req);
-    requireSession(session);
-
-    const userId = (session.user as { id: string }).id;
+    const sessionUserId = (session?.user as { id?: string } | undefined)?.id ?? null;
 
     let body: unknown;
     try {
@@ -56,13 +40,37 @@ export async function POST(req: NextRequest) {
       return jsonError('Invalid cart payload', 400);
     }
 
-    const { items: cartItems, addressId: payloadAddressId, shippingAddress: payloadShippingAddress } =
-      parsed.data;
+    const {
+      items: cartItems,
+      addressId: payloadAddressId,
+      shippingAddress: payloadShippingAddress,
+      riderNotes: payloadRiderNotes,
+      saveAddress: payloadSaveAddress,
+      guestSessionId: payloadGuestSessionId,
+    } = parsed.data;
+
+    // OQ-G refine — at least one of (sessionUserId, guestSessionId) must
+    // be present.
+    if (!sessionUserId && !payloadGuestSessionId) {
+      return jsonError('Authentication required', 401);
+    }
+    const isGuest = !sessionUserId;
+
+    // Saved-address path is user-only (saved addresses are user-bound).
+    if (isGuest && payloadAddressId) {
+      return jsonError('Guest checkout cannot use a saved address', 400);
+    }
+    if (isGuest && payloadSaveAddress) {
+      // Guests have no account to save into. Q3(b) — ignore the flag
+      // rather than 400; mirrors the UI which hides the toggle.
+    }
 
     let shippingName: string;
     let shippingPhone: string;
-    let shippingAddress: string;
+    let shippingAddressLine: string;
     let shippingCity: string;
+    let shippingPostalCode: string | null = null;
+    let shippingProvince: string | null = null;
     let orderAddressId: string | null = null;
 
     if (payloadAddressId) {
@@ -71,19 +79,23 @@ export async function POST(req: NextRequest) {
         .from(addresses)
         .where(eq(addresses.id, payloadAddressId));
 
-      if (!addressRow || addressRow.userId !== userId) {
+      if (!addressRow || addressRow.userId !== sessionUserId) {
         return jsonError('Invalid or unauthorized address', 400);
       }
       shippingName = addressRow.recipientName;
       shippingPhone = addressRow.recipientPhone;
-      shippingAddress = addressRow.address;
+      shippingAddressLine = addressRow.address;
       shippingCity = addressRow.city;
+      shippingPostalCode = addressRow.postalCode ?? null;
+      shippingProvince = addressRow.province ?? null;
       orderAddressId = payloadAddressId;
     } else if (payloadShippingAddress) {
       shippingName = payloadShippingAddress.name;
       shippingPhone = payloadShippingAddress.phone;
-      shippingAddress = payloadShippingAddress.address;
+      shippingAddressLine = payloadShippingAddress.address;
       shippingCity = payloadShippingAddress.city;
+      shippingPostalCode = payloadShippingAddress.postalCode ?? null;
+      shippingProvince = payloadShippingAddress.province ?? null;
     } else {
       return jsonError('Provide addressId or shippingAddress', 400);
     }
@@ -95,7 +107,9 @@ export async function POST(req: NextRequest) {
         id: products.id,
         vendorId: products.vendorId,
         name: products.name,
-        weightGrams: products.weightGrams,
+        packWeightGrams: products.packWeightGrams,
+        packSize: products.packSize,
+        pricePerUnitCents: products.pricePerUnitCents,
         stock: products.stock,
         version: products.version,
       })
@@ -111,7 +125,7 @@ export async function POST(req: NextRequest) {
       }
       if (product.stock < item.quantity) {
         return jsonError(
-          `Insufficient stock for "${product.name}". Available: ${product.stock}`,
+          `Insufficient stock for "${product.name}". Available: ${product.stock} packs`,
           400
         );
       }
@@ -119,48 +133,49 @@ export async function POST(req: NextRequest) {
 
     const allTiers = await db
       .select({
-        productId: productPriceTiers.productId,
-        minQty: productPriceTiers.minQty,
-        maxQty: productPriceTiers.maxQty,
-        priceCents: productPriceTiers.priceCents,
+        productId: productPackTiers.productId,
+        packQty: productPackTiers.packQty,
+        pricePerPackCents: productPackTiers.pricePerPackCents,
       })
-      .from(productPriceTiers)
-      .where(inArray(productPriceTiers.productId, productIds))
-      .orderBy(asc(productPriceTiers.minQty));
+      .from(productPackTiers)
+      .where(inArray(productPackTiers.productId, productIds));
 
-    const tiersByProduct = new Map<
-      string,
-      { minQty: number; maxQty: number | null; priceCents: number }[]
-    >();
+    const tierByProductAndQty = new Map<string, number>();
     for (const tier of allTiers) {
-      const list = tiersByProduct.get(tier.productId) ?? [];
-      list.push(tier);
-      tiersByProduct.set(tier.productId, list);
+      tierByProductAndQty.set(
+        `${tier.productId}:${tier.packQty}`,
+        tier.pricePerPackCents
+      );
     }
 
-    // Group items by vendor
-    const vendorGroups = new Map<
-      string,
-      {
-        productId: string;
-        quantity: number;
-        unitPrice: number;
-        totalPrice: number;
-        weightGrams: number;
-      }[]
-    >();
+    type GroupItem = {
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+      packWeightGrams: number;
+      packSizeAtPurchase: number;
+      pricePerUnitAtPurchase: number | null;
+      selectedPackQty: number;
+    };
+
+    const vendorGroups = new Map<string, GroupItem[]>();
 
     for (const item of cartItems) {
       const product = productMap.get(item.productId)!;
-      const tiers = tiersByProduct.get(item.productId) ?? [];
-      const unitPrice = resolveTierPrice(tiers, item.quantity);
-      if (unitPrice <= 0) {
+      const perPack = tierByProductAndQty.get(
+        `${item.productId}:${item.selectedPackQty}`
+      );
+      if (perPack === undefined || perPack <= 0) {
         return jsonError(
-          'Cannot checkout product without a valid price tier.',
+          'Cannot checkout product without a valid pack tier.',
           400
         );
       }
+      const unitPrice = perPack;
       const totalPrice = unitPrice * item.quantity;
+      const totalWeight =
+        product.packWeightGrams * item.selectedPackQty * item.quantity;
 
       const group = vendorGroups.get(product.vendorId) ?? [];
       group.push({
@@ -168,43 +183,101 @@ export async function POST(req: NextRequest) {
         quantity: item.quantity,
         unitPrice,
         totalPrice,
-        weightGrams: product.weightGrams * item.quantity,
+        packWeightGrams: totalWeight,
+        packSizeAtPurchase: item.selectedPackQty,
+        pricePerUnitAtPurchase: product.pricePerUnitCents ?? null,
+        selectedPackQty: item.selectedPackQty,
       });
       vendorGroups.set(product.vendorId, group);
     }
 
     const displayId = generateDisplayId();
     let totalItemsCost = 0;
+    let totalCartWeightGrams = 0;
 
     for (const groupItems of vendorGroups.values()) {
       for (const gi of groupItems) {
         totalItemsCost += gi.totalPrice;
+        totalCartWeightGrams += gi.packWeightGrams;
       }
     }
 
+    const orderDeliveryTier = resolveDeliveryTier(totalCartWeightGrams);
+    const totalShippingCost = orderDeliveryTier.feeCents;
+    const grandTotal = totalItemsCost + totalShippingCost;
+
     const result = await db.transaction(async (tx) => {
+      // Per buyer-checkout one-time-addr Q11(b) — when toggle is OFF on
+      // an authed checkout, save the address inside the same tx and
+      // capture the new addressId for the order row.
+      let resolvedAddressId = orderAddressId;
+      if (
+        !isGuest &&
+        sessionUserId &&
+        payloadSaveAddress &&
+        payloadShippingAddress &&
+        !payloadAddressId
+      ) {
+        const [savedAddress] = await tx
+          .insert(addresses)
+          .values({
+            userId: sessionUserId,
+            title: 'Saved at checkout',
+            recipientName: shippingName,
+            recipientPhone: shippingPhone,
+            address: shippingAddressLine,
+            city: shippingCity,
+            postalCode: shippingPostalCode,
+            province: shippingProvince,
+            isDefault: false,
+          })
+          .returning({ id: addresses.id });
+        if (!savedAddress) throw new Error('Address insert failed');
+        resolvedAddressId = savedAddress.id;
+      }
+
       const [order] = await tx
         .insert(orders)
         .values({
-          userId,
+          userId: sessionUserId, // null for guests, per OQ-G(b)
+          guestSessionId: isGuest ? (payloadGuestSessionId ?? null) : null,
           displayId,
           shippingName,
           shippingPhone,
-          shippingAddress,
+          shippingAddress: shippingAddressLine,
           shippingCity,
-          addressId: orderAddressId,
+          shippingPostalCode,
+          shippingProvince,
+          addressId: resolvedAddressId,
           totalItemsCost,
-          totalShippingCost: 0,
-          grandTotal: totalItemsCost,
+          totalShippingCost,
+          grandTotal,
           status: 'processing',
+          riderNotes: payloadRiderNotes ?? null,
         })
         .returning({ id: orders.id, displayId: orders.displayId });
 
       if (!order) throw new Error('Order insert failed');
 
-      for (const [vendorId, groupItems] of vendorGroups.entries()) {
-        const itemsTotal = groupItems.reduce((s, i) => s + i.totalPrice, 0);
-        const weightGrams = groupItems.reduce((s, i) => s + i.weightGrams, 0);
+      const vendorEntries = Array.from(vendorGroups.entries());
+      let shippingAllocated = 0;
+      for (let i = 0; i < vendorEntries.length; i++) {
+        const [vendorId, groupItems] = vendorEntries[i]!;
+        const itemsTotal = groupItems.reduce((s, gi) => s + gi.totalPrice, 0);
+        const weightGrams = groupItems.reduce(
+          (s, gi) => s + gi.packWeightGrams,
+          0
+        );
+
+        const isLast = i === vendorEntries.length - 1;
+        const subShipping = isLast
+          ? totalShippingCost - shippingAllocated
+          : totalCartWeightGrams > 0
+            ? Math.round(
+                (weightGrams / totalCartWeightGrams) * totalShippingCost
+              )
+            : 0;
+        shippingAllocated += subShipping;
 
         const [subOrder] = await tx
           .insert(subOrders)
@@ -213,9 +286,9 @@ export async function POST(req: NextRequest) {
             vendorId,
             status: 'pending',
             weightGrams,
-            codAmount: itemsTotal,
+            codAmount: itemsTotal + subShipping,
             itemsTotal,
-            shippingFeeCustomer: 0,
+            shippingFeeCustomer: subShipping,
             coolieFeeReimbursement: 0,
             courierCost: 0,
             platformCommission: 0,
@@ -231,11 +304,12 @@ export async function POST(req: NextRequest) {
             quantity: gi.quantity,
             unitPrice: gi.unitPrice,
             totalPrice: gi.totalPrice,
+            packSizeAtPurchase: gi.packSizeAtPurchase,
+            pricePerUnitAtPurchase: gi.pricePerUnitAtPurchase,
           }))
         );
       }
 
-      // Decrement stock for each product
       for (const item of cartItems) {
         const product = productMap.get(item.productId)!;
         await tx
@@ -253,11 +327,6 @@ export async function POST(req: NextRequest) {
       201
     );
   } catch (err) {
-    if (err instanceof Error) {
-      if (err.message === AUTH_GUARD_ERRORS.SESSION_REQUIRED) {
-        return jsonError(err.message, 401);
-      }
-    }
     console.error('POST /api/checkout error:', err);
     return jsonError('Failed to place order. Please try again.', 500);
   }
