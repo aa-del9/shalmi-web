@@ -71,8 +71,12 @@ export function buildApp(): Hono {
     // Remove once the parser is known to behave end-to-end.
     const debugRoot = payload as Record<string, unknown> | null;
     const debugData = debugRoot?.data as Record<string, unknown> | undefined;
-    const debugMessage = debugData?.message as Record<string, unknown> | undefined;
-    const debugMsgInner = debugMessage?.message as Record<string, unknown> | undefined;
+    const debugMessage = debugData?.message as
+      | Record<string, unknown>
+      | undefined;
+    const debugMsgInner = debugMessage?.message as
+      | Record<string, unknown>
+      | undefined;
     const debugId = (debugMessage?.id ?? debugMsgInner?.id) as
       | Record<string, unknown>
       | string
@@ -92,6 +96,8 @@ export function buildApp(): Hono {
     console.log(
       '[webhook] from=' +
         String(debugMessage?.from ?? debugMsgInner?.from) +
+        ' to=' +
+        String(debugMessage?.to ?? debugMsgInner?.to) +
         ' fromMe=' +
         String(debugMessage?.fromMe ?? debugMsgInner?.fromMe) +
         ' type=' +
@@ -104,6 +110,13 @@ export function buildApp(): Hono {
         ).slice(0, 200) +
         ' id=' +
         JSON.stringify(debugId).slice(0, 200)
+    );
+    // Full _data dump so we can find the real sender phone for @lid
+    // payloads (WhatsApp's anonymous Linked-ID handle).
+    const debugDataField = debugMessage?._data;
+    // eslint-disable-next-line no-console
+    console.log(
+      '[webhook] _data=' + JSON.stringify(debugDataField).slice(0, 4000)
     );
 
     let inbound;
