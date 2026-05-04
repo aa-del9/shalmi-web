@@ -5,10 +5,10 @@
  * BullMQ consumers, and wires graceful shutdown so SIGTERM /
  * SIGINT drains queues + closes Redis cleanly.
  *
- * Lazy env loading: queue construction and Interakt calls each
- * read process.env when they actually need it. The process boots
- * even when REDIS_URL or INTERAKT_API_KEY are missing — failures
- * surface at request time instead of startup.
+ * Lazy env loading: queue construction, waapi calls, and Gemini
+ * each read process.env when they actually need it. The process
+ * boots even when REDIS_URL, WAAPI_*, or GEMINI_API_KEY are missing
+ * — failures surface at request time instead of startup.
  */
 
 import { serve } from '@hono/node-server';

@@ -9,7 +9,8 @@
       "Bash(pnpm db:migrate:dev)",
       "Bash(pnpm tsc *)",
       "Bash(pnpm exec *)",
-      "Read(//d//**)"
+      "Read(//d//**)",
+      "Bash(pnpm add *)"
     ]
   }
 }

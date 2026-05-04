@@ -29,3 +29,26 @@ export type {
   InboundJobPayload,
   OutboundJobPayload,
 } from './types';
+export {
+  runVendorTurn,
+  runVendorFollowupTurn,
+  extractUsage,
+  firstFunctionCall,
+  getVendorSystemPrompt,
+  type ConversationTurn,
+  type RunVendorTurnInput,
+  type RunVendorFollowupTurnInput,
+  type GeminiUsage,
+  type FunctionCall,
+  type FunctionDeclaration,
+  type GenerateContentResponse,
+} from './llm';
+export {
+  loadConversation,
+  appendTurn,
+  clearPendingAction,
+  MAX_RECENT_TURNS,
+  type ConversationRow,
+  type ConversationTurnEntry,
+  type ConversationRole,
+} from './conversation';
