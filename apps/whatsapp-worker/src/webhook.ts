@@ -31,9 +31,7 @@ import { getInboundQueue, getOutboundQueue } from './queues';
 export function buildApp(): Hono {
   const app = new Hono();
 
-  app.get('/health', (c) =>
-    c.json({ ok: true, service: 'whatsapp-worker' })
-  );
+  app.get('/health', (c) => c.json({ ok: true, service: 'whatsapp-worker' }));
 
   app.get('/webhook/whatsapp/:token', (c) => {
     const token = c.req.param('token');
@@ -60,6 +58,8 @@ export function buildApp(): Hono {
     }
 
     const eventType = readWaapiEventType(payload);
+    // eslint-disable-next-line no-console
+    console.log(`[webhook] event=${eventType ?? 'unknown'}`);
     if (eventType !== 'message') {
       // Lifecycle events (`ready`, `qr`, `disconnected`,
       // `authenticated`, etc.) and message status callbacks are
@@ -80,8 +80,14 @@ export function buildApp(): Hono {
     }
     if (!inbound) {
       // Self-authored or non-individual chat — ack and skip.
+      // eslint-disable-next-line no-console
+      console.log('[webhook] message skipped (group_or_self)');
       return c.json({ ok: true, skipped: 'group_or_self' });
     }
+    // eslint-disable-next-line no-console
+    console.log(
+      `[webhook] inbound from=${inbound.phone} type=${inbound.messageType} id=${inbound.metaMessageId}`
+    );
 
     // Dedupe — waapi may retry on timeout. If we've already logged
     // this message id, ack and stop.
@@ -134,10 +140,7 @@ export function buildApp(): Hono {
     }
 
     if (typeof body.to !== 'string' || typeof body.body !== 'string') {
-      return c.json(
-        { ok: false, error: 'to and body must be strings' },
-        400
-      );
+      return c.json({ ok: false, error: 'to and body must be strings' }, 400);
     }
     if (body.body.trim().length === 0) {
       return c.json({ ok: false, error: 'body cannot be empty' }, 400);
@@ -150,8 +153,7 @@ export function buildApp(): Hono {
       return c.json(
         {
           ok: false,
-          error:
-            err instanceof Error ? err.message : 'invalid phone',
+          error: err instanceof Error ? err.message : 'invalid phone',
         },
         400
       );
