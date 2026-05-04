@@ -32,6 +32,18 @@ export const auth = betterAuth({
         required: false,
         input: false,
       },
+      // Per OQ-S(a) — shopkeeper signup fields written by the post-
+      // signup hook on the same path as `retailerType`.
+      shopName: {
+        type: 'string',
+        required: false,
+        input: false,
+      },
+      shopAddress: {
+        type: 'string',
+        required: false,
+        input: false,
+      },
     },
   },
   trustedOrigins: [

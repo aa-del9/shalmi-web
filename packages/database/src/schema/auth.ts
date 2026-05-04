@@ -21,6 +21,12 @@ export const user = pgTable('user', {
   // Per OQ-R(a) — buyer sub-role; nullable, populated by signup flow.
   // Values: 'generic' | 'shopkeeper'. Validated by zod, not Postgres enum.
   retailerType: text('retailer_type'),
+  // Per OQ-S(a) — bricks-and-mortar shop fields populated only by the
+  // shopkeeper signup form. shopName is retail signage; shopAddress is
+  // the physical shop address (NOT a delivery address — those live in
+  // the `addresses` table).
+  shopName: text('shop_name'),
+  shopAddress: text('shop_address'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

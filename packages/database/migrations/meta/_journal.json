@@ -99,6 +99,13 @@
       "when": 1778098201000,
       "tag": "0013_user_retailer_type",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1778098202000,
+      "tag": "0014_user_shop_columns",
+      "breakpoints": true
     }
   ]
 }
