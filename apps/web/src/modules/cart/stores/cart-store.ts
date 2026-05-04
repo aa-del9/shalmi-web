@@ -5,25 +5,34 @@ import { persist, type PersistStorage } from 'zustand/middleware';
 import type { CartItem, CartItemInput } from '../types';
 import { resolvePerPackPrice } from '../utils/pack-pricing';
 
-interface CartState {
+interface PersistedCartState {
   items: CartItem[];
+  guestSessionId: string | null;
+}
+
+interface CartState extends PersistedCartState {
   addItem: (product: CartItemInput, packQuantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, packQuantity: number) => void;
   updateSelectedPackQty: (productId: string, selectedPackQty: number) => void;
   clearCart: () => void;
+  setGuestSessionId: (id: string) => void;
+  clearGuestSessionId: () => void;
 }
 
 const STORAGE_KEY = 'shalmi-cart';
-const STORAGE_VERSION = 2;
+const STORAGE_VERSION = 3;
 
 /**
  * Custom storage so we can hard-reset stale localStorage payloads from the
  * legacy band-tier model. Bumping the persist `version` triggers a migrate;
  * the hard-reset on read covers users coming straight from a stale tab
  * without an in-flight rehydrate.
+ *
+ * Version 3 adds `guestSessionId` to the persisted shape so the guest path
+ * (per buyer-signin Q6) survives navigation.
  */
-const cartStorage: PersistStorage<{ items: CartItem[] }> | undefined =
+const cartStorage: PersistStorage<PersistedCartState> | undefined =
   typeof window === 'undefined'
     ? undefined
     : {
@@ -33,10 +42,12 @@ const cartStorage: PersistStorage<{ items: CartItem[] }> | undefined =
             if (!raw) return null;
             const parsed = JSON.parse(raw) as {
               version?: number;
-              state?: { items: CartItem[] };
+              state?: PersistedCartState;
             };
             if (parsed.version !== STORAGE_VERSION) return null;
-            return parsed.state ? { state: parsed.state, version: STORAGE_VERSION } : null;
+            return parsed.state
+              ? { state: parsed.state, version: STORAGE_VERSION }
+              : null;
           } catch {
             return null;
           }
@@ -60,6 +71,7 @@ export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
+      guestSessionId: null,
 
       addItem: (product, packQuantity = 1) =>
         set((state) => {
@@ -121,11 +133,18 @@ export const useCartStore = create<CartState>()(
         })),
 
       clearCart: () => set({ items: [] }),
+
+      setGuestSessionId: (id) => set({ guestSessionId: id }),
+      clearGuestSessionId: () => set({ guestSessionId: null }),
     }),
     {
       name: STORAGE_KEY,
       version: STORAGE_VERSION,
       storage: cartStorage,
+      partialize: (state) => ({
+        items: state.items,
+        guestSessionId: state.guestSessionId,
+      }),
     }
   )
 );

@@ -10,7 +10,6 @@ import {
   getCartTotalWeightGrams,
 } from '@/modules/cart/stores/cart-store';
 import { useSession } from '@/modules/auth/client/auth-client';
-import { useModalStore } from '@/modules/core/stores/modal-store';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
 import { CartItemRow } from '@/modules/cart/components/cart-item-row';
 import { CartSummary } from '@/modules/cart/components/cart-summary';
@@ -27,13 +26,16 @@ export default function CartPage() {
   const totalPrice = getCartTotalPrice(items);
   const totalWeightGrams = getCartTotalWeightGrams(items);
   const { data: session, isPending: sessionLoading } = useSession();
-  const openAuthModal = useModalStore((s) => s.openAuthModal);
 
   function handleMobileCheckout() {
     if (session?.user) {
       router.push(ABSOLUTE_ROUTES.CHECKOUT);
     } else {
-      openAuthModal(ABSOLUTE_ROUTES.CHECKOUT);
+      // Per buyer-signin gap-analysis Q16(a): repoint embedded auth-modal
+      // triggers to the page-level sign-in. Route param preserves intent.
+      router.push(
+        `${ABSOLUTE_ROUTES.AUTH}?redirect=${encodeURIComponent(ABSOLUTE_ROUTES.CHECKOUT)}`
+      );
     }
   }
 

@@ -97,7 +97,35 @@
       "idx": 13,
       "version": "7",
       "when": 1778098201000,
-      "tag": "0013_whatsapp",
+      "tag": "0013_user_retailer_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1778098202000,
+      "tag": "0014_user_shop_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1778098203000,
+      "tag": "0015_orders_guest_session",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1778098204000,
+      "tag": "0016_orders_shipping_extras",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1778098205000,
+      "tag": "0017_whatsapp",
       "breakpoints": true
     }
   ]

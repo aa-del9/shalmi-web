@@ -17,11 +17,16 @@ export const user = pgTable('user', {
     .notNull()
     .default(false),
   role: text('role').notNull().default('retailer'),
-  // `business_name` is created by migration 0012 (Batch 5). The Drizzle
-  // field declaration stays deferred until the operator applies that
-  // migration to dev/staging — Better-Auth's user SELECT would 500
-  // otherwise. Account drawer renders the line only when the session
-  // payload exposes it (graceful no-op until then).
+  businessName: text('business_name'),
+  // Per OQ-R(a) — buyer sub-role; nullable, populated by signup flow.
+  // Values: 'generic' | 'shopkeeper'. Validated by zod, not Postgres enum.
+  retailerType: text('retailer_type'),
+  // Per OQ-S(a) — bricks-and-mortar shop fields populated only by the
+  // shopkeeper signup form. shopName is retail signage; shopAddress is
+  // the physical shop address (NOT a delivery address — those live in
+  // the `addresses` table).
+  shopName: text('shop_name'),
+  shopAddress: text('shop_address'),
   whatsappFirstSeenAt: timestamp('whatsapp_first_seen_at'),
   whatsappLastSeenAt: timestamp('whatsapp_last_seen_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
