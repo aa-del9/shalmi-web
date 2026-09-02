@@ -1,11 +1,17 @@
 /** Vendor list item: profile + phone from joined user */
 export type VendorListItem = {
   id: string;
-  phoneNumber: string | null;
+  displayId: string;
+  fullName: string | null;
   shopName: string;
+  phoneNumber: string | null;
   city: string;
+  address: string | null;
   marketHub: string;
+  logoUrl: string | null;
+  email: string | null;
   isActive: boolean;
+  createdAt: string;
 };
 
 /** Full vendor detail for edit form (list item + bank details) */
@@ -14,5 +20,20 @@ export type VendorDetail = VendorListItem & {
     bankName: string;
     accountTitle: string;
     iban: string;
+  };
+  /** ISO timestamp; null if vendor has never messaged the WhatsApp bot. */
+  whatsappFirstSeenAt: string | null;
+  /** ISO timestamp of the most recent inbound WhatsApp message. */
+  whatsappLastSeenAt: string | null;
+};
+
+export type VendorListMeta = {
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  totals: {
+    all: number;
+    active: number;
+    inactive: number;
   };
 };

@@ -6,7 +6,8 @@ export const ABSOLUTE_ROUTES = {
   CHECKOUT: '/checkout',
 
   PROFILE: '/profile',
-  PROFILE_ADDRESSES: '/profile/addresses',
+  PROFILE_SETTINGS: '/profile/settings',
+  PROFILE_ADDRESSES: '/profile/settings/addresses',
   PROFILE_ORDERS: '/profile/orders',
 
   VENDOR: '/vendor',
@@ -15,12 +16,19 @@ export const ABSOLUTE_ROUTES = {
   VENDOR_PRODUCTS_NEW: '/vendor/products/new',
   VENDOR_ORDERS: '/vendor/orders',
   VENDOR_LEDGER: '/vendor/ledger',
+  VENDOR_SETTINGS: '/vendor/settings',
 
   ADMIN: '/admin',
   ADMIN_DASHBOARD: `/admin/dashboard`,
   ADMIN_VENDORS: `/admin/vendors`,
   ADMIN_CATEGORIES: `/admin/categories`,
   ADMIN_PROMO_BANNERS: '/admin/promo-banners',
+  ADMIN_ORDERS: '/admin/orders',
+  ADMIN_PRODUCTS: '/admin/products',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_SALES_REPORTS: '/admin/sales-reports',
+  ADMIN_AUDIT_LOG: '/admin/audit-log',
+  ADMIN_WHATSAPP_UNRECOGNIZED: '/admin/whatsapp-unrecognized',
 } as const;
 
 export const AUTH_REQUIRED_PREFIXES = [

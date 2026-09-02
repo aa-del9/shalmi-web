@@ -28,6 +28,7 @@
     "@repo/database": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/schemas": "workspace:*",
+    "@repo/services": "workspace:*",
     "@repo/storage": "workspace:*",
     "@repo/types": "workspace:*",
     "@repo/ui": "workspace:*",

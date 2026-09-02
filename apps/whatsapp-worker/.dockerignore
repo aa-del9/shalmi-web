@@ -1,0 +1,42 @@
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/coverage
+**/.cache
+
+# env / local
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# vcs / editor
+.git
+.gitignore
+.github
+.husky
+.vscode
+.cursor
+.idea
+.DS_Store
+
+# tooling artifacts not needed inside the image
+.playwright-mcp
+.claude
+.claude-revamp
+.claude-whatsapp
+.agent
+Pencil*
+*.csv
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# vercel
+.vercel

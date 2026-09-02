@@ -43,6 +43,90 @@
       "when": 1772479115221,
       "tag": "0005_pale_pepper_potts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777733730871,
+      "tag": "0006_slim_redwing",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777747992995,
+      "tag": "0007_abnormal_vin_gonzales",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1777749601699,
+      "tag": "0008_fine_leo",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1777836001000,
+      "tag": "0009_pack_pricing",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1777922401000,
+      "tag": "0010_vendor_payouts",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1777925401000,
+      "tag": "0011_vendor_product_enrichment",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778011801000,
+      "tag": "0012_buyer_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778098201000,
+      "tag": "0013_user_retailer_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1778098202000,
+      "tag": "0014_user_shop_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1778098203000,
+      "tag": "0015_orders_guest_session",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1778098204000,
+      "tag": "0016_orders_shipping_extras",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1778098205000,
+      "tag": "0017_whatsapp",
+      "breakpoints": true
     }
   ]
 }

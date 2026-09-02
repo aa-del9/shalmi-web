@@ -1,22 +1,43 @@
 import type { NextRequest } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { eq, desc, inArray } from 'drizzle-orm';
 import {
-  db,
-  products,
-  productPriceTiers,
-  productCategories,
-} from '@repo/database';
-import { createProductSchema } from '@repo/schemas/catalog/product';
+  createProduct,
+  listVendorProducts,
+  VENDOR_PRODUCT_SORTS,
+  VENDOR_PRODUCT_STATUS_FILTERS,
+  type VendorProductSort,
+  type VendorProductStatusFilter,
+} from '@repo/services/vendor/products';
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from '@repo/services/errors';
 import { jsonSuccess, jsonError } from '@/modules/core/api';
 import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
 import { getSessionFromRequest } from '@/modules/auth/server/session-from-request';
 import { requireVendor } from '@/modules/auth/server/guards/require-role';
 import { getVendorIdFromSession } from '@/modules/auth/server/get-vendor-id-from-session';
-import { slugForProduct } from '@/modules/core/utils/slug';
 import { ABSOLUTE_ROUTES } from '@/modules/core/constants/absolute-routes';
-import { POSTGRES_UNIQUE_VIOLATION } from '@repo/constants/postgres';
 
+const PAGE_SIZE_DEFAULT = 8;
+
+/**
+ * Vendor product list — paginated + filterable + sortable.
+ *
+ * Per gap-analysis Q1/Q3: stats segments (ALL / ACTIVE / LOW STOCK /
+ * DRAFTS) are real filters; the GET response includes both the page rows
+ * AND a stats payload of category-wide counts so the segments + chip row
+ * stay in sync without a second round-trip.
+ *
+ * Query params:
+ *   page    — 1-based page number (default 1).
+ *   pageSize— rows per page (default 8, max 30).
+ *   q       — case-insensitive search across name + sku + brand.
+ *   status  — `all|active|low-stock|drafts`.
+ *   categoryId — filter rows that belong to this category (M2M).
+ *   sort    — `newest|oldest|stock-asc|stock-desc` (default `newest`).
+ */
 export async function GET(req: NextRequest) {
   try {
     const session = await getSessionFromRequest(req);
@@ -27,47 +48,41 @@ export async function GET(req: NextRequest) {
       return jsonError('Vendor record not found', 403);
     }
 
-    const rows = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        slug: products.slug,
-        weightGrams: products.weightGrams,
-        images: products.images,
-        stock: products.stock,
-        createdAt: products.createdAt,
-      })
-      .from(products)
-      .where(eq(products.vendorId, vendorId))
-      .orderBy(desc(products.createdAt));
-
-    const productIds = rows.map((r) => r.id);
-    const categoryLinks =
-      productIds.length > 0
-        ? await db
-            .select({
-              productId: productCategories.productId,
-              categoryId: productCategories.categoryId,
-            })
-            .from(productCategories)
-            .where(inArray(productCategories.productId, productIds))
-        : [];
-
-    const categoryIdsByProductId = categoryLinks.reduce(
-      (acc, { productId, categoryId }) => {
-        if (!acc[productId]) acc[productId] = [];
-        acc[productId].push(categoryId);
-        return acc;
-      },
-      {} as Record<string, string[]>
+    const url = new URL(req.url);
+    const page = Math.max(1, Number(url.searchParams.get('page') ?? '1') || 1);
+    const pageSize = Math.max(
+      1,
+      Number(url.searchParams.get('pageSize') ?? PAGE_SIZE_DEFAULT) ||
+        PAGE_SIZE_DEFAULT
     );
+    const q = url.searchParams.get('q') ?? undefined;
+    const rawStatus = url.searchParams.get('status');
+    const statusFilter: VendorProductStatusFilter | undefined =
+      rawStatus !== null &&
+      (VENDOR_PRODUCT_STATUS_FILTERS as readonly string[]).includes(rawStatus)
+        ? (rawStatus as VendorProductStatusFilter)
+        : undefined;
+    const categoryId = url.searchParams.get('categoryId') ?? undefined;
+    const rawSort = url.searchParams.get('sort');
+    const sort: VendorProductSort | undefined =
+      rawSort !== null &&
+      (VENDOR_PRODUCT_SORTS as readonly string[]).includes(rawSort)
+        ? (rawSort as VendorProductSort)
+        : undefined;
 
-    const data = rows.map((row) => ({
-      ...row,
-      categoryIds: categoryIdsByProductId[row.id] ?? [],
-    }));
+    const result = await listVendorProducts({
+      vendorId,
+      filter: {
+        page,
+        pageSize,
+        q,
+        status: statusFilter,
+        categoryId,
+        sort,
+      },
+    });
 
-    return jsonSuccess(data);
+    return jsonSuccess(result);
   } catch (err) {
     if (err instanceof Error) {
       const message = err.message;
@@ -78,6 +93,12 @@ export async function GET(req: NextRequest) {
         const status = message === AUTH_GUARD_ERRORS.ADMIN_REQUIRED ? 403 : 401;
         return jsonError(message, status);
       }
+    }
+    if (err instanceof ValidationError) {
+      return jsonError(err.message, 400);
+    }
+    if (err instanceof NotFoundError) {
+      return jsonError(err.message, 404);
     }
     console.error('GET /api/vendor/products error:', err);
     return jsonError('Failed to load products.', 500);
@@ -101,57 +122,13 @@ export async function POST(req: NextRequest) {
       return jsonError('Invalid JSON body', 400);
     }
 
-    const parsed = createProductSchema.safeParse(payload);
-    if (!parsed.success) {
-      const message = parsed.error.flatten().formErrors[0] ?? 'Invalid input';
-      return jsonError(message, 400);
-    }
-
-    const { name, weightGrams, images, stock, tiers, categoryIds } =
-      parsed.data;
-    const slug = slugForProduct(name);
-
-    const [inserted] = await db.transaction(async (tx) => {
-      const [product] = await tx
-        .insert(products)
-        .values({
-          vendorId,
-          name,
-          slug,
-          weightGrams,
-          images: images as { url: string; blurHash: string | null }[],
-          stock: stock ?? 0,
-        })
-        .returning({ id: products.id });
-
-      if (!product) {
-        throw new Error('Product insert did not return id');
-      }
-
-      const mappedTiers = tiers.map((tier) => ({
-        productId: product.id,
-        minQty: tier.minQty,
-        maxQty: tier.maxQty,
-        priceCents: tier.price,
-      }));
-
-      await tx.insert(productPriceTiers).values(mappedTiers);
-
-      if (categoryIds && categoryIds.length > 0) {
-        await tx.insert(productCategories).values(
-          categoryIds.map((categoryId) => ({
-            productId: product.id,
-            categoryId,
-          }))
-        );
-      }
-
-      return [product];
-    });
+    const result = await createProduct({
+      vendorId,
+      ...((payload as Record<string, unknown>) ?? {}),
+    } as Parameters<typeof createProduct>[0]);
 
     revalidatePath(ABSOLUTE_ROUTES.VENDOR_PRODUCTS);
-
-    return jsonSuccess({ productId: inserted.id }, undefined, 201);
+    return jsonSuccess({ productId: result.productId }, undefined, 201);
   } catch (err) {
     if (err instanceof Error) {
       const message = err.message;
@@ -163,10 +140,11 @@ export async function POST(req: NextRequest) {
         return jsonError(message, status);
       }
     }
-
-    const pgErr = err as { code?: string };
-    if (pgErr?.code === POSTGRES_UNIQUE_VIOLATION) {
-      return jsonError('A product with this slug already exists.', 409);
+    if (err instanceof ValidationError) {
+      return jsonError(err.message, 400);
+    }
+    if (err instanceof ConflictError) {
+      return jsonError(err.message, 409);
     }
 
     console.error('POST /api/vendor/products error:', err);

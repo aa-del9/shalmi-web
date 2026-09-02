@@ -8,7 +8,7 @@ import { user } from './schema/auth';
 import { vendors } from './schema/vendors';
 import { categories } from './schema/categories';
 import { products } from './schema/products';
-import { productPriceTiers } from './schema/product-price-tiers';
+import { productPackTiers } from './schema/product-pack-tiers';
 import { productCategories } from './schema/product-categories';
 
 // ---------------------------------------------------------------------------
@@ -165,7 +165,11 @@ async function seedProducts() {
     const productName =
       row.weightGrams > 0 ? `${row.name} ${row.weightGrams}g` : row.name;
 
-    const unitPriceRupees = row.totalPriceRupees / row.quantity;
+    const unitPriceCents = Math.round(
+      (row.totalPriceRupees / row.quantity) * 100
+    );
+    const wholesalePackPriceCents = Math.round(row.totalPriceRupees * 100);
+    const retailPackPriceCents = Math.round(unitPriceCents * 1.15);
 
     const [product] = await db
       .insert(products)
@@ -173,7 +177,16 @@ async function seedProducts() {
         vendorId,
         name: productName,
         slug: makeSlug(productName),
-        weightGrams: row.weightGrams,
+        packWeightGrams: row.weightGrams,
+        packSize: row.quantity > 1 ? row.quantity : 1,
+        unitWeightGrams:
+          row.quantity > 1 && row.weightGrams > 0
+            ? Math.round(row.weightGrams / row.quantity)
+            : row.weightGrams,
+        unitLabel: row.quantity > 1 ? row.itemType : null,
+        packWholesalePriceCents:
+          row.quantity > 1 ? wholesalePackPriceCents : unitPriceCents,
+        pricePerUnitCents: unitPriceCents,
         stock: DEFAULT_STOCK,
         images: [],
       })
@@ -184,29 +197,32 @@ async function seedProducts() {
       continue;
     }
 
-    // Price tiers: single-unit retail price + bulk wholesale price
+    // Pack tiers: a single "BUY 1" tier as default. For multi-unit packs the
+    // retail single-unit price is also recorded as a per-unit fallback tier.
     if (row.quantity > 1) {
-      const retailCents = Math.round(unitPriceRupees * 1.15); // 15% retail markup
-      await db.insert(productPriceTiers).values([
+      await db.insert(productPackTiers).values([
         {
           productId: product.id,
-          minQty: 1,
-          maxQty: row.quantity - 1,
-          priceCents: retailCents,
+          packQty: 1,
+          pricePerPackCents: retailPackPriceCents,
+          badge: null,
+          isDefault: false,
         },
         {
           productId: product.id,
-          minQty: row.quantity,
-          maxQty: null,
-          priceCents: unitPriceRupees,
+          packQty: row.quantity,
+          pricePerPackCents: wholesalePackPriceCents,
+          badge: 'best',
+          isDefault: true,
         },
       ]);
     } else {
-      await db.insert(productPriceTiers).values({
+      await db.insert(productPackTiers).values({
         productId: product.id,
-        minQty: 1,
-        maxQty: null,
-        priceCents: unitPriceRupees,
+        packQty: 1,
+        pricePerPackCents: unitPriceCents,
+        badge: null,
+        isDefault: true,
       });
     }
 
@@ -220,12 +236,9 @@ async function seedProducts() {
     }
 
     inserted++;
-    const tierInfo =
-      row.quantity > 1
-        ? `retail Rs ${((unitPriceRupees * 1.15) / 100).toFixed(0)} | bulk(${row.quantity}+) Rs ${(unitPriceRupees / 100).toFixed(0)}`
-        : `Rs ${(unitPriceRupees / 100).toFixed(0)}`;
-
-    console.log(`  ✓ ${productName} — ${tierInfo}`);
+    console.log(
+      `  ✓ ${productName} — Rs ${(unitPriceCents / 100).toFixed(0)}/unit`
+    );
   }
 
   console.log(`\nDone! Inserted ${inserted}/${rows.length} products.`);

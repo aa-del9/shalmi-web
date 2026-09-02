@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/Moeed 8th Sem/Fyp/Code/shalmi-web/Pencil-Design/**)",
+      "Read(//d/Moeed 8th Sem/Fyp/Code/shalmi-web/Pencil Design//**)",
+      "Bash(git add *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm check-types *)",
+      "Bash(pnpm db:migrate:dev)",
+      "Bash(pnpm tsc *)",
+      "Bash(pnpm exec *)",
+      "Read(//d//**)",
+      "Bash(pnpm add *)"
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "whatsapp-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "tsx --env-file-if-exists=.env src/index.ts",
+    "setup-webhook": "tsx --env-file-if-exists=.env src/scripts/setup-webhook.ts",
+    "waapi-status": "tsx --env-file-if-exists=.env src/scripts/waapi-status.ts",
+    "parse-fixture": "tsx src/scripts/parse-fixture.ts",
+    "probe-lid": "tsx --env-file-if-exists=.env src/scripts/probe-lid.ts",
+    "gemini-loop-harness": "tsx --env-file-if-exists=.env src/scripts/gemini-loop-harness.ts",
+    "check-types": "tsc --noEmit",
+    "clean": "rm -rf node_modules .turbo dist"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@repo/database": "workspace:*",
+    "@repo/mcp-server": "workspace:*",
+    "@repo/services": "workspace:*",
+    "@repo/whatsapp-core": "workspace:*",
+    "bullmq": "^5.34.10",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.6.14",
+    "ioredis": "^5.4.2",
+    "tsx": "^4.19.2"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
+    "typescript": "^5.9.2"
+  }
+}

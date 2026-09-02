@@ -7,8 +7,9 @@
 export * from './auth';
 export * from './addresses';
 export * from './products';
-export * from './product-price-tiers';
+export * from './product-pack-tiers';
 export * from './vendors';
+export * from './payout-runs';
 export * from './orders';
 export * from './sub-orders';
 export * from './order-items';
@@ -19,4 +20,5 @@ export * from './categories';
 export * from './product-categories';
 export * from './promotional-banners';
 export * from './product-reviews';
+export * from './whatsapp';
 export * from './relations';
