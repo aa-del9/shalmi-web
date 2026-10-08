@@ -120,6 +120,13 @@
       "when": 1778098204000,
       "tag": "0016_orders_shipping_extras",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1778098205000,
+      "tag": "0017_whatsapp",
+      "breakpoints": true
     }
   ]
 }

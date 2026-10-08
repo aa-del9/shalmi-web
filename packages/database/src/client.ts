@@ -14,7 +14,6 @@ const client =
   globalForDb.pgClient ??
   postgres(connectionString, { prepare: false, max: 3 });
 
-// eslint-disable-next-line turbo/no-undeclared-env-vars
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.pgClient = client;
 }
