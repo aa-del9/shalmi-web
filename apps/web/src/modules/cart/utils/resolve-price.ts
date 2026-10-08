@@ -1,28 +1,17 @@
-import type { PriceTier } from '../types';
-
 /**
- * Finds the applicable price tier for a given quantity.
- * Tiers are matched by minQty/maxQty range. Falls back to the
- * lowest-minQty tier if no exact match is found.
+ * Legacy price helpers.
+ *
+ * The band-tier `resolvePrice` was removed when the pack-pricing schema
+ * landed (Batch 3). Use `resolvePerPackPrice` from `./pack-pricing.ts`
+ * instead.
+ *
+ * `formatPrice` is preserved here as a thin wrapper around the canonical
+ * `formatRupeesFromCents` formatter so existing callers keep working
+ * during the transition.
  */
-export function resolvePrice(
-  priceTiers: PriceTier[],
-  quantity: number
-): number {
-  const sorted = [...priceTiers].sort((a, b) => a.minQty - b.minQty);
 
-  for (let i = sorted.length - 1; i >= 0; i--) {
-    const tier = sorted[i]!;
-    if (quantity >= tier.minQty) {
-      if (tier.maxQty === null || quantity <= tier.maxQty) {
-        return tier.priceCents;
-      }
-    }
-  }
+import { formatRupeesFromCents } from '@/modules/core/utils/format-price';
 
-  return sorted[0]?.priceCents ?? 0;
-}
-
-export function formatPrice(amount: number): string {
-  return `Rs. ${amount.toLocaleString()}`;
+export function formatPrice(cents: number): string {
+  return formatRupeesFromCents(cents);
 }

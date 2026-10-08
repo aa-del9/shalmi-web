@@ -28,7 +28,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) notFound();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="mx-auto max-w-[1360px] px-4 py-6 md:px-10 md:py-8">
       <ProductDetail product={product} />
     </div>
   );

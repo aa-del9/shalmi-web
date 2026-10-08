@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@repo/ui/components/card';
 import { Button } from '@repo/ui/components/button';
-import { QuantitySelector } from '@/modules/cart/components/quantity-selector';
 import { useCartStore } from '@/modules/cart/stores/cart-store';
-import type { CartItemInput } from '@/modules/cart/types';
+import type { CartItemInput, PackTier } from '@/modules/cart/types';
+import { findDefaultTier } from '@/modules/cart/utils/pack-pricing';
 import type { StorefrontProduct } from '../../types';
-import { formatPrice } from '@/modules/cart/utils/resolve-price';
+import { formatRupeesFromCents } from '@/modules/core/utils/format-price';
 
 interface ProductCardProps {
   product: StorefrontProduct;
@@ -17,10 +18,8 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const firstImage = product.images[0];
-  const priceDisplay = formatPrice(product.lowestPriceCents);
-  const [quantity, setQuantity] = useState(1);
+  const priceDisplay = formatRupeesFromCents(product.lowestPriceCents);
   const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
 
   async function handleAddToCart(e: React.MouseEvent) {
@@ -32,39 +31,38 @@ export function ProductCard({ product }: ProductCardProps) {
         `/api/products/${encodeURIComponent(product.slug)}`
       );
       const json = await res.json();
-      if (!json.success || !json.data) {
-        return;
-      }
+      if (!json.success || !json.data) return;
       const p = json.data as {
         id: string;
         name: string;
         slug: string;
         vendorId: string;
+        vendorName: string | null;
         images: { url: string; blurHash: string | null }[];
-        weightGrams: number;
+        packWeightGrams: number;
+        packSize: number;
+        unitLabel: string | null;
         stock: number;
-        priceTiers: {
-          minQty: number;
-          maxQty: number | null;
-          priceCents: number;
-        }[];
+        packTiers: PackTier[];
       };
-      if (p.stock <= 0) {
-        return;
-      }
+      if (p.stock <= 0) return;
+      const defaultTier = findDefaultTier(p.packTiers);
+      if (!defaultTier) return;
       const cartInput: CartItemInput = {
         productId: p.id,
         name: p.name,
         slug: p.slug,
         image: p.images[0] ?? null,
-        weightGrams: p.weightGrams,
+        packWeightGrams: p.packWeightGrams,
+        packSize: p.packSize,
+        unitLabel: p.unitLabel,
         vendorId: p.vendorId,
-        priceTiers: p.priceTiers,
+        vendorName: p.vendorName ?? '',
+        packTiers: p.packTiers,
+        selectedPackQty: defaultTier.packQty,
       };
-      const qty = Math.min(quantity, p.stock);
-      addItem(cartInput, qty);
-      setAdded(true);
-      setTimeout(() => setAdded(false), 1500);
+      addItem(cartInput, 1);
+      toast.success('Added to cart');
     } finally {
       setAdding(false);
     }
@@ -79,8 +77,14 @@ export function ProductCard({ product }: ProductCardProps) {
               src={firstImage.url}
               alt={product.name}
               fill
-              className="object-cover"
+              className="object-contain"
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
+              {...(firstImage.blurHash
+                ? {
+                    placeholder: 'blur',
+                    blurDataURL: firstImage.blurHash,
+                  }
+                : {})}
             />
           ) : (
             <div className="flex h-full items-center justify-center">
@@ -91,9 +95,9 @@ export function ProductCard({ product }: ProductCardProps) {
         <CardContent className="p-3">
           <h3 className="truncate text-sm font-medium">{product.name}</h3>
           <p className="text-muted-foreground text-xs">
-            {product.weightGrams} g
+            {product.packWeightGrams} g
           </p>
-          <p className="mt-1 text-sm font-semibold">From Rs. {priceDisplay}</p>
+          <p className="mt-1 text-sm font-semibold">{priceDisplay}</p>
         </CardContent>
       </Link>
       <div
@@ -103,21 +107,14 @@ export function ProductCard({ product }: ProductCardProps) {
           e.stopPropagation();
         }}
       >
-        <div className="flex items-center gap-2">
-          <QuantitySelector
-            quantity={quantity}
-            min={1}
-            onChange={setQuantity}
-          />
-          <Button
-            size="sm"
-            className="flex-1 shrink-0"
-            onClick={handleAddToCart}
-            disabled={adding || added}
-          >
-            {adding ? '…' : added ? 'Added' : 'Add'}
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          className="w-full"
+          onClick={handleAddToCart}
+          disabled={adding}
+        >
+          {adding ? '…' : 'Add to cart'}
+        </Button>
       </div>
     </Card>
   );

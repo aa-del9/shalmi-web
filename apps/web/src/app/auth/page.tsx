@@ -1,12 +1,12 @@
-'use client';
-
 import { Suspense } from 'react';
-import { AuthPageContent } from '@/modules/auth/components/auth-page-content';
+import { SignIn } from '@/modules/auth/components/sign-in';
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={<div className="min-h-[40vh]" />}>
-      <AuthPageContent />
-    </Suspense>
+    <div className="min-h-screen bg-background">
+      <Suspense fallback={<div className="min-h-[40vh]" />}>
+        <SignIn />
+      </Suspense>
+    </div>
   );
 }

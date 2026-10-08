@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { eq, desc, inArray } from 'drizzle-orm';
+import { eq, asc, inArray, and, sql } from 'drizzle-orm';
 import {
   db,
   subOrders,
@@ -42,13 +42,28 @@ export async function GET(req: NextRequest) {
       .from(subOrders)
       .innerJoin(orders, eq(subOrders.orderId, orders.id))
       .where(eq(subOrders.vendorId, vendorId))
-      .orderBy(desc(subOrders.createdAt));
+      // Pencil voSubHd reads "Oldest first · pack the items in order".
+      .orderBy(asc(subOrders.createdAt));
+
+    // TODO(post-v1): consume `meta.pendingCount` from the vendor sidebar
+    // badge once the chrome revamp lands in Batch 4 (per buyer-orders
+    // gap-analysis Q2).
+    const pendingCountRows = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(subOrders)
+      .where(
+        and(eq(subOrders.vendorId, vendorId), eq(subOrders.status, 'pending'))
+      );
+
+    const meta = {
+      pendingCount: Number(pendingCountRows[0]?.count ?? 0),
+    };
+
+    if (subOrderRows.length === 0) {
+      return jsonSuccess({ subOrders: [], meta });
+    }
 
     const subOrderIds = subOrderRows.map((r) => r.id);
-
-    if (subOrderIds.length === 0) {
-      return jsonSuccess([]);
-    }
 
     const itemRows = await db
       .select({
@@ -88,7 +103,7 @@ export async function GET(req: NextRequest) {
       })),
     }));
 
-    return jsonSuccess(data);
+    return jsonSuccess({ subOrders: data, meta });
   } catch (err) {
     if (err instanceof Error) {
       const message = err.message;

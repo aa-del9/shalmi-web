@@ -83,15 +83,14 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
       </Carousel>
 
       {count > 1 && (
-        <div className="mt-3 flex justify-center gap-1.5">
+        // Pencil bid1Y/HzhO2 — active rounded ink 24×6, inactive 6×6 rule-2.
+        <div className="mt-3.5 flex justify-center gap-1.5">
           {Array.from({ length: count }).map((_, i) => (
             <button
               key={i}
               className={cn(
-                'h-1.5 rounded-full transition-all',
-                i === current
-                  ? 'bg-primary w-6'
-                  : 'bg-muted-foreground/30 w-1.5'
+                'h-1.5 rounded-[3px] transition-all',
+                i === current ? 'w-6 bg-ink' : 'w-1.5 bg-rule-2'
               )}
               onClick={() => api?.scrollTo(i)}
             >

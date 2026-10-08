@@ -7,11 +7,13 @@ export const clientEnv = createEnv({
     NEXT_PUBLIC_APP_URL: z.string(),
     NEXT_PUBLIC_BRAND_NAME: z.string(),
     NEXT_PUBLIC_IS_PROD: z.string().transform((value) => value === 'true'),
+    NEXT_PUBLIC_APP_VERSION: z.string().default('0.0.0'),
   },
   runtimeEnv: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_BRAND_NAME: process.env.NEXT_PUBLIC_BRAND_NAME,
     NEXT_PUBLIC_IS_PROD: process.env.NEXT_PUBLIC_IS_PROD,
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION,
   },
 });

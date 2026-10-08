@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { UpdateCategoryInput } from '../../schemas';
 import { CategoryQueryKeys } from '@/modules/common/queries/categories';
+import { AdminCategoriesQueryKeys } from '../use-admin-categories-query';
 
 export function useUpdateCategoryMutation(categoryId: string) {
   const queryClient = useQueryClient();
@@ -24,6 +25,9 @@ export function useUpdateCategoryMutation(categoryId: string) {
       queryClient.invalidateQueries({ queryKey: CategoryQueryKeys.all });
       queryClient.invalidateQueries({
         queryKey: CategoryQueryKeys.detail(categoryId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: AdminCategoriesQueryKeys.all,
       });
     },
   });

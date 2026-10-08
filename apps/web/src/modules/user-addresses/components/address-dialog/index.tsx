@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -21,6 +22,8 @@ import {
 import { Spinner } from '@repo/ui/components/spinner';
 import { createAddressSchema, type CreateAddressInput } from '../../schemas';
 import { useCreateAddressMutation } from '../../hooks/use-create-address-mutation';
+import { useUpdateAddressMutation } from '../../hooks/use-update-address-mutation';
+import type { Address } from '../../types';
 
 const defaultValues: CreateAddressInput = {
   title: '',
@@ -28,31 +31,63 @@ const defaultValues: CreateAddressInput = {
   recipientPhone: '',
   address: '',
   city: '',
+  postalCode: undefined,
+  province: undefined,
   isDefault: false,
 };
 
-type AddressDialogProps = {
+interface AddressDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-};
+  /** When provided, the dialog runs in edit mode (PATCH); otherwise create. */
+  address?: Address | null;
+}
 
-export function AddressDialog({ open, onOpenChange }: AddressDialogProps) {
+/**
+ * Add / Edit address dialog (gap-analysis Q18 + Q19): re-uses the existing
+ * dialog visual; switches between POST (create) and PATCH (edit) based on
+ * whether `address` is supplied.
+ */
+export function AddressDialog({
+  open,
+  onOpenChange,
+  address,
+}: AddressDialogProps) {
   const createMutation = useCreateAddressMutation();
+  const updateMutation = useUpdateAddressMutation();
+  const editing = Boolean(address);
+  const pending = createMutation.isPending || updateMutation.isPending;
 
   const form = useForm<CreateAddressInput>({
     resolver: zodResolver(createAddressSchema),
     defaultValues,
   });
 
+  useEffect(() => {
+    if (open) {
+      form.reset(
+        address
+          ? {
+              title: address.title,
+              recipientName: address.recipientName,
+              recipientPhone: address.recipientPhone,
+              address: address.address,
+              city: address.city,
+              postalCode: address.postalCode ?? undefined,
+              province: address.province ?? undefined,
+              isDefault: address.isDefault,
+            }
+          : defaultValues
+      );
+    }
+  }, [open, address, form]);
+
   const onSubmit = form.handleSubmit(async (data) => {
-    await createMutation.mutateAsync({
-      title: data.title,
-      recipientName: data.recipientName,
-      recipientPhone: data.recipientPhone,
-      address: data.address,
-      city: data.city,
-      isDefault: data.isDefault,
-    });
+    if (address) {
+      await updateMutation.mutateAsync({ id: address.id, data });
+    } else {
+      await createMutation.mutateAsync(data);
+    }
     form.reset(defaultValues);
     onOpenChange(false);
   });
@@ -66,7 +101,7 @@ export function AddressDialog({ open, onOpenChange }: AddressDialogProps) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add address</DialogTitle>
+          <DialogTitle>{editing ? 'Edit address' : 'Add address'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit}>
           <FieldGroup className="gap-4">
@@ -77,7 +112,7 @@ export function AddressDialog({ open, onOpenChange }: AddressDialogProps) {
                   id="addr-title"
                   {...form.register('title')}
                   placeholder="e.g. Main Shop"
-                  disabled={createMutation.isPending}
+                  disabled={pending}
                   aria-invalid={Boolean(form.formState.errors.title)}
                 />
                 <FieldError errors={[form.formState.errors.title]} />
@@ -92,7 +127,7 @@ export function AddressDialog({ open, onOpenChange }: AddressDialogProps) {
                   id="addr-recipientName"
                   {...form.register('recipientName')}
                   placeholder="Full name"
-                  disabled={createMutation.isPending}
+                  disabled={pending}
                   aria-invalid={Boolean(
                     form.formState.errors.recipientName
                   )}
@@ -112,7 +147,7 @@ export function AddressDialog({ open, onOpenChange }: AddressDialogProps) {
                   {...form.register('recipientPhone')}
                   placeholder="03XX-XXXXXXX"
                   autoComplete="tel"
-                  disabled={createMutation.isPending}
+                  disabled={pending}
                   aria-invalid={Boolean(
                     form.formState.errors.recipientPhone
                   )}
@@ -129,7 +164,7 @@ export function AddressDialog({ open, onOpenChange }: AddressDialogProps) {
                   id="addr-address"
                   {...form.register('address')}
                   placeholder="Full address"
-                  disabled={createMutation.isPending}
+                  disabled={pending}
                   aria-invalid={Boolean(form.formState.errors.address)}
                 />
                 <FieldError errors={[form.formState.errors.address]} />
@@ -142,10 +177,37 @@ export function AddressDialog({ open, onOpenChange }: AddressDialogProps) {
                   id="addr-city"
                   {...form.register('city')}
                   placeholder="City"
-                  disabled={createMutation.isPending}
+                  disabled={pending}
                   aria-invalid={Boolean(form.formState.errors.city)}
                 />
                 <FieldError errors={[form.formState.errors.city]} />
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="addr-postalCode">
+                Postal code <span className="text-ink-3">(optional)</span>
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="addr-postalCode"
+                  {...form.register('postalCode')}
+                  placeholder="52250"
+                  autoComplete="postal-code"
+                  disabled={pending}
+                />
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="addr-province">
+                Province <span className="text-ink-3">(optional)</span>
+              </FieldLabel>
+              <FieldContent>
+                <Input
+                  id="addr-province"
+                  {...form.register('province')}
+                  placeholder="Punjab"
+                  disabled={pending}
+                />
               </FieldContent>
             </Field>
             <Field orientation="horizontal">
@@ -156,7 +218,7 @@ export function AddressDialog({ open, onOpenChange }: AddressDialogProps) {
                   onCheckedChange={(checked) =>
                     form.setValue('isDefault', checked === true)
                   }
-                  disabled={createMutation.isPending}
+                  disabled={pending}
                 />
                 <FieldLabel
                   htmlFor="addr-isDefault"
@@ -176,16 +238,18 @@ export function AddressDialog({ open, onOpenChange }: AddressDialogProps) {
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
-              disabled={createMutation.isPending}
+              disabled={pending}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? (
+            <Button type="submit" disabled={pending}>
+              {pending ? (
                 <>
                   <Spinner className="size-4" />
-                  Adding…
+                  {editing ? 'Saving…' : 'Adding…'}
                 </>
+              ) : editing ? (
+                'Save changes'
               ) : (
                 'Add address'
               )}

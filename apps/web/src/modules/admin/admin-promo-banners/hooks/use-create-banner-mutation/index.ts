@@ -1,9 +1,9 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { BannerQueryKeys } from '../../constants/banner-query-keys';
 import type { CreateBannerInput } from '../../schemas';
+import type { Banner } from '../../types';
 
 export function useCreateBannerMutation() {
   const queryClient = useQueryClient();
@@ -16,19 +16,13 @@ export function useCreateBannerMutation() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok || !data.success) {
         throw new Error(data?.error ?? 'Failed to create banner');
       }
-      return data;
+      return data.data as Banner;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BannerQueryKeys.all });
-      toast.success('Banner added. It appears in Available banners.');
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : 'Something went wrong'
-      );
     },
   });
 }

@@ -76,7 +76,7 @@ export function ProductTable({
               products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.weightGrams}g</TableCell>
+                  <TableCell>{product.packWeightGrams}g</TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>
                     <ProductCategoriesCell

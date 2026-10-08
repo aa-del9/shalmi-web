@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/next';
 import '@repo/ui/globals.css';
 import { RootLayout } from '@/modules/root-layout';
 import { WithChildren } from '@repo/types/common';
@@ -10,5 +11,10 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: WithChildren) {
-  return <RootLayout>{children}</RootLayout>;
+  return (
+    <RootLayout>
+      {children}
+      <Analytics />
+    </RootLayout>
+  );
 }

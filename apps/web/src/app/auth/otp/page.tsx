@@ -1,12 +1,12 @@
-'use client';
-
 import { Suspense } from 'react';
-import { OtpVerificationForm } from '@/modules/auth/components/otp-verification-form';
+import { OtpVerification } from '@/modules/auth/components/otp-verification';
 
 export default function AuthOtpPage() {
   return (
-    <Suspense fallback={<div className="container py-12">Loading…</div>}>
-      <OtpVerificationForm />
-    </Suspense>
+    <div className="min-h-screen bg-background">
+      <Suspense fallback={<div className="min-h-[40vh]" />}>
+        <OtpVerification />
+      </Suspense>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { asc, eq, min } from 'drizzle-orm';
-import { db, products, productPriceTiers } from '@repo/database';
+import { db, products, productPackTiers } from '@repo/database';
 import type { StorefrontProduct } from '../types';
 
 export async function getBestPricesProducts(): Promise<StorefrontProduct[]> {
@@ -12,16 +12,18 @@ export async function getBestPricesProducts(): Promise<StorefrontProduct[]> {
           name: products.name,
           slug: products.slug,
           images: products.images,
-          weightGrams: products.weightGrams,
-          lowestPriceCents: min(productPriceTiers.priceCents),
+          packWeightGrams: products.packWeightGrams,
+          packSize: products.packSize,
+          unitLabel: products.unitLabel,
+          lowestPriceCents: min(productPackTiers.pricePerPackCents),
         })
         .from(products)
         .innerJoin(
-          productPriceTiers,
-          eq(products.id, productPriceTiers.productId)
+          productPackTiers,
+          eq(products.id, productPackTiers.productId)
         )
         .groupBy(products.id)
-        .orderBy(asc(min(productPriceTiers.priceCents)))
+        .orderBy(asc(min(productPackTiers.pricePerPackCents)))
         .limit(20);
 
       return rows.map((r) => ({

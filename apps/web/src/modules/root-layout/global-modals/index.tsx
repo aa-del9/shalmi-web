@@ -1,26 +1,10 @@
 'use client';
 
-import { useModalStore } from '@/modules/core/stores/modal-store';
-import { AuthModal } from '@/modules/auth/components/auth-modal';
-
+/**
+ * Reserved for future global-scope modals. The previous `AuthModal` mount
+ * was retired in Batch 7 — sign-in is a full-page route at `/auth`
+ * (per buyer-signin gap-analysis Q16(a)).
+ */
 export function GlobalModals() {
-  const type = useModalStore((s) => s.type);
-  const redirectUrl = useModalStore((s) => s.redirectUrl);
-  const closeModal = useModalStore((s) => s.closeModal);
-
-  const open = type === 'auth';
-
-  return (
-    <>
-      {type === 'auth' && (
-        <AuthModal
-          open={open}
-          onOpenChange={(isOpen) => {
-            if (!isOpen) closeModal();
-          }}
-          redirectUrl={redirectUrl}
-        />
-      )}
-    </>
-  );
+  return null;
 }

@@ -3,7 +3,7 @@ import { user } from './auth';
 import { products } from './products';
 import { categories } from './categories';
 import { productCategories } from './product-categories';
-import { productPriceTiers } from './product-price-tiers';
+import { productPackTiers } from './product-pack-tiers';
 import { orders } from './orders';
 import { subOrders } from './sub-orders';
 import { orderItems } from './order-items';
@@ -24,8 +24,8 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   productCategories: many(productCategories, {
     relationName: 'productToProductCategories',
   }),
-  productPriceTiers: many(productPriceTiers, {
-    relationName: 'productToProductPriceTiers',
+  productPackTiers: many(productPackTiers, {
+    relationName: 'productToProductPackTiers',
   }),
   reviews: many(productReviews, {
     relationName: 'productToReviews',
@@ -46,13 +46,13 @@ export const productCategoriesRelations = relations(
   })
 );
 
-export const productPriceTiersRelations = relations(
-  productPriceTiers,
+export const productPackTiersRelations = relations(
+  productPackTiers,
   ({ one }) => ({
     product: one(products, {
-      fields: [productPriceTiers.productId],
+      fields: [productPackTiers.productId],
       references: [products.id],
-      relationName: 'productToProductPriceTiers',
+      relationName: 'productToProductPackTiers',
     }),
   })
 );

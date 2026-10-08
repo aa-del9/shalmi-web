@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server';
-import { eq, desc, inArray } from 'drizzle-orm';
+import { eq, desc, asc, inArray, ilike, or, exists, and, sql } from 'drizzle-orm';
 import {
   db,
   orders,
@@ -12,12 +12,63 @@ import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
 import { getSessionFromRequest } from '@/modules/auth/server/session-from-request';
 import { requireSession } from '@/modules/auth/server/guards/require-session';
 
+type SortKey = 'newest' | 'oldest';
+
+function parseSort(value: string | null): SortKey {
+  return value === 'oldest' ? 'oldest' : 'newest';
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getSessionFromRequest(req);
     requireSession(session);
 
     const userId = (session.user as { id: string }).id;
+
+    const url = new URL(req.url);
+    const q = url.searchParams.get('q')?.trim() ?? '';
+    const sort = parseSort(url.searchParams.get('sort'));
+
+    // Lifetime aggregates (always over the user's full order set,
+    // independent of `q` so the subtitle metric doesn't drop when the
+    // user searches — see buyer-orders gap-analysis Q4).
+    const summaryRows = await db
+      .select({
+        count: sql<number>`COUNT(*)::int`,
+        lifetimeTotalCents: sql<number>`COALESCE(SUM(${orders.grandTotal}), 0)::int`,
+      })
+      .from(orders)
+      .where(eq(orders.userId, userId));
+
+    const summaryRow = summaryRows[0] ?? { count: 0, lifetimeTotalCents: 0 };
+    const summary = {
+      count: Number(summaryRow.count),
+      lifetimeTotalCents: Number(summaryRow.lifetimeTotalCents),
+    };
+
+    // Filter clause: `q` matches displayId OR product name (via subquery
+    // EXISTS so an order with multiple matching products doesn't
+    // duplicate the row in the parent select).
+    const matchesProductName = exists(
+      db
+        .select({ id: orderItems.id })
+        .from(orderItems)
+        .innerJoin(subOrders, eq(orderItems.subOrderId, subOrders.id))
+        .innerJoin(products, eq(orderItems.productId, products.id))
+        .where(
+          and(
+            eq(subOrders.orderId, orders.id),
+            ilike(products.name, `%${q}%`)
+          )
+        )
+    );
+
+    const whereClause = q
+      ? and(
+          eq(orders.userId, userId),
+          or(ilike(orders.displayId, `%${q}%`), matchesProductName)
+        )
+      : eq(orders.userId, userId);
 
     const orderRows = await db
       .select({
@@ -27,14 +78,17 @@ export async function GET(req: NextRequest) {
         totalItemsCost: orders.totalItemsCost,
         totalShippingCost: orders.totalShippingCost,
         grandTotal: orders.grandTotal,
+        shippingCity: orders.shippingCity,
         createdAt: orders.createdAt,
       })
       .from(orders)
-      .where(eq(orders.userId, userId))
-      .orderBy(desc(orders.createdAt));
+      .where(whereClause)
+      .orderBy(
+        sort === 'oldest' ? asc(orders.createdAt) : desc(orders.createdAt)
+      );
 
     if (orderRows.length === 0) {
-      return jsonSuccess([]);
+      return jsonSuccess({ orders: [], summary });
     }
 
     const orderIds = orderRows.map((o) => o.id);
@@ -47,6 +101,8 @@ export async function GET(req: NextRequest) {
         codAmount: subOrders.codAmount,
         itemsTotal: subOrders.itemsTotal,
         shippingFeeCustomer: subOrders.shippingFeeCustomer,
+        weightGrams: subOrders.weightGrams,
+        handedAt: subOrders.handedAt,
         createdAt: subOrders.createdAt,
       })
       .from(subOrders)
@@ -102,6 +158,7 @@ export async function GET(req: NextRequest) {
       ...order,
       subOrders: (subsByOrder.get(order.id) ?? []).map((sub) => ({
         ...sub,
+        handedAt: sub.handedAt ? sub.handedAt.toISOString() : null,
         items: (itemsBySubOrder.get(sub.id) ?? []).map((item) => ({
           id: item.id,
           productId: item.productId,
@@ -117,7 +174,7 @@ export async function GET(req: NextRequest) {
       })),
     }));
 
-    return jsonSuccess(data);
+    return jsonSuccess({ orders: data, summary });
   } catch (err) {
     if (err instanceof Error) {
       if (err.message === AUTH_GUARD_ERRORS.SESSION_REQUIRED) {

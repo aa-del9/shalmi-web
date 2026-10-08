@@ -17,6 +17,8 @@ export const addresses = pgTable('addresses', {
   recipientPhone: text('recipient_phone').notNull(),
   address: text('address').notNull(),
   city: text('city').notNull(),
+  postalCode: text('postal_code'),
+  province: text('province'),
   isDefault: boolean('is_default').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

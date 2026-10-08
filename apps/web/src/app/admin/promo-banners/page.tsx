@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   description: 'Manage promotional banners',
 };
 
+// nuqs `useQueryState` reads request URL at render — keep dynamic.
+export const dynamic = 'force-dynamic';
+
 export default function Page() {
   return <AdminPromoBanners />;
 }

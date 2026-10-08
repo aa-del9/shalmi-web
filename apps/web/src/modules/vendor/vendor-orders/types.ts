@@ -26,3 +26,12 @@ export type VendorSubOrder = {
   shippingCity: string;
   items: VendorSubOrderItem[];
 };
+
+export type VendorOrdersMeta = {
+  pendingCount: number;
+};
+
+export type VendorOrdersResponse = {
+  subOrders: VendorSubOrder[];
+  meta: VendorOrdersMeta;
+};
