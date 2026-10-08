@@ -38,7 +38,6 @@ export async function sendOtpSms(
     return;
   }
 
-  // eslint-disable-next-line turbo/no-undeclared-env-vars
   if (process.env.NODE_ENV !== 'production') {
     console.log(`[auth] OTP for ${phoneNumber}: ${code}`);
   } else {
