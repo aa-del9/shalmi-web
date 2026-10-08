@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from './client';
 import { user } from './schema/auth';
 import { vendors } from './schema/vendors';
@@ -10,6 +10,20 @@ import { categories } from './schema/categories';
 import { products } from './schema/products';
 import { productPackTiers } from './schema/product-pack-tiers';
 import { productCategories } from './schema/product-categories';
+
+/**
+ * Mirrors the admin vendor-creation route: next sequential VND-#### id
+ * derived from the numeric part of existing display ids.
+ */
+async function generateNextVendorDisplayId(): Promise<string> {
+  const [row] = await db
+    .select({
+      maxId: sql<string | null>`MAX(NULLIF(REGEXP_REPLACE(${vendors.displayId}, '[^0-9]', '', 'g'), ''))`,
+    })
+    .from(vendors);
+  const next = Number(row?.maxId ?? '0') + 1;
+  return `VND-${String(next).padStart(4, '0')}`;
+}
 
 // ---------------------------------------------------------------------------
 // Paths
@@ -114,6 +128,7 @@ async function seedProducts() {
       .insert(vendors)
       .values({
         userId: vendorUser.id,
+        displayId: await generateNextVendorDisplayId(),
         shopName: 'AliBaba',
         city: 'Lahore',
         hub: 'Baara Bazaar',
