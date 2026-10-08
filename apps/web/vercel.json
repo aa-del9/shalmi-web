@@ -1,4 +1,7 @@
 {
+  "git": {
+    "deploymentEnabled": false
+  },
   "regions": ["bom1"],
   "crons": [
     {
