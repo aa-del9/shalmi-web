@@ -1,7 +1,5 @@
-'use client';
-
-import { UserAddresses } from '@/modules/user-addresses';
+import { redirect } from 'next/navigation';
 
 export default function ProfileAddressesPage() {
-  return <UserAddresses />;
+  redirect('/profile/settings/addresses');
 }

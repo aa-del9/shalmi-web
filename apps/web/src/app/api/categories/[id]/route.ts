@@ -18,6 +18,8 @@ export async function GET(_req: NextRequest, context: RouteContext) {
         name: categories.name,
         slug: categories.slug,
         imageUrl: categories.imageUrl,
+        iconKey: categories.iconKey,
+        isActive: categories.isActive,
         createdAt: categories.createdAt,
         updatedAt: categories.updatedAt,
       })
@@ -34,6 +36,8 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       name: row.name,
       slug: row.slug,
       imageUrl: row.imageUrl ?? null,
+      iconKey: row.iconKey ?? null,
+      isActive: row.isActive,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });

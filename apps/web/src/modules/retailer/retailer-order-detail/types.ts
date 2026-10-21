@@ -1,3 +1,6 @@
+import type { ProductImageRecord } from '@repo/database';
+import type { PackTier } from '@/modules/cart/types';
+
 export type OrderDetailItem = {
   id: string;
   productId: string;
@@ -7,7 +10,19 @@ export type OrderDetailItem = {
   isReviewed: boolean;
   product: {
     name: string;
+    slug: string;
     imageUrl: string | null;
+    imageRecord: ProductImageRecord | null;
+    vendorId: string;
+    vendorName: string | null;
+    packSize: number;
+    packWeightGrams: number;
+    unitLabel: string | null;
+    pricePerUnitCents: number | null;
+    packMrpCents: number | null;
+    stock: number;
+    lowStockThreshold: number;
+    packTiers: PackTier[];
   };
 };
 

@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateCategoryInput } from '../../schemas';
 import { CategoryQueryKeys } from '@/modules/common/queries/categories';
+import { AdminCategoriesQueryKeys } from '../use-admin-categories-query';
 
 export function useCreateCategoryMutation() {
   const queryClient = useQueryClient();
@@ -22,6 +23,9 @@ export function useCreateCategoryMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CategoryQueryKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: AdminCategoriesQueryKeys.all,
+      });
     },
   });
 }

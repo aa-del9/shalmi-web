@@ -45,6 +45,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     name?: string;
     slug?: string;
     imageUrl?: string | null;
+    iconKey?: string | null;
+    isActive?: boolean;
     updatedAt: Date;
   } = { updatedAt: new Date() };
 
@@ -64,6 +66,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (data.imageUrl !== undefined) {
     updatePayload.imageUrl =
       data.imageUrl && data.imageUrl !== '' ? data.imageUrl : null;
+  }
+  if (data.iconKey !== undefined) {
+    updatePayload.iconKey =
+      data.iconKey && data.iconKey !== '' ? data.iconKey : null;
+  }
+  if (data.isActive !== undefined) {
+    updatePayload.isActive = data.isActive;
   }
 
   if (Object.keys(updatePayload).length <= 1) {

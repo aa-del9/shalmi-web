@@ -1,15 +1,22 @@
 /**
  * Product create/update Zod schemas (catalog).
+ *
+ * Pack-pricing model (Batch 3): the create payload now carries pack
+ * metadata + an array of `product_pack_tiers` rows.
  */
 
 import { z } from 'zod';
 import { slugSchema } from '../metadata';
 import {
-  createProductPriceTiersSchema,
-  type ProductPriceTiersForm,
-} from './product-price-tiers';
+  productPackTiersSchema,
+  type ProductPackTiersInput,
+  type PackTierRow,
+  type PackTierBadge,
+  PACK_TIER_BADGES,
+} from './product-pack-tiers';
 
-const weightGramsSchema = z.number().int().positive();
+const positiveInt = z.number().int().positive();
+const nonNegativeInt = z.number().int().min(0);
 const urlSchema = z.string().url();
 
 export const productImageSchema = z.object({
@@ -17,15 +24,32 @@ export const productImageSchema = z.object({
   blurHash: z.string().nullable(),
 });
 
+export const PRODUCT_STATUSES = ['active', 'draft'] as const;
+export type ProductStatusInput = (typeof PRODUCT_STATUSES)[number];
+
 export const createProductSchema = z.object({
   name: z.string().min(3).max(255),
   slug: slugSchema.optional(),
-  weightGrams: weightGramsSchema.default(500),
+  // Per-pack net weight in grams (was `weightGrams` in the band model).
+  packWeightGrams: positiveInt.default(500),
+  // Units per pack (e.g. 30 sachets in a Carton). Defaults to 1 (= sold
+  // as a single unit).
+  packSize: positiveInt.default(1),
+  unitWeightGrams: positiveInt.optional().nullable(),
+  unitLabel: z.string().min(1).max(40).optional().nullable(),
+  packMrpCents: positiveInt.optional().nullable(),
+  packWholesalePriceCents: positiveInt,
+  pricePerUnitCents: positiveInt.optional().nullable(),
   images: z.array(productImageSchema).min(1),
-  stock: z.number().int().min(0).optional().default(0),
+  stock: nonNegativeInt.optional().default(0),
   vendorId: z.string().uuid().optional(),
-  tiers: createProductPriceTiersSchema,
+  packTiers: productPackTiersSchema,
   categoryIds: z.array(z.string().uuid()).optional(),
+  // Vendor product enrichment (Batch 4 schema landing).
+  sku: z.string().min(1).max(64).optional().nullable(),
+  brand: z.string().min(1).max(120).optional().nullable(),
+  lowStockThreshold: nonNegativeInt.optional().default(10),
+  status: z.enum(PRODUCT_STATUSES).optional().default('active'),
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
@@ -37,4 +61,9 @@ export const updateProductSchema = createProductSchema.partial().extend({
 
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 
-export type { ProductPriceTiersForm };
+export type {
+  ProductPackTiersInput,
+  PackTierRow,
+  PackTierBadge,
+};
+export { PACK_TIER_BADGES };

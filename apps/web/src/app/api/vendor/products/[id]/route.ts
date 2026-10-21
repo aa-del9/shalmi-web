@@ -4,7 +4,7 @@ import { eq, and, asc } from 'drizzle-orm';
 import {
   db,
   products,
-  productPriceTiers,
+  productPackTiers,
   productCategories,
 } from '@repo/database';
 import { updateProductSchema } from '@repo/schemas/catalog/product';
@@ -38,9 +38,19 @@ export async function GET(req: NextRequest, context: RouteContext) {
         id: products.id,
         name: products.name,
         slug: products.slug,
-        weightGrams: products.weightGrams,
+        packWeightGrams: products.packWeightGrams,
+        packSize: products.packSize,
+        unitWeightGrams: products.unitWeightGrams,
+        unitLabel: products.unitLabel,
+        packMrpCents: products.packMrpCents,
+        packWholesalePriceCents: products.packWholesalePriceCents,
+        pricePerUnitCents: products.pricePerUnitCents,
         images: products.images,
         stock: products.stock,
+        sku: products.sku,
+        brand: products.brand,
+        lowStockThreshold: products.lowStockThreshold,
+        status: products.status,
         createdAt: products.createdAt,
       })
       .from(products)
@@ -53,14 +63,15 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     const tiers = await db
       .select({
-        id: productPriceTiers.id,
-        minQty: productPriceTiers.minQty,
-        maxQty: productPriceTiers.maxQty,
-        price: productPriceTiers.priceCents,
+        id: productPackTiers.id,
+        packQty: productPackTiers.packQty,
+        pricePerPackCents: productPackTiers.pricePerPackCents,
+        badge: productPackTiers.badge,
+        isDefault: productPackTiers.isDefault,
       })
-      .from(productPriceTiers)
-      .where(eq(productPriceTiers.productId, id))
-      .orderBy(asc(productPriceTiers.minQty));
+      .from(productPackTiers)
+      .where(eq(productPackTiers.productId, id))
+      .orderBy(asc(productPackTiers.packQty));
 
     const categoryRows = await db
       .select({ categoryId: productCategories.categoryId })
@@ -71,12 +82,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     return jsonSuccess({
       ...product,
       categoryIds,
-      tiers: tiers.map((t) => ({
-        id: t.id,
-        minQty: t.minQty,
-        maxQty: t.maxQty,
-        price: t.price,
-      })),
+      packTiers: tiers,
     });
   } catch (err) {
     if (err instanceof Error) {
@@ -125,19 +131,45 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const data = parsed.data;
     const updatePayload: {
       name?: string;
-      weightGrams?: number;
+      packWeightGrams?: number;
+      packSize?: number;
+      unitWeightGrams?: number | null;
+      unitLabel?: string | null;
+      packMrpCents?: number | null;
+      packWholesalePriceCents?: number;
+      pricePerUnitCents?: number | null;
       images?: { url: string; blurHash: string | null }[];
       stock?: number;
+      sku?: string | null;
+      brand?: string | null;
+      lowStockThreshold?: number;
+      status?: 'active' | 'draft';
     } = {};
     if (data.name !== undefined) updatePayload.name = data.name;
-    if (data.weightGrams !== undefined)
-      updatePayload.weightGrams = data.weightGrams;
+    if (data.packWeightGrams !== undefined)
+      updatePayload.packWeightGrams = data.packWeightGrams;
+    if (data.packSize !== undefined) updatePayload.packSize = data.packSize;
+    if (data.unitWeightGrams !== undefined)
+      updatePayload.unitWeightGrams = data.unitWeightGrams ?? null;
+    if (data.unitLabel !== undefined)
+      updatePayload.unitLabel = data.unitLabel ?? null;
+    if (data.packMrpCents !== undefined)
+      updatePayload.packMrpCents = data.packMrpCents ?? null;
+    if (data.packWholesalePriceCents !== undefined)
+      updatePayload.packWholesalePriceCents = data.packWholesalePriceCents;
+    if (data.pricePerUnitCents !== undefined)
+      updatePayload.pricePerUnitCents = data.pricePerUnitCents ?? null;
     if (data.images !== undefined)
       updatePayload.images = data.images as {
         url: string;
         blurHash: string | null;
       }[];
     if (data.stock !== undefined) updatePayload.stock = data.stock;
+    if (data.sku !== undefined) updatePayload.sku = data.sku ?? null;
+    if (data.brand !== undefined) updatePayload.brand = data.brand ?? null;
+    if (data.lowStockThreshold !== undefined)
+      updatePayload.lowStockThreshold = data.lowStockThreshold;
+    if (data.status !== undefined) updatePayload.status = data.status;
 
     await db.transaction(async (tx) => {
       const [existing] = await tx
@@ -160,16 +192,17 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
           .where(eq(products.id, id));
       }
 
-      if (data.tiers !== undefined && data.tiers.length > 0) {
+      if (data.packTiers !== undefined && data.packTiers.length > 0) {
         await tx
-          .delete(productPriceTiers)
-          .where(eq(productPriceTiers.productId, id));
-        await tx.insert(productPriceTiers).values(
-          data.tiers.map((tier) => ({
+          .delete(productPackTiers)
+          .where(eq(productPackTiers.productId, id));
+        await tx.insert(productPackTiers).values(
+          data.packTiers.map((tier) => ({
             productId: id,
-            minQty: tier.minQty,
-            maxQty: tier.maxQty,
-            priceCents: tier.price,
+            packQty: tier.packQty,
+            pricePerPackCents: tier.pricePerPackCents,
+            badge: tier.badge ?? null,
+            isDefault: tier.isDefault ?? false,
           }))
         );
       }

@@ -1,18 +1,18 @@
 import { create } from 'zustand';
 
-export type ModalType = 'auth' | null;
+/**
+ * The auth-modal type was retired in Batch 7 (sign-in is a full page at
+ * `/auth` per buyer-signin gap-analysis Q16(a)). The store is kept so that
+ * future modal-driven UI can plug in without rewiring the layout chrome.
+ */
+export type ModalType = null;
 
 interface ModalState {
   type: ModalType;
-  redirectUrl: string | null;
-  openAuthModal: (redirectUrl?: string | null) => void;
   closeModal: () => void;
 }
 
 export const useModalStore = create<ModalState>((set) => ({
   type: null,
-  redirectUrl: null,
-  openAuthModal: (redirectUrl = null) =>
-    set({ type: 'auth', redirectUrl: redirectUrl ?? null }),
-  closeModal: () => set({ type: null, redirectUrl: null }),
+  closeModal: () => set({ type: null }),
 }));

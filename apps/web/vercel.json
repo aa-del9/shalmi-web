@@ -2,5 +2,11 @@
   "git": {
     "deploymentEnabled": false
   },
-  "regions": ["bom1"]
+  "regions": ["bom1"],
+  "crons": [
+    {
+      "path": "/api/cron/finalize-deliveries",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }

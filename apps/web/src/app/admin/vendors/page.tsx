@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   description: 'Admin vendors',
 };
 
+// nuqs `useQueryState` requires the request URL at render time;
+// keep this route dynamic so prerender doesn't trip on it.
+export const dynamic = 'force-dynamic';
+
 export default function Page() {
   return <AdminVendors />;
 }

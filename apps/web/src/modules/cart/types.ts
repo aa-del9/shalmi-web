@@ -1,9 +1,12 @@
 import type { ProductImageRecord } from '@repo/database';
+import type { PackTierBadge } from '@repo/schemas/catalog/product';
 
-export interface PriceTier {
-  minQty: number;
-  maxQty: number | null;
-  priceCents: number;
+export interface PackTier {
+  id?: string;
+  packQty: number;
+  pricePerPackCents: number;
+  badge: PackTierBadge | null;
+  isDefault: boolean;
 }
 
 export interface CartItem {
@@ -11,10 +14,18 @@ export interface CartItem {
   name: string;
   slug: string;
   image: ProductImageRecord | null;
-  weightGrams: number;
+  /** Per-pack net weight (was the legacy `weightGrams` field). */
+  packWeightGrams: number;
+  packSize: number;
+  unitLabel: string | null;
   vendorId: string;
+  vendorName: string;
+  /** Snapshot of available pack tiers when the line was added. */
+  packTiers: PackTier[];
+  /** Pack qty of the currently-selected tier (e.g. 6/12/24). */
+  selectedPackQty: number;
+  /** Quantity in PACKS of the selected pack qty. */
   quantity: number;
-  priceTiers: PriceTier[];
 }
 
 export interface CartItemInput {
@@ -22,7 +33,11 @@ export interface CartItemInput {
   name: string;
   slug: string;
   image: ProductImageRecord | null;
-  weightGrams: number;
+  packWeightGrams: number;
+  packSize: number;
+  unitLabel: string | null;
   vendorId: string;
-  priceTiers: PriceTier[];
+  vendorName: string;
+  packTiers: PackTier[];
+  selectedPackQty: number;
 }

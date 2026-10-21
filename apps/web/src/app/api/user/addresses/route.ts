@@ -7,12 +7,20 @@ import { getSessionFromRequest } from '@/modules/auth/server/session-from-reques
 import { requireSession } from '@/modules/auth/server/guards/require-session';
 import { AUTH_GUARD_ERRORS } from '@/modules/auth/server/guards/errors';
 
+const optionalString = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v && v.length > 0 ? v : undefined));
+
 const createAddressSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   recipientName: z.string().min(1, 'Recipient name is required'),
   recipientPhone: z.string().min(1, 'Recipient phone is required'),
   address: z.string().min(1, 'Address is required'),
   city: z.string().min(1, 'City is required'),
+  postalCode: optionalString,
+  province: optionalString,
   isDefault: z.boolean().optional(),
 });
 
@@ -62,8 +70,16 @@ export async function POST(req: NextRequest) {
       return jsonError(message, 400);
     }
 
-    const { title, recipientName, recipientPhone, address, city, isDefault } =
-      parsed.data;
+    const {
+      title,
+      recipientName,
+      recipientPhone,
+      address,
+      city,
+      postalCode,
+      province,
+      isDefault,
+    } = parsed.data;
 
     if (isDefault === true) {
       await db
@@ -81,6 +97,8 @@ export async function POST(req: NextRequest) {
         recipientPhone,
         address,
         city,
+        postalCode: postalCode ?? null,
+        province: province ?? null,
         isDefault: isDefault ?? false,
       })
       .returning();

@@ -1,12 +1,12 @@
 import { unstable_cache } from 'next/cache';
 import { desc, eq, max, min, sql } from 'drizzle-orm';
-import { db, products, productPriceTiers } from '@repo/database';
+import { db, products, productPackTiers } from '@repo/database';
 import type { StorefrontProduct } from '../types';
 
 export async function getSuperSaverProducts(): Promise<StorefrontProduct[]> {
   return unstable_cache(
     async () => {
-      const spread = sql<number>`(${max(productPriceTiers.priceCents)} - ${min(productPriceTiers.priceCents)})`;
+      const spread = sql<number>`(${max(productPackTiers.pricePerPackCents)} - ${min(productPackTiers.pricePerPackCents)})`;
 
       const rows = await db
         .select({
@@ -14,14 +14,16 @@ export async function getSuperSaverProducts(): Promise<StorefrontProduct[]> {
           name: products.name,
           slug: products.slug,
           images: products.images,
-          weightGrams: products.weightGrams,
-          lowestPriceCents: min(productPriceTiers.priceCents),
+          packWeightGrams: products.packWeightGrams,
+          packSize: products.packSize,
+          unitLabel: products.unitLabel,
+          lowestPriceCents: min(productPackTiers.pricePerPackCents),
           spread,
         })
         .from(products)
         .innerJoin(
-          productPriceTiers,
-          eq(products.id, productPriceTiers.productId)
+          productPackTiers,
+          eq(products.id, productPackTiers.productId)
         )
         .groupBy(products.id)
         .orderBy(desc(spread))

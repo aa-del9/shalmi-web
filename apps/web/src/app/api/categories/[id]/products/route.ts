@@ -3,7 +3,7 @@ import { eq, asc, min, countDistinct } from 'drizzle-orm';
 import {
   db,
   products,
-  productPriceTiers,
+  productPackTiers,
   productCategories,
   categories,
 } from '@repo/database';
@@ -44,8 +44,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
         .from(productCategories)
         .innerJoin(products, eq(productCategories.productId, products.id))
         .innerJoin(
-          productPriceTiers,
-          eq(products.id, productPriceTiers.productId)
+          productPackTiers,
+          eq(products.id, productPackTiers.productId)
         )
         .where(eq(productCategories.categoryId, id)),
 
@@ -55,14 +55,16 @@ export async function GET(req: NextRequest, context: RouteContext) {
           name: products.name,
           slug: products.slug,
           images: products.images,
-          weightGrams: products.weightGrams,
-          lowestPriceCents: min(productPriceTiers.priceCents),
+          packWeightGrams: products.packWeightGrams,
+          packSize: products.packSize,
+          unitLabel: products.unitLabel,
+          lowestPriceCents: min(productPackTiers.pricePerPackCents),
         })
         .from(productCategories)
         .innerJoin(products, eq(productCategories.productId, products.id))
         .innerJoin(
-          productPriceTiers,
-          eq(products.id, productPriceTiers.productId)
+          productPackTiers,
+          eq(products.id, productPackTiers.productId)
         )
         .where(eq(productCategories.categoryId, id))
         .groupBy(products.id)
